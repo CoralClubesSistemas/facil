@@ -1,0 +1,81 @@
+name: CI/CD QA - FACIL Core
+
+on:
+  push:
+    branches: [ "qa" ] # Se activa cuando hay push en rama qa
+  workflow_dispatch: # Permite ejecución manual desde GitHub
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  deploy-qa:
+    runs-on: [ self-hosted, Linux, coral-clubes ]
+    environment: QA
+
+    steps:
+      - name: Checkout Código
+        uses: actions/checkout@v4
+
+      # =================================================================
+      # FASE 1: CONSTRUCCIÓN (DOCKER BUILD)
+      # =================================================================
+      - name: Construir Imagen Docker (QA)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          tags: facil:qa
+          push: false
+          load: true
+
+          # Pasamos credenciales para descargar las librerías privadas (Utils/Exceptions)
+          build-args: |
+            GITHUB_ACTOR=${{ github.actor }}
+            GITHUB_TOKEN=${{ secrets.PAQUETES_PAT_TOKEN }}
+
+      # =================================================================
+      # FASE 2: DESPLIEGUE (DOCKER RUN)
+      # =================================================================
+      - name: Desplegar en QA
+        run: |
+          echo "--- Iniciando Despliegue en QA ---"
+
+          # 1. Limpieza de contenedores anteriores
+          docker stop facil-qa || true
+          docker rm facil-qa || true
+
+          # 2. Ejecución del nuevo contenedor
+          # Puerto: 8086
+          docker run -d --name facil-qa \
+            --network coral-net \
+            --restart unless-stopped \
+            -p 8086:8080 \
+            \
+            -e SPRING_PROFILES_ACTIVE=qa \
+            -e SERVER_PORT=8080 \
+            \
+            -e DB_URL="${{ secrets.DB_URL_QA }}" \
+            -e DB_USER="${{ secrets.DB_USER_QA }}" \
+            -e DB_PASS="${{ secrets.DB_PASS_QA }}" \
+            \
+            -e RABBIT_HOST=rabbit \
+            -e RABBIT_PORT=5672 \
+            -e RABBIT_USER="${{ secrets.RABBIT_USER_QA }}" \
+            -e RABBIT_PASS="${{ secrets.RABBIT_PASS_QA }}" \
+            \
+            -e REDIS_HOST=redis \
+            -e REDIS_PORT=6379 \
+            \
+            -e STORAGE_SERVICE_URL="${{ secrets.STORAGE_URL_QA }}" \
+            -e STORAGE_API_KEY="${{ secrets.API_KEY_FACIL_STORAGE }}" \
+            \
+            -e NOTIFICATIONS_SERVICE_URL="${{ secrets.NOTIFICATIONS_URL_QA }}" \
+            -e NOTIFICATIONS_API_KEY="${{ secrets.API_KEY_FACIL_NOTIFICACIONES }}" \
+            \
+            facil:qa
+
+          echo "Despliegue exitoso en el puerto 8086."
+
+      - name: Limpieza de imágenes huérfanas
+        run: docker image prune -f

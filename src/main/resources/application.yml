@@ -1,0 +1,84 @@
+spring:
+  application:
+    name: facil
+
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev} # Default a dev
+
+  # CONFIGURACIÓN MODULITH (Para observabilidad de módulos)
+  modulith:
+    events:
+      externalization:
+        enabled: true # Permitir que los eventos salgan a RabbitMQ
+      republish-outstanding-events-on-restart: true # Re-publicar eventos no enviados al reiniciar
+
+  # CONFIGURACIÓN SQL SERVER (Conexión a SPs)
+  datasource:
+    url: ${DB_URL} # Inyectado por ENV o perfil específico
+    username: ${DB_USER}
+    password: ${DB_PASS}
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    hikari:
+      maximum-pool-size: 20 # Pool de conexiones a la BD
+      minimum-idle: 5 # Conexiones mínimas inactivas
+      connection-timeout: 30000 # 30 segundos de espera para obtener conexión
+      idle-timeout: 600000 # 10 minutos antes de cerrar conexiones inactivas
+
+  # JPA (Manejo híbrido: Entidades + Native Queries para SPs)
+  jpa:
+    show-sql: false
+    open-in-view: false
+    hibernate:
+      ddl-auto: none # PROHIBIDO modificar esquema desde Java en este proyecto
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.SQLServerDialect
+
+  # REDIS (Caché y sesiones distribuidas)
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASS}
+
+  # RABBITMQ (Para eventos de dominio asíncronos entre módulos)
+  rabbitmq:
+    host: ${RABBIT_HOST:localhost}
+    port: ${RABBIT_PORT:5672}
+    username: ${RABBIT_USER:guest}
+    password: ${RABBIT_PASS:guest}
+
+# CONFIGURACIÓN PROPIA DE CORAL CLUBES
+app:
+  # Clientes HTTP a los microservicios de infraestructura
+  clients:
+    storage:
+      url: ${STORAGE_SERVICE_URL}
+      api-key: ${STORAGE_API_KEY} # Key de sistema "FACIL"
+    notifications:
+      url: ${NOTIFICATIONS_SERVICE_URL}
+      api-key: ${NOTIFICATIONS_API_KEY} # Key de sistema "FACIL"
+
+  security:
+    cors:
+      allowed-origins: "*" # Ajustar en Prod
+
+# ==================================================================
+# CONFIGURACION PARA PERFIL DEV
+# ==================================================================
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    url: jdbc:sqlserver://10.10.3.154:1433;databaseName=Facil;trustServerCertificate=true;encrypt=false
+    username: sa
+    password: CoralClubes1234#
+
+  rabbitmq:
+    host: 10.10.3.154
+    port: 5672
+    username: guest
+    password: guest
