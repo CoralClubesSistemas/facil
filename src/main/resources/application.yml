@@ -63,6 +63,14 @@ app:
     cors:
       allowed-origins: "*" # Ajustar en Prod
 
+  url:
+    frontend: ${FRONTEND_URL} # URL del frontend autorizado
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 3600000        # 1 hora (en ms)
+  refresh-expiration: 86400000 # 24 horas (en ms)
+
 # ==================================================================
 # CONFIGURACION PARA PERFIL DEV
 # ==================================================================
@@ -82,3 +90,29 @@ spring:
     port: 5672
     username: guest
     password: guest
+
+app:
+  url:
+    frontend: http://localhost:4200
+    password-reset: http://localhost:4200/confirm-reset
+
+  # Clientes HTTP a los microservicios de infraestructura
+  clients:
+    storage:
+      url: ${STORAGE_SERVICE_URL}
+      api-key: ${STORAGE_API_KEY} # Key de sistema "FACIL"
+    notifications:
+      url: http://10.10.3.154:8081
+      api-key: FACIL_PRjS7QZ9J7APlgez6wXuA04Qsv0esjJu
+      system-code: FACIL
+      aliases:
+        default: SMTP_GENERAL
+      templates:
+        reset-password: reset-pass-v1
+
+  security:
+    password-reset:
+      expiration-minutes: 60 # 1 hora para tokens de reseteo
+
+jwt:
+  secret: EtxeaKWTYyRKw7iWYx7itysvDFpfJEhRWUaYGWmntKH2lD3MVE5cLiACudKo8bMaH0oHgsi/oagLQdGuZATntg==
