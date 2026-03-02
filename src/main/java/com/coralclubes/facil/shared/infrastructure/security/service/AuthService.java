@@ -8,23 +8,17 @@ import com.coralclubes.facil.shared.infrastructure.exceptions.custom.NoPermissio
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.NoWebRegistrationException;
 import com.coralclubes.facil.modules.sistema.dto.projection.ModuloDtoResult;
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.UsernameNotFound;
-import com.coralclubes.facil.shared.infrastructure.security.dto.projection.UserAutorizacionesResult;
 import com.coralclubes.facil.shared.infrastructure.security.dto.projection.UserLoginResult;
 import com.coralclubes.facil.shared.infrastructure.security.dto.request.LoginRequest;
 import com.coralclubes.facil.shared.infrastructure.security.dto.request.RefreshTokenRequest;
 import com.coralclubes.facil.shared.infrastructure.security.dto.request.ValidacionAutorizacion;
 import com.coralclubes.facil.shared.infrastructure.security.dto.response.*;
-import com.coralclubes.facil.shared.infrastructure.security.jwt.JwtService;
 import com.coralclubes.facil.shared.infrastructure.security.repository.LoginRepository;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -64,62 +58,48 @@ public class AuthService {
             throw new BadCredentialsException("Contraseña incorrecta");
         }
 
-        // 3. Obtener Autorizaciones (Lógica de Negocio)
-        List<UserAutorizacionesResult> autorizaciones = loginRepository.spLoginObtenerAutorizacionesUsuario(userData.usuario());
-
-        if (autorizaciones.isEmpty()) {
-            throw new NoPermissionsException("El usuario no tiene permisos asignados.");
+        List<ModuloDtoResult> modulos = loginRepository.spLoginModulosUsuarios(userData.usuario());
+        if (modulos.isEmpty()) {
+            throw new NoPermissionsException("El usuario no tiene módulos asignados en el sistema.");
         }
 
-        // 4. Generar Tokens
-        String token = generateToken(userData.usuario(), autorizaciones);
+        String token = jwtService.generateToken(userData.usuario(), new HashMap<>());
         String refreshToken = jwtService.generateRefreshToken(userData.usuario());
 
-        logger.info(userData.usuario(),"Usuario '{}' autenticado exitosamente", userData.usuario());
+        logger.info(userData.usuario(), "Usuario '{}' autenticado exitosamente", userData.usuario());
 
-        // 5. Retornar
         return ApiResponse.from(LoginResponseCode.LOGIN_SUCCESS, buildAuthResponse(token, refreshToken, userData));
     }
 
-    // Genera un token JWT con las autorizaciones del usuario como reclamaciones adicionales.
-    private String generateToken(String username, List<UserAutorizacionesResult> autorizaciones) {
-        Map<String, Object> claims = new HashMap<>();
-        List<String> authClaves = autorizaciones.stream().map(UserAutorizacionesResult::clave).filter(Objects::nonNull).toList(); // Java 17+ toList()
-
-        claims.put("auth", authClaves);
-        return jwtService.generateToken(username, claims);
-    }
-
-    // Construye la respuesta de autenticación con el token, refresh token y datos adicionales del usuario.
     private AuthResponse buildAuthResponse(String token, String refreshToken, UserLoginResult user) {
         return AuthResponse.builder()
                 .token(token)
                 .refreshToken(refreshToken)
                 .usuario(user.usuario())
                 .idDesarrollo(user.idDesarrollo())
+                .desarrolloDescripcion(user.desarrolloDescripcion())
                 .email(user.email())
                 .rolId(user.rolId())
                 .rolDescripcion(user.rolDescripcion())
                 .build();
     }
 
-    /**
-     * Renueva el token de acceso usando un Refresh Token válido.
-     */
     public ApiResponse<RefreshTokenResponse> refreshToken(RefreshTokenRequest request) {
         if (!jwtService.isRefreshTokenValid(request.refreshToken())) {
             throw new BadCredentialsException("Token de refresco inválido o expirado");
         }
 
         String username = jwtService.getUsernameFromToken(request.refreshToken());
-        UserLoginResult userData = loginRepository.spLoginUsuarios(username).orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
+        UserLoginResult userData = loginRepository.spLoginUsuarios(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
 
-        List<UserAutorizacionesResult> autorizaciones = loginRepository.spLoginObtenerAutorizacionesUsuario(username);
-        if (autorizaciones.isEmpty()) {
-            throw new NoPermissionsException("El usuario perdió sus permisos. Re-autentique.");
+        List<ModuloDtoResult> modulos = loginRepository.spLoginModulosUsuarios(username);
+        if (modulos.isEmpty()) {
+            throw new NoPermissionsException("El usuario perdió sus accesos. Re-autentique.");
         }
 
-        String newToken = generateToken(userData.usuario(), autorizaciones);
+        // Generamos el nuevo JWT Magro
+        String newToken = jwtService.generateToken(userData.usuario(), new HashMap<>());
         String newRefreshToken = jwtService.generateRefreshToken(userData.usuario());
 
         return ApiResponse.from(JwtResponseCode.JWT_REFRESH_SUCCESS, new RefreshTokenResponse(newToken, newRefreshToken));

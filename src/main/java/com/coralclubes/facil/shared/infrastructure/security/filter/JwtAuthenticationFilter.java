@@ -1,6 +1,6 @@
 package com.coralclubes.facil.shared.infrastructure.security.filter;
 
-import com.coralclubes.facil.shared.infrastructure.security.jwt.JwtService;
+import com.coralclubes.facil.shared.infrastructure.security.service.JwtService;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -13,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -32,13 +33,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserDetailsServiceImpl userDetailsService;
 
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
+
+    /**
+     * Define qué rutas NO deben pasar por este filtro de validación JWT.
+     */
+    @Override
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+        String path = request.getServletPath();
+
+        // Lista de rutas que deben ignorar el filtro JWT
+        return pathMatcher.match("/api/auth/login", path) ||
+                pathMatcher.match("/api/auth/login/simple", path) ||
+                pathMatcher.match("/api/auth/password-reset/**", path) ||
+                pathMatcher.match("/api/auth/refresh-token", path) ||
+                pathMatcher.match("/v3/api-docs/**", path) ||
+                pathMatcher.match("/swagger-ui/**", path) ||
+                pathMatcher.match("/api/config/**", path) ||
+                pathMatcher.match("/api/util/**", path) ||
+                pathMatcher.match("/api/test/**", path) ||
+                pathMatcher.match("/api/v1/reservaciones/hoteles/portales/**", path);
+    }
+
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-
         // 1. Extraer token
         String jwt = parseJwt(request);
 

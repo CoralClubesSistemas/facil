@@ -105,6 +105,12 @@ public class SecurityConfig {
                         // Endpoints de prueba
                         .requestMatchers("/api/test/**").permitAll()
 
+                        // endpoints especificos dque consumen los portales web y que no requieren autenticación
+                        .requestMatchers("/api/v1/public/**").permitAll()
+
+                        // endpoints de WebSocket
+                        .requestMatchers("/ws-api/**").permitAll()
+
                         // TODO LO DEMÁS requiere estar autenticado
                         .anyRequest().authenticated()
                 )

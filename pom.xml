@@ -6,11 +6,11 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.5.10</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/>
     </parent>
     <groupId>com.coralclubes</groupId>
     <artifactId>facil</artifactId>
-    <version>0.0.1</version>
+    <version>1.0.0</version>
     <name>facil</name>
     <description>facil</description>
     <url/>
@@ -27,7 +27,7 @@
         <url/>
     </scm>
 
-    <!-- Incluimos los repositorios web desde los cuales consumimos ciertas librerias -->
+    <!-- Incluimos los repositorios web desde los cuales consumimos las librerias de la empresa -->
     <repositories>
         <repository>
             <id>github-utils</id>
@@ -46,6 +46,7 @@
         <java.version>21</java.version>
         <spring-modulith.version>1.4.6</spring-modulith.version>
     </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -73,10 +74,6 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-thymeleaf</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         <!--<dependency>
@@ -91,10 +88,6 @@
             <groupId>org.springframework.modulith</groupId>
             <artifactId>spring-modulith-starter-jpa</artifactId>
         </dependency>-->
-        <dependency>
-            <groupId>org.thymeleaf.extras</groupId>
-            <artifactId>thymeleaf-extras-springsecurity6</artifactId>
-        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -197,6 +190,16 @@
             <artifactId>jjwt-jackson</artifactId>
             <version>0.12.3</version>
             <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.projectreactor.netty</groupId>
+            <artifactId>reactor-netty</artifactId>
         </dependency>
 
     </dependencies>

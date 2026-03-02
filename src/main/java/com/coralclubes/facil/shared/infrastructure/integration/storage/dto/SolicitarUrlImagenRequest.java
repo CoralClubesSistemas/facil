@@ -1,4 +1,4 @@
-package com.coralclubes.facil.modules.reservaciones.dto.request;
+package com.coralclubes.facil.shared.infrastructure.integration.storage.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

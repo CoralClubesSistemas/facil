@@ -1,5 +1,6 @@
 package com.coralclubes.facil.shared.infrastructure.security.service;
 
+import com.coralclubes.facil.modules.sistema.dto.projection.ModuloDtoResult;
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.NoPermissionsException;
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.NoWebRegistrationException;
 import com.coralclubes.facil.shared.infrastructure.security.dto.projection.UserAutorizacionesResult;
@@ -16,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -49,15 +51,12 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             throw new NoWebRegistrationException("Su cuenta no tiene acceso web activo.");
         }
 
-        // 3. Cargar permisos
         List<GrantedAuthority> authorities = extractAuthorities(user.usuario());
 
-        // 4. Construir el objeto UserDetails
         return CustomUserDetails.builder()
                 .username(user.usuario())
-                .password(user.password()) // Se requiere por contrato, aunque el filtro JWT no lo usa para comparar.
+                .password(user.password())
                 .authorities(authorities)
-                // Metadatos para el UserContext
                 .idDesarrollo(user.idDesarrollo())
                 .desarrolloDescripcion(user.desarrolloDescripcion())
                 .email(user.email())
@@ -70,19 +69,34 @@ public class UserDetailsServiceImpl implements UserDetailsService {
      * Extrae las autorizaciones y las convierte a GrantedAuthority.
      */
     private List<GrantedAuthority> extractAuthorities(String username) {
-        List<UserAutorizacionesResult> rawPermissions = loginRepository.spLoginObtenerAutorizacionesUsuario(username);
+        List<GrantedAuthority> authorities = new ArrayList<>();
 
-        // Si el usuario se quedó sin roles, no debería poder operar nada.
-        if (rawPermissions.isEmpty()) {
-            logger.warn("SECURITY", "Usuario '{}' tiene token pero cero permisos en BD.", username);
-            throw new NoPermissionsException("No tiene permisos asignados.");
+        List<ModuloDtoResult> modulos = loginRepository.spLoginModulosUsuarios(username);
+
+        if (modulos.isEmpty()) {
+            logger.warn("SECURITY", "Usuario '{}' tiene token pero cero módulos asignados en BD.", username);
+            throw new NoPermissionsException("No tiene módulos asignados.");
         }
 
-        return rawPermissions.stream()
+        modulos.stream()
+                .map(ModuloDtoResult::clave)
+                .filter(Objects::nonNull)
+                .filter(clave -> !clave.isBlank())
+                .forEach(clave ->
+                        authorities.add(new SimpleGrantedAuthority("MOD_" + clave.toUpperCase()))
+                );
+
+        // 2. Cargar Autorizaciones fuera de política (Permisos Críticos)
+        List<UserAutorizacionesResult> autorizaciones = loginRepository.spLoginObtenerAutorizacionesUsuario(username);
+
+        autorizaciones.stream()
                 .map(UserAutorizacionesResult::clave)
                 .filter(Objects::nonNull)
-                .map(clave -> new SimpleGrantedAuthority("ACCESS_" + clave))
-                .map(GrantedAuthority.class::cast)
-                .toList();
+                .filter(clave -> !clave.isBlank())
+                .forEach(clave ->
+                        authorities.add(new SimpleGrantedAuthority("AUTH_" + clave.toUpperCase()))
+                );
+
+        return authorities;
     }
 }

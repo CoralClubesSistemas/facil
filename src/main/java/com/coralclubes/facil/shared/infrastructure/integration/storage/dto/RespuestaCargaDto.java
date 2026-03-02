@@ -1,4 +1,14 @@
 package com.coralclubes.facil.shared.infrastructure.integration.storage.dto;
 
-public class RespuestaCargaDto {
-}
+import java.util.UUID;
+
+/**
+ * Respuesta que entrega el Microservicio de Storage.
+ */
+public record RespuestaCargaDto(
+        UUID fileId,
+        String nombreOriginal,
+        String uploadUrl,
+        String metodo,
+        Integer expiracionSegundos
+) {}

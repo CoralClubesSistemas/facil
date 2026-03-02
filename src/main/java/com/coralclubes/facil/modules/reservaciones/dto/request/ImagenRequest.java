@@ -9,7 +9,7 @@ import java.util.UUID;
  * Petición individual de imagen para guardar (con su orden y si es portada).
  */
 @Builder
-public record ImagenHotelRequest(
+public record ImagenRequest(
         @NotNull(message = "El UUID de la imagen es obligatorio")
         UUID uuid,
 

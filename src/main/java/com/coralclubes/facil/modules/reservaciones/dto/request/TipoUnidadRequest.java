@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Builder;
 
 @Builder
-public record TipoUnidadRequests(
+public record TipoUnidadRequest(
         Integer idTipoUnidad, // Null para crear, valor para actualizar
         Integer idLsvTipoUnidad, // Null si se va a crear un nuevo nombre
 

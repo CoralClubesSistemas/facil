@@ -1,4 +1,4 @@
-package com.coralclubes.facil.shared.infrastructure.security.jwt;
+package com.coralclubes.facil.shared.infrastructure.security.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

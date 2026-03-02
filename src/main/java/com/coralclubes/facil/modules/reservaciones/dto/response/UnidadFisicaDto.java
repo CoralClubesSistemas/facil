@@ -1,4 +1,16 @@
 package com.coralclubes.facil.modules.reservaciones.dto.response;
 
-public class UnidadFisicaDto {
-}
+import lombok.Builder;
+
+@Builder
+public record UnidadFisicaDto(
+        Integer idUnidadFisica,
+        String numeroUnidad,
+        Integer piso,
+        Integer idPadre,
+        String numeroPadre,
+        Integer idTipoUnidad,
+        String nombreTipoUnidad,
+        Integer idDesarrollo,
+        String nombreDesarrollo
+) {}

@@ -8,9 +8,9 @@ import java.util.List;
 /**
  * Envoltorio para eliminar imágenes (lote múltiple).
  */
-public record EliminarImagenesHotelRequest(
-        @NotNull(message = "El ID del hotel es obligatorio")
-        Integer idHotel,
+public record EliminarImagenesRequest(
+        @NotNull(message = "El ID es obligatorio")
+        Integer id,
 
         @Valid
         List<EliminarImagenRequest> imagenesAEliminar

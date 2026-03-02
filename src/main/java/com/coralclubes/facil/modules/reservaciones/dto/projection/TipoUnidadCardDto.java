@@ -1,4 +1,4 @@
-package com.coralclubes.facil.modules.reservaciones.dto.response;
+package com.coralclubes.facil.modules.reservaciones.dto.projection;
 
 import lombok.Builder;
 
@@ -12,6 +12,8 @@ public record TipoUnidadCardDto(
         String nombreTipoUnidad,
         Integer capacidad,
         String descripcionCorta,
-        String urlImagen,
-        BigDecimal calificacion
+        UUID uuidPortada,
+        BigDecimal calificacion,
+        Integer idDesarrollo,
+        String nombreHotel
 ) {}

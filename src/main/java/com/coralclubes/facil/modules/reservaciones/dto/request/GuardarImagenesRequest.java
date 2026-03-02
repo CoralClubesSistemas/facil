@@ -8,10 +8,10 @@ import java.util.List;
 /**
  * Envoltorio para guardar las imágenes subidas de un hotel.
  */
-public record GuardarImagenesHotelRequest(
-        @NotNull(message = "El ID del hotel es obligatorio")
-        Integer idHotel,
+public record GuardarImagenesRequest(
+        @NotNull(message = "El ID es obligatorio")
+        Integer id,
 
         @Valid
-        List<ImagenHotelRequest> imagenes
+        List<ImagenRequest> imagenes
 ) {}

@@ -78,7 +78,6 @@ public class UserContext {
                 .email(user.getEmail())
                 .rolId(user.getRolId())
                 .rolDescripcion(user.getRolDescripcion())
-                // El token no se recupera del contexto, ya se validó
                 .build());
     }
 }
