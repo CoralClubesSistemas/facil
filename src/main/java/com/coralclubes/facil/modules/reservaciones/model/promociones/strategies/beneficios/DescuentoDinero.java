@@ -14,12 +14,13 @@ public class DescuentoDinero implements PromocionBeneficio {
     @Override
     public BigDecimal calculateDiscount(Beneficio benefitData, ReservacionContexto context) {
         BigDecimal descuento = switch (benefitData.objetivoClave().toUpperCase()) {
-            case "TOTAL" -> benefitData.valor();
+            case "TOTAL", "HABITACION" -> benefitData.valor();
             case "PROX_RESERV" -> BigDecimal.ZERO;
             default -> BigDecimal.ZERO;
         };
 
-        // Regla de negocio: El descuento no puede ser mayor al total a pagar
-        return descuento.compareTo(context.getMontoActual()) > 0 ? context.getMontoActual() : descuento;
+        // El descuento en dinero duro no puede ser mayor al costo de la unidad específica
+        BigDecimal costoUnidad = context.getUnidadElegidaParaDescuento().getCostoEstancia();
+        return descuento.compareTo(costoUnidad) > 0 ? costoUnidad : descuento;
     }
 }

@@ -14,11 +14,14 @@ public class DescuentoPorcentaje implements PromocionBeneficio {
 
     @Override
     public BigDecimal calculateDiscount(Beneficio benefitData, ReservacionContexto context) {
-        BigDecimal porcentaje = benefitData.valor().divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+        BigDecimal porcentaje = benefitData.valor().divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP);
+
+        // OBTENEMOS EL COSTO DE LA UNIDAD ESPECÍFICA, NO DEL CARRITO TOTAL
+        BigDecimal costoUnidad = context.getUnidadElegidaParaDescuento().getCostoEstancia();
 
         return switch (benefitData.objetivoClave().toUpperCase()) {
-            case "TOTAL" -> context.getMontoActual().multiply(porcentaje);
-            case "PROX_RESERV" -> BigDecimal.ZERO; // No aplica al carrito actual
+            case "TOTAL", "HABITACION" -> costoUnidad.multiply(porcentaje);
+            case "PROX_RESERV" -> BigDecimal.ZERO;
             default -> BigDecimal.ZERO;
         };
     }

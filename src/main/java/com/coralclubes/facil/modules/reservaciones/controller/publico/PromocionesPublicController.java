@@ -22,16 +22,6 @@ public class PromocionesPublicController {
     private final PromocionesService service;
 
     /**
-     * Endpoint abierto. Permite que un cliente valide un código en su carrito
-     * para ver si existe y qué beneficios da, incluso antes de hacer login.
-     */
-    @GetMapping("/validar/{codigo}")
-    public ResponseEntity<ApiResponse<Promocion>> validarCodigo(@PathVariable String codigo) {
-        ApiResponse<Promocion> response = service.validarPromocionPorCodigo(codigo);
-        return ResponseEntity.status(response.status()).body(response);
-    }
-
-    /**
      * Endpoint protegido. Aplica formalmente la promoción, reduciendo el stock.
      */
     @PostMapping("/aplicar-consumo")

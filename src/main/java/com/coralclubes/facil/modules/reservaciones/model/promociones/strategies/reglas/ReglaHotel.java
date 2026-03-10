@@ -19,6 +19,7 @@ public class ReglaHotel implements PromocionRegla {
                 .map(d -> d.valorCatalogoId())
                 .toList();
 
+        // Validamos contra el destino general del carrito
         return EvaluadorReglasUtil.compararListas(context.getIdDesarrollo(), ruleData.comparadorClave(), hotelesPermitidos);
     }
 }

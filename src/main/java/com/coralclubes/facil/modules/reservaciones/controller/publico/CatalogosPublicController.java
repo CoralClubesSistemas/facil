@@ -32,9 +32,8 @@ public class CatalogosPublicController {
     }
 
     @GetMapping("/destinos")
-    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerDestinos(
-            @RequestParam(required = false, defaultValue = "0") Integer idDestino) {
-        return ResponseEntity.ok(service.obtenerDestinos(idDestino));
+    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerDestinos() {
+        return ResponseEntity.ok(service.obtenerDestinos());
     }
 
     @GetMapping("/temporadas")

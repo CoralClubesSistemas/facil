@@ -1,7 +1,8 @@
 package com.coralclubes.facil.modules.reservaciones.repository;
 
+import com.coralclubes.facil.modules.reservaciones.dto.projection.TipoUnidadDetalles;
 import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
-import com.coralclubes.facil.modules.reservaciones.dto.projection.ImagenDto;
+import com.coralclubes.facil.shared.infrastructure.domain.dto.ImagenDto;
 import com.coralclubes.facil.modules.reservaciones.dto.projection.TipoUnidadCardDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.TipoUnidadDetalleDto;
 import com.coralclubes.facil.modules.reservaciones.dto.request.EliminarImagenRequest;
@@ -10,6 +11,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.request.RelacionCaracteri
 import com.coralclubes.facil.modules.reservaciones.dto.request.TipoUnidadRequest;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import com.coralclubes.utils.json.JsonUtils;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -90,6 +92,20 @@ public class UnidadesRepository {
             rs.getInt("value"),
             rs.getString("label")
     );
+
+    private final RowMapper<TipoUnidadDetalles> detallesUIRowMapper = ((rs, rowNum) -> TipoUnidadDetalles.builder()
+            .rhdtId(rs.getInt("RhdtId"))
+            .nombreTipoUnidad(rs.getString("NombreTipoUnidad"))
+            .capacidad(rs.getInt("Capacidad"))
+            .descripcionCorta(rs.getString("DescripcionCorta"))
+            .descripcionLarga(rs.getString("DescripcionLarga"))
+            .nombreDesarrollo(rs.getString("NombreDesarrollo"))
+            .calificacion(rs.getBigDecimal("Calificacion"))
+            .imagenesUUID(rs.getString("ImagenesUUID") != null ? JsonUtils.fromJson(rs.getString("ImagenesUUID"), new TypeReference<List<ImagenDto>>() {
+            }) : List.of())
+            .caracteristicas(rs.getString("Caracteristicas") != null ? JsonUtils.fromJson(rs.getString("Caracteristicas"), new TypeReference<List<CaracteristicaDto>>() {
+            }) : List.of())
+            .build());
 
     // =========================================================================
     // MÉTODOS DE ESCRITURA (Write)
@@ -208,5 +224,9 @@ public class UnidadesRepository {
         params.put("IdDesarrollo", idDesarrollo);
         params.put("IdUnidadFisicaExcluida", idUnidadFisicaExcluida);
         return spExecutor.queryList("spResvObtenerCatalogoPosiblesPadres", params, posiblesPadresMapper);
+    }
+
+    public Optional<TipoUnidadDetalles> spResvObtenerDetalleTipoUnidad(Integer idTipoUnidad) {
+        return spExecutor.querySingle("spResvObtenerDetalleTipoUnidad", Map.of("RhdtId", idTipoUnidad), detallesUIRowMapper);
     }
 }

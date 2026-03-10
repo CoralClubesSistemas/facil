@@ -1,4 +1,4 @@
-package com.coralclubes.facil.modules.reservaciones.dto.response;
+package com.coralclubes.facil.shared.infrastructure.domain.dto;
 
 import lombok.Builder;
 

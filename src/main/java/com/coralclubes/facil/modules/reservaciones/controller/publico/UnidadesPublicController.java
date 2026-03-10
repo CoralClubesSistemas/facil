@@ -1,7 +1,8 @@
 package com.coralclubes.facil.modules.reservaciones.controller.publico;
 
 import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
-import com.coralclubes.facil.modules.reservaciones.dto.response.ImagenResponse;
+import com.coralclubes.facil.modules.reservaciones.dto.response.TipoUnidadUIDetalles;
+import com.coralclubes.facil.shared.infrastructure.domain.dto.ImagenResponse;
 import com.coralclubes.facil.modules.reservaciones.dto.response.TipoUnidadDetalleDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.TipoUnidadUI;
 import com.coralclubes.facil.modules.reservaciones.service.UnidadesService;
@@ -45,5 +46,12 @@ public class UnidadesPublicController {
     public ResponseEntity<ApiResponse<List<CaracteristicaDto>>> obtenerCaracteristicasXTipoUnidad(
             @RequestParam Integer idTipoUnidad) {
         return ResponseEntity.ok(service.obtenerCaracteristicasXTipoUnidad(idTipoUnidad));
+    }
+
+    @GetMapping("/ui-detalles")
+    public ResponseEntity<ApiResponse<TipoUnidadUIDetalles>> obtenerTipoUnidadUIDetalles(
+            @RequestParam Integer idTipoUnidad) {
+        ApiResponse<TipoUnidadUIDetalles> response = service.obtenerTipoUnidadUIDetalles(idTipoUnidad);
+        return ResponseEntity.status(response.status()).body(response);
     }
 }

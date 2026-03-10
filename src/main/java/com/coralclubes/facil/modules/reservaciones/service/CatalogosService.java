@@ -31,8 +31,10 @@ public class CatalogosService {
         return ApiResponse.success(repo.spResvCatalogoTiposHabitaciones(idDesarrollo));
     }
 
-    public ApiResponse<List<SelectGenerico<Integer>>> obtenerDestinos(Integer idDestino) {
-        return ApiResponse.success(repo.spResvCatalogoDestinos(idDestino));
+    public ApiResponse<List<SelectGenerico<Integer>>> obtenerDestinos() {
+        Integer idDesarrollo = userContext.getIdDesarrollo();
+
+        return ApiResponse.success(repo.spResvCatalogoDestinos(idDesarrollo));
     }
 
     public ApiResponse<List<SelectGenerico<Integer>>> obtenerTemporadas() {

@@ -20,41 +20,35 @@ public class PromocionesEngine {
     private final Map<String, PromocionRegla> mapaReglas;
     private final Map<String, PromocionBeneficio> mapaBeneficios;
 
-    // Spring Inyecta TODAS las clases que implementan las interfaces automáticamente en estas listas
     public PromocionesEngine(List<PromocionRegla> reglas, List<PromocionBeneficio> beneficios) {
-        this.mapaReglas = reglas.stream()
-                .collect(Collectors.toMap(PromocionRegla::getTipoRegla, Function.identity()));
-
-        this.mapaBeneficios = beneficios.stream()
-                .collect(Collectors.toMap(PromocionBeneficio::getTipoBeneficio, Function.identity()));
+        this.mapaReglas = reglas.stream().collect(Collectors.toMap(PromocionRegla::getTipoRegla, Function.identity()));
+        this.mapaBeneficios = beneficios.stream().collect(Collectors.toMap(PromocionBeneficio::getTipoBeneficio, Function.identity()));
     }
 
-    /**
-     * Evalúa la promoción completa contra el contexto de la reservación actual.
-     * @return El monto total a descontar de la reservación (0 si no cumple reglas).
-     */
     public BigDecimal evaluarYAplicar(Promocion promocion, ReservacionContexto contexto) {
+        if (contexto.getItems() == null || contexto.getItems().isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        // REGLA DE NEGOCIO: Por defecto, el descuento se ancla a la primera unidad del carrito
+        contexto.setUnidadElegidaParaDescuento(contexto.getItems().getFirst());
 
         // 1. FASE DE REGLAS (MATCHING)
         for (Regla regla : promocion.reglas()) {
             PromocionRegla estrategiaRegla = mapaReglas.get(regla.tipoReglaClave());
+            if (estrategiaRegla == null) throw new IllegalArgumentException("Regla no soportada: " + regla.tipoReglaClave());
 
-            if (estrategiaRegla == null) {
-                throw new IllegalArgumentException("Motor no soporta la regla: " + regla.tipoReglaClave());
-            }
-
-            // Si UNA sola regla falla (Ej. No es el hotel correcto), la promo entera se descarta.
+            // Si falla la regla, se anula la promoción
+            // Si es ReglaTipoHabitacion, por dentro cambiará la 'unidadElegidaParaDescuento'
             if (!estrategiaRegla.evaluate(regla, contexto)) {
                 return BigDecimal.ZERO;
             }
         }
 
-        // 2. FASE DE BENEFICIOS (CALCULATING)
+        // 2. FASE DE BENEFICIOS
         BigDecimal totalDescuentoCalculado = BigDecimal.ZERO;
-
         for (Beneficio beneficio : promocion.beneficios()) {
             PromocionBeneficio estrategiaBeneficio = mapaBeneficios.get(beneficio.tipoBeneficioClave());
-
             if (estrategiaBeneficio != null) {
                 BigDecimal descuentoParcial = estrategiaBeneficio.calculateDiscount(beneficio, contexto);
                 totalDescuentoCalculado = totalDescuentoCalculado.add(descuentoParcial);

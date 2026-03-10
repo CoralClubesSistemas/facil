@@ -16,8 +16,10 @@ public class ReglaMonto implements PromocionRegla {
         if (ruleData.detalles().isEmpty()) return false;
 
         var detalle = ruleData.detalles().get(0);
+
+        // Evalúa si el TOTAL del carrito alcanza el mínimo requerido por la promoción
         return EvaluadorReglasUtil.compararNumericos(
-                context.getMontoActual(),
+                context.getMontoTotalCarrito(),
                 ruleData.comparadorClave(),
                 detalle.valorNumerico(),
                 detalle.valorSecundario()

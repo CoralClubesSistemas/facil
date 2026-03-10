@@ -13,6 +13,9 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.UUID;
 
 @Component
@@ -20,6 +23,8 @@ import java.util.UUID;
 public class StorageClient {
 
     private final BusinessLogger logger;
+
+    private final RestClient restClient;
 
     @Value("${app.clients.storage.url}")
     private String serviceUrl;
@@ -31,25 +36,21 @@ public class StorageClient {
      * Negocia una URL de carga directa con el microservicio de almacenamiento.
      */
     public RespuestaCargaDto solicitarUrlCarga(SolicitudCargaDto solicitud) {
-        RestClient restClient = RestClient.builder()
-                .baseUrl(serviceUrl)
-                .defaultHeader("X-API-KEY", apiKey)
-                .build();
-
         try {
+
             ApiResponse<RespuestaCargaDto> response = restClient.post()
-                    .uri("/api/v1/storage/sign-upload")
+                    .uri(serviceUrl + "/api/v1/storage/sign-upload")
+                    .header("X-API-KEY", apiKey)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(solicitud)
                     .retrieve()
-                    .body(new ParameterizedTypeReference<>() {
-                    });
+                    .body(new ParameterizedTypeReference<>() {});
 
             if (response != null && response.data() != null) {
                 return response.data();
-            } else {
-                throw new IllegalStateException("El microservicio de storage devolvió una respuesta vacía.");
             }
+
+            throw new IllegalStateException("El microservicio de storage devolvió una respuesta vacía.");
 
         } catch (Exception e) {
             logger.error("STORAGE_CLIENT", "Error al negociar URL de carga: " + e.getMessage(), e);
@@ -57,26 +58,23 @@ public class StorageClient {
         }
     }
 
+    /**
+     * Obtiene la URL de descarga de un archivo.
+     */
     public String obtenerUrlDescarga(UUID uuid) {
-        RestClient restClient = RestClient.builder()
-                .baseUrl(serviceUrl)
-                .defaultHeader("X-API-KEY", apiKey)
-                .build();
-
         try {
+
             ApiResponse<InfoArchivoDto> response = restClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/api/v1/storage/files/" + uuid.toString())
-                            .build())
+                    .uri(serviceUrl + "/api/v1/storage/files/" + uuid)
+                    .header("X-API-KEY", apiKey)
                     .retrieve()
-                    .body(new ParameterizedTypeReference<>() {
-                    });
+                    .body(new ParameterizedTypeReference<>() {});
 
             if (response != null && response.data() != null) {
                 return response.data().urlDescarga();
-            } else {
-                throw new IllegalStateException("El microservicio de storage devolvió una respuesta vacía.");
             }
+
+            throw new IllegalStateException("El microservicio de storage devolvió una respuesta vacía.");
 
         } catch (Exception e) {
             logger.error("STORAGE_CLIENT", "Error al negociar URL de descarga: " + e.getMessage(), e);
@@ -86,22 +84,13 @@ public class StorageClient {
 
     /**
      * Elimina un archivo del almacenamiento.
-     *
-     * @param uuid      Identificador del archivo.
-     * @param permanent true para borrado físico, false para borrado lógico.
      */
     public void eliminarArchivo(UUID uuid, boolean permanent) {
-        RestClient restClient = RestClient.builder()
-                .baseUrl(serviceUrl)
-                .defaultHeader("X-API-KEY", apiKey)
-                .build();
-
         try {
+
             restClient.delete()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/api/v1/storage/files/" + uuid.toString())
-                            .queryParam("permanent", permanent)
-                            .build())
+                    .uri(serviceUrl + "/api/v1/storage/files/" + uuid + "?permanent=" + permanent)
+                    .header("X-API-KEY", apiKey)
                     .retrieve()
                     .toBodilessEntity();
 
@@ -110,6 +99,43 @@ public class StorageClient {
         } catch (Exception e) {
             logger.error("STORAGE_CLIENT", "Error al eliminar archivo: " + e.getMessage(), e);
             throw new ServiceUnavailableException("El servicio de almacenamiento no está disponible en este momento.");
+        }
+    }
+
+    /**
+     * Realiza la carga directa de un archivo binario a una URL prefirmada (MinIO / S3).
+     * Paso 2 del patrón Valet Key.
+     */
+    public void subirArchivoBinario(String uploadUrl, byte[] archivo, String contentType) {
+
+        try {
+
+            HttpURLConnection connection = (HttpURLConnection) new URL(uploadUrl).openConnection();
+
+            connection.setRequestMethod("PUT");
+            connection.setDoOutput(true);
+
+            // Headers EXACTOS que firmó MinIO
+            connection.setRequestProperty("Content-Type", contentType);
+
+            // obligatorio para S3/MinIO
+            connection.setFixedLengthStreamingMode(archivo.length);
+
+            try (OutputStream os = connection.getOutputStream()) {
+                os.write(archivo);
+            }
+
+            int responseCode = connection.getResponseCode();
+
+            if (responseCode >= 400) {
+                throw new RuntimeException("Error en upload a storage. HTTP " + responseCode);
+            }
+
+            logger.info("STORAGE_CLIENT", "Archivo binario subido exitosamente a la URL prefirmada.");
+
+        } catch (Exception e) {
+            logger.error("STORAGE_CLIENT", "Error al subir el archivo binario directo al bucket: " + e.getMessage(), e);
+            throw new ServiceUnavailableException("Fallo la carga directa al bucket de almacenamiento.");
         }
     }
 }

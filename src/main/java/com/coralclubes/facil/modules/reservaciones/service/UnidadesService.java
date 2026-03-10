@@ -1,10 +1,12 @@
 package com.coralclubes.facil.modules.reservaciones.service;
 
 import com.coralclubes.dto.SelectGenerico;
+import com.coralclubes.facil.modules.reservaciones.dto.projection.TipoUnidadDetalles;
 import com.coralclubes.facil.modules.reservaciones.dto.response.*;
 import com.coralclubes.facil.modules.reservaciones.dto.projection.TipoUnidadCardDto;
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
 import com.coralclubes.facil.modules.reservaciones.repository.UnidadesRepository;
+import com.coralclubes.facil.shared.infrastructure.domain.dto.ImagenResponse;
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.ServiceUnavailableException;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
@@ -246,5 +248,30 @@ public class UnidadesService {
 
     public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogoPadres(Integer idDesarrollo, Integer idUnidadExcluida) {
         return ApiResponse.success(tipoUnidadRepo.spResvObtenerCatalogoPosiblesPadres(idDesarrollo, idUnidadExcluida));
+    }
+
+    public ApiResponse<TipoUnidadUIDetalles> obtenerTipoUnidadUIDetalles(Integer idTipoUnidad) {
+        TipoUnidadDetalles detalles = tipoUnidadRepo.spResvObtenerDetalleTipoUnidad(idTipoUnidad)
+                .orElseThrow(() -> new ServiceUnavailableException("No se pudieron obtener los detalles del tipo de unidad."));
+
+        TipoUnidadUIDetalles uiDetalles = TipoUnidadUIDetalles.builder()
+                .rhdtId(detalles.rhdtId())
+                .nombreTipoUnidad(detalles.nombreTipoUnidad())
+                .descripcionCorta(detalles.descripcionCorta())
+                .descripcionLarga(detalles.descripcionLarga())
+                .capacidad(detalles.capacidad())
+                .calificacion(detalles.calificacion())
+                .nombreDesarrollo(detalles.nombreDesarrollo())
+                .caracteristicas(detalles.caracteristicas())
+                .imagenes(detalles.imagenesUUID().stream().map(img -> ImagenResponse.builder()
+                        .idImagen(img.idImagen())
+                        .urlImagen(img.uuid() != null ? storageClient.obtenerUrlDescarga(img.uuid()) : null)
+                        .uuid(img.uuid())
+                        .esPortada(img.esPortada())
+                        .orden(img.orden())
+                        .build()).toList())
+                .build();
+
+        return ApiResponse.success(uiDetalles);
     }
 }

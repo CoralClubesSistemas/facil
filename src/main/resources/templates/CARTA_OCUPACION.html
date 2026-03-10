@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Carta de Ocupación - Coral Clubes</title>
+    <style>
+        @page {
+            size: letter portrait;
+            margin: 1.5cm;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #334155;
+            font-size: 10px;
+            line-height: 1.4;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Layout Tables (A prueba de OpenHTMLToPDF) */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        td {
+            vertical-align: top;
+        }
+
+        /* Cabecera */
+        .header-table {
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+        }
+
+        .logo-box {
+            background-color: #1e293b;
+            color: #ffffff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            display: inline-block;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .header-title {
+            text-align: right;
+        }
+
+        .header-title h2 {
+            margin: 0 0 4px 0;
+            font-size: 14px;
+            color: #0f172a;
+            text-transform: uppercase;
+        }
+
+        .header-title p {
+            margin: 0;
+            color: #64748b;
+            font-size: 10px;
+        }
+
+        /* Bloque de Información del Titular */
+        .info-box {
+            border: 1px solid #e2e8f0;
+            background-color: #f8fafc;
+            border-radius: 6px;
+            margin-bottom: 25px;
+        }
+
+        .info-box td {
+            padding: 15px;
+        }
+
+        .info-label {
+            font-size: 8px;
+            font-weight: bold;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .info-value-title {
+            font-size: 14px;
+            font-weight: 900;
+            color: #0f172a;
+            margin: 0 0 8px 0;
+            text-transform: uppercase;
+        }
+
+        .info-disclaimer {
+            color: #475569;
+            font-size: 10px;
+            margin: 0;
+        }
+
+        .info-right-table {
+            border-left: 1px solid #cbd5e1;
+            padding-left: 15px;
+        }
+
+        .info-val-right {
+            font-size: 11px;
+            font-weight: bold;
+            color: #0f172a;
+            text-align: right;
+        }
+
+        /* Tabla de Habitaciones */
+        .room-table {
+            margin-bottom: 30px;
+        }
+
+        .room-table th {
+            background-color: #f1f5f9;
+            color: #475569;
+            font-size: 8px;
+            text-transform: uppercase;
+            padding: 8px 10px;
+            text-align: center;
+            border-bottom: 2px solid #cbd5e1;
+        }
+
+        .room-table th:first-child {
+            text-align: left;
+        }
+
+        .room-table td {
+            padding: 10px 10px;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 10px;
+            font-weight: bold;
+            color: #1e293b;
+        }
+
+        .room-table td:first-child {
+            text-align: left;
+        }
+
+        /* Reglamento */
+        .rules-section {
+            margin-bottom: 30px;
+        }
+
+        .rules-title {
+            font-size: 11px;
+            font-weight: bold;
+            color: #0f172a;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 5px;
+        }
+
+        .rule-item {
+            margin-bottom: 8px;
+            font-size: 9px;
+            line-height: 1.4;
+            color: #475569;
+            padding-left: 10px;
+            text-indent: -10px;
+        }
+
+        .rule-item strong {
+            color: #1e293b;
+        }
+
+        /* Footer y Totales */
+        .footer-table {
+            margin-bottom: 40px;
+            border-top: 2px solid #e2e8f0;
+            padding-top: 15px;
+        }
+
+        .obs-box {
+            border: 1px solid #cbd5e1;
+            background-color: #f8fafc;
+            padding: 10px;
+            border-radius: 4px;
+            font-style: italic;
+            color: #64748b;
+            font-size: 9px;
+            min-height: 30px;
+        }
+
+        .total-amount {
+            font-size: 24px;
+            font-weight: 900;
+            color: #0f172a;
+            margin: 5px 0 2px 0;
+            text-align: right;
+        }
+
+        /* Firmas */
+        .signature-table td {
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .sig-line {
+            border-top: 1px solid #94a3b8;
+            padding-top: 5px;
+            margin: 0 auto;
+            width: 80%;
+        }
+
+        .sig-title {
+            font-size: 9px;
+            font-weight: bold;
+            color: #475569;
+            margin: 0;
+        }
+
+        .sig-sub {
+            font-size: 8px;
+            color: #94a3b8;
+            margin: 2px 0 0 0;
+        }
+
+        .greeting {
+            text-align: center;
+            font-style: italic;
+            color: #0ea5e9;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+
+<table class="header-table">
+    <tr>
+        <td style="width: 50%;">
+            <div class="logo-box">
+                CORAL CLUBES | <span style="font-weight: normal; font-size: 10px;" th:text="${desarrollo}">RESERVACIONES</span>
+            </div>
+        </td>
+        <td style="width: 50%;" class="header-title">
+            <h2>CARTA DE OCUPACIÓN / HOSPEDAJE</h2>
+            <p>Fecha de emisión: <span th:text="${fechaEmision}">10/08/2026</span></p>
+        </td>
+    </tr>
+</table>
+
+<table class="info-box">
+    <tr>
+        <td style="width: 55%;">
+            <span class="info-label">TITULAR DE LA RESERVACIÓN</span>
+            <p class="info-value-title" th:text="${titular}">JUAN PÉREZ LÓPEZ</p>
+            <p class="info-disclaimer">Por este medio hacemos de su conocimiento que usted y sus acompañantes
+                disfrutarán de su estancia con base en el siguiente itinerario.</p>
+        </td>
+        <td style="width: 45%;" class="info-right-table">
+            <table style="width: 100%;">
+                <tr>
+                    <td style="padding: 0 0 8px 0; width: 40%;"><span class="info-label">NO. MEMBRESÍA</span></td>
+                    <td style="padding: 0 0 8px 0; width: 60%;" class="info-val-right" th:text="${membresia}">
+                        0-123456-1
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 0 0 8px 0;"><span class="info-label">NO. RESERVACIÓN</span></td>
+                    <td style="padding: 0 0 8px 0;" class="info-val-right" th:text="${foliosReservacion}">45001, 45002
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 0 0 8px 0;"><span class="info-label">FECHA DE ENTRADA</span></td>
+                    <td style="padding: 0 0 8px 0;" class="info-val-right" th:text="${fechaEntrada}">19/08/2026</td>
+                </tr>
+                <tr>
+                    <td style="padding: 0;"><span class="info-label">FECHA DE SALIDA</span></td>
+                    <td style="padding: 0;" class="info-val-right" th:text="${fechaSalida}">22/08/2026</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+
+<span class="info-label" style="color: #0f172a;">DETALLE DE ALOJAMIENTO</span>
+<table class="room-table">
+    <thead>
+    <tr>
+        <th style="width: 80%;">TIPO HABITACIÓN</th>
+        <th style="width: 20%; text-align: center;">TOTAL PAX</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="hab : ${habitaciones}">
+        <td th:text="${hab.tipoHabitacion}">MASTER SUITE</td>
+        <td style="text-align: center;" th:text="${hab.totalPax}">2</td>
+    </tr>
+    </tbody>
+</table>
+
+<div class="rules-section">
+    <div class="rules-title">REGLAMENTO GENERAL Y DISPOSICIONES</div>
+    <table>
+        <tr>
+            <td style="width: 48%; padding-right: 2%;">
+                <div class="rule-item">• <strong>Registro de Socios:</strong> Al llegar deberá presentar credenciales
+                    vigentes. Quienes no las muestren serán considerados invitados y cubrirán la cuota.
+                </div>
+                <div class="rule-item">• <strong>Registro Externos:</strong> Invitados externos deben presentar
+                    identificación oficial vigente obligatoria.
+                </div>
+                <div class="rule-item">• <strong>Horarios:</strong> Check-in: 15:00 Hrs / Check-out: 12:00 Hrs. Si no se
+                    desocupa a tiempo, se aplicará un cargo extra automático.
+                </div>
+                <div class="rule-item">• <strong>Garantía:</strong> Al registro, podrá dejar un depósito en garantía
+                    (Voucher abierto) si así lo desea.
+                </div>
+                <div class="rule-item">• <strong>Capacidad:</strong> No exceder el número permitido de personas por
+                    habitación. El excedente genera cobro adicional por invitado.
+                </div>
+                <div class="rule-item">• <strong>Menores:</strong> Niños mayores de 3 años cuentan como adultos para
+                    efectos de tarifa y capacidad.
+                </div>
+                <div class="rule-item">• <strong>Instalaciones:</strong> Uso permitido de áreas deportivas respetando
+                    reglamentos.
+                </div>
+            </td>
+            <td style="width: 48%; padding-left: 2%;">
+                <div class="rule-item">• <strong>Políticas de Pago:</strong> No hay cancelaciones, cambios de fecha ni
+                    reembolsos una vez efectuado el pago.
+                </div>
+                <div class="rule-item">• <strong>Restricciones de Ingreso:</strong> Prohibido: mascotas, armas, juguetes
+                    de alberca, inflamables, alimentos y bebidas.
+                </div>
+                <div class="rule-item">• <strong>Daños:</strong> Daños a bienes del club serán cobrados según el valor
+                    establecido por la empresa.
+                </div>
+                <div class="rule-item">• <strong>Valores:</strong> Dinero y objetos de valor deben depositarse en cajas
+                    de seguridad. La empresa no se responsabiliza por pérdida.
+                </div>
+                <div class="rule-item">• <strong>Convivencia:</strong> Prohibido fumar en habitaciones. Silencio
+                    requerido en pasillos a partir de las 22:00 hrs.
+                </div>
+                <div class="rule-item">• <strong>Fraccionamiento Las Brisas:</strong> Acceso controlado. Se requiere
+                    identificación oficial y respeto total a vialidades.
+                </div>
+                <div class="rule-item">• <strong>Estacionamiento:</strong> La empresa no se hace responsable por daños,
+                    robos o averías a vehículos.
+                </div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<table class="footer-table">
+    <tr>
+        <td style="width: 60%; padding-right: 20px;">
+            <span class="info-label">OBSERVACIONES Y/O PETICIONES</span>
+            <div class="obs-box" th:text="${observaciones}">Sin observaciones adicionales.</div>
+        </td>
+        <td style="width: 40%; text-align: right; vertical-align: bottom;">
+            <span class="info-label">IMPORTE TOTAL RESERVA</span>
+            <div class="total-amount" th:text="'$' + ${#numbers.formatDecimal(importeTotal, 1, 'COMMA', 2, 'POINT')}">
+                $15,000.00
+            </div>
+            <span style="font-size: 9px; color: #94a3b8; font-weight: bold;">MONEDA: MXN</span>
+        </td>
+    </tr>
+</table>
+
+<table class="signature-table" style="margin-top: 50px;">
+    <tr>
+        <td>
+            <div class="sig-line"></div>
+            <p class="sig-title">FIRMA DEL SOCIO / HUÉSPED</p>
+            <p class="sig-sub">Acepto términos y condiciones</p>
+        </td>
+        <td>
+            <div class="sig-line"></div>
+            <p class="sig-title">CORAL CLUBES CUERNAVACA</p>
+            <p class="sig-sub">Gerencia / Recepción</p>
+        </td>
+    </tr>
+</table>
+
+<p class="greeting">¡Feliz Estancia!</p>
+
+</body>
+</html>

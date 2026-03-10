@@ -2,6 +2,7 @@ package com.coralclubes.facil.modules.reservaciones.controller.admin;
 
 import com.coralclubes.facil.modules.reservaciones.dto.request.EnlazarImagenRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.request.PromocionIntegralRequest;
+import com.coralclubes.facil.modules.reservaciones.dto.response.Promocion;
 import com.coralclubes.facil.modules.reservaciones.dto.response.PromocionListResponse;
 import com.coralclubes.facil.modules.reservaciones.service.PromocionesService;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
@@ -61,5 +62,16 @@ public class PromocionesAdminController {
     public ResponseEntity<ApiResponse<Boolean>> enlazarImagen(
             @Valid @RequestBody EnlazarImagenRequest request) {
         return ResponseEntity.ok(service.enlazarImagenPromocion(request));
+    }
+
+    /**
+     * Endpoint abierto. Permite que un cliente valide un código en su carrito
+     * para ver si existe y qué beneficios da, incluso antes de hacer login.
+     */
+    @GetMapping("/validar/{codigo}")
+    @PreAuthorize("hasAuthority('MOD_SMNUPROMOCIONESRESERVACIONES')")
+    public ResponseEntity<ApiResponse<Promocion>> validarCodigo(@PathVariable String codigo) {
+        ApiResponse<Promocion> response = service.validarPromocionPorCodigo(codigo);
+        return ResponseEntity.status(response.status()).body(response);
     }
 }

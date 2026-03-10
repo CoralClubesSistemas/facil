@@ -120,6 +120,10 @@ app:
     notifications:
       url: http://10.10.3.154:8081
       api-key: FACIL_PRjS7QZ9J7APlgez6wXuA04Qsv0esjJu
+      system-code: FACIL
+      aliases:
+          default: SMTP_GENERAL
+          aws-ses: AWS_SES
 
   security:
     password-reset:
