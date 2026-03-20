@@ -8,8 +8,8 @@ import com.coralclubes.facil.modules.reservaciones.dto.response.InventarioBodega
 import com.coralclubes.facil.modules.reservaciones.dto.response.SugerenciaAmenidadDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.TareaDashboardDto;
 import com.coralclubes.facil.modules.reservaciones.repository.AmaDeLlavesRepository;
-import com.coralclubes.facil.shared.infrastructure.notificiones.application.dto.PeticionNotificacionDto;
-import com.coralclubes.facil.shared.infrastructure.notificiones.application.service.NotificacionEmisorService;
+import com.coralclubes.facil.modules.notificaciones.application.dto.PeticionNotificacionDto;
+import com.coralclubes.facil.modules.notificaciones.application.service.NotificacionEmisorService;
 import com.coralclubes.facil.shared.infrastructure.security.enums.ClavesModulos;
 import com.coralclubes.facil.shared.infrastructure.security.service.SeguridadService;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
@@ -35,7 +35,6 @@ public class AmaDeLlavesService {
 
     private final NotificacionEmisorService notificacionEmisor;
     private final SeguridadService seguridadService;
-
 
     public ApiResponse<List<CamaristaDto>> obtenerCamaristas() {
         Integer idDesarrollo = userContext.getIdDesarrollo();
@@ -95,25 +94,31 @@ public class AmaDeLlavesService {
 
         } catch (JsonProcessingException e) {
             log.error("Error al parsear consumos a JSON", e);
-            return ApiResponse.error(GeneralResponseCode.INTERNAL_SERVER_ERROR, "Error procesando el listado de consumos.");
+            return ApiResponse.error(GeneralResponseCode.INTERNAL_SERVER_ERROR,
+                    "Error procesando el listado de consumos.");
         }
     }
 
     /**
-     * Crea la tarea de limpieza en BD y dispara la notificación a las Master en turno.
+     * Crea la tarea de limpieza en BD y dispara la notificación a las Master en
+     * turno.
      */
-    public void crearTareaYNotificar(Integer idUnidadFisica, String numeroHabitacion, Integer idDesarrollo, String usuarioQueLibera, String origenAccion) {
+    public void crearTareaYNotificar(Integer idUnidadFisica, String numeroHabitacion, Integer idDesarrollo,
+            String usuarioQueLibera, String origenAccion) {
         try {
             // 1. Creamos la orden de trabajo en Base de Datos (Estatus: Pendiente)
             repository.crearTareaLimpieza(idUnidadFisica, usuarioQueLibera, origenAccion);
 
             // 2. Buscamos a quién avisarle.
-            // Obtenemos los usernames de todos los usuarios con permiso de Ama de Llaves en ese desarrollo
-            List<String> usernamesMasters = seguridadService.obtenerUsernamesPorPermisoYDesarrollo(ClavesModulos.AMADELLAVES.getClave(), idDesarrollo);
+            // Obtenemos los usernames de todos los usuarios con permiso de Ama de Llaves en
+            // ese desarrollo
+            List<String> usernamesMasters = seguridadService
+                    .obtenerUsernamesPorPermisoYDesarrollo(ClavesModulos.AMADELLAVES.getClave(), idDesarrollo);
 
             if (usernamesMasters != null && !usernamesMasters.isEmpty()) {
 
-                // 3. Armamos el Payload Dinámico (Metadata) para que Angular sepa qué hacer al hacer clic
+                // 3. Armamos el Payload Dinámico (Metadata) para que Angular sepa qué hacer al
+                // hacer clic
                 Map<String, Object> metadata = Map.of(
                         "accion", "NUEVA_TAREA_LIMPIEZA",
                         "idUnidadFisica", idUnidadFisica,
@@ -130,18 +135,20 @@ public class AmaDeLlavesService {
                         2,
                         titulo,
                         mensaje,
-                        metadata
-                );
+                        metadata);
 
                 // 5. Disparamos la notificación masiva persistente
                 // 'SISTEMA' será el remitente
                 notificacionEmisor.enviarAMultiples("SISTEMA", usernamesMasters, peticion);
             } else {
-                log.warn("Se liberó la unidad {}, pero no hay Camaristas Master activas para notificar en el desarrollo {}.", idUnidadFisica, idDesarrollo);
+                log.warn(
+                        "Se liberó la unidad {}, pero no hay Camaristas Master activas para notificar en el desarrollo {}.",
+                        idUnidadFisica, idDesarrollo);
             }
 
         } catch (Exception e) {
-            log.error("Error al crear tarea de limpieza o notificar para la unidad {}: {}", idUnidadFisica, e.getMessage());
+            log.error("Error al crear tarea de limpieza o notificar para la unidad {}: {}", idUnidadFisica,
+                    e.getMessage());
         }
     }
 }

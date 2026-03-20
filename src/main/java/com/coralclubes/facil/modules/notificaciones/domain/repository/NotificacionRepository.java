@@ -1,6 +1,6 @@
-package com.coralclubes.facil.shared.infrastructure.notificiones.domain.repository;
+package com.coralclubes.facil.modules.notificaciones.domain.repository;
 
-import com.coralclubes.facil.shared.infrastructure.notificiones.domain.model.Notificacion;
+import com.coralclubes.facil.modules.notificaciones.domain.model.Notificacion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

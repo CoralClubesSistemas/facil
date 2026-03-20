@@ -1,4 +1,4 @@
-package com.coralclubes.facil.modules.sistema.controller;
+package com.coralclubes.facil.modules.sistema.controller.admin;
 
 import com.coralclubes.facil.modules.sistema.dto.response.ModuloApiResponse;
 import com.coralclubes.facil.modules.sistema.dto.projection.ModuloDtoResult;

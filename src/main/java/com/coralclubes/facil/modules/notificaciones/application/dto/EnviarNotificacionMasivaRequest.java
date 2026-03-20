@@ -1,4 +1,4 @@
-package com.coralclubes.facil.shared.infrastructure.notificiones.application.dto;
+package com.coralclubes.facil.modules.notificaciones.application.dto;
 
 import java.util.List;
 

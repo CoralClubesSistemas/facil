@@ -1,9 +1,10 @@
-package com.coralclubes.facil.shared.infrastructure.notificiones.application.service;
+package com.coralclubes.facil.modules.notificaciones.application.service;
 
-import com.coralclubes.facil.shared.infrastructure.notificiones.application.dto.NotificacionDto;
-import com.coralclubes.facil.shared.infrastructure.notificiones.domain.model.Notificacion;
-import com.coralclubes.facil.shared.infrastructure.notificiones.domain.repository.NotificacionRepository;
+import com.coralclubes.facil.modules.notificaciones.application.dto.NotificacionDto;
+import com.coralclubes.facil.modules.notificaciones.domain.model.Notificacion;
+import com.coralclubes.facil.modules.notificaciones.domain.repository.NotificacionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +41,7 @@ public class NotificacionGestionService {
 
     private Map<String, Object> parseContenido(String contenidoJson) {
         try {
-            return objectMapper.readValue(contenidoJson, Map.class);
+            return objectMapper.readValue(contenidoJson, new TypeReference<Map<String, Object>>() {});
         } catch (Exception e) {
             return Map.of(); // Retorna un mapa vacío si hay error
         }
@@ -69,18 +69,17 @@ public class NotificacionGestionService {
     // 4. Marcar todas como leídas
     @Transactional
     public void marcarTodasComoLeidas(String username) {
-        List<NotificacionDto> noLeidas = obtenerNoLeidas(username);
+        List<Notificacion> notificaciones = notificacionRepository
+                .findByDestinatarioUsernameAndEstadoOrderByFechaCreacionDesc(username, "NO_LEIDO");
 
-        // Obtener las entidades completas para actualizar
-        List<Notificacion> notificaciones = noLeidas.stream()
-                .map(dto -> notificacionRepository.findById(dto.id()).orElse(null))
-                .filter(Objects::nonNull) // Filtrar los que no se encontraron (aunque deberían existir)
-                .toList();
+        if (notificaciones == null || notificaciones.isEmpty()) return;
 
+        LocalDateTime now = LocalDateTime.now();
         notificaciones.forEach(n -> {
             n.setEstado("LEIDO");
-            n.setFechaLectura(LocalDateTime.now());
+            n.setFechaLectura(now);
         });
+
         notificacionRepository.saveAll(notificaciones);
     }
 }

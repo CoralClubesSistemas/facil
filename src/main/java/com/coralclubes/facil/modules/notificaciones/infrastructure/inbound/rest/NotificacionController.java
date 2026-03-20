@@ -1,13 +1,13 @@
-package com.coralclubes.facil.shared.infrastructure.notificiones.infrastructure.inbound.rest;
+package com.coralclubes.facil.modules.notificaciones.infrastructure.inbound.rest;
 
-import com.coralclubes.facil.shared.infrastructure.notificiones.application.dto.EnviarNotificacionMasivaRequest;
-import com.coralclubes.facil.shared.infrastructure.notificiones.application.dto.NotificacionDto;
-import com.coralclubes.facil.shared.infrastructure.notificiones.application.service.NotificacionEmisorService;
-import com.coralclubes.facil.shared.infrastructure.notificiones.application.service.NotificacionGestionService;
-import com.coralclubes.facil.shared.infrastructure.notificiones.domain.model.Notificacion;
+import com.coralclubes.facil.modules.notificaciones.application.dto.EnviarNotificacionMasivaRequest;
+import com.coralclubes.facil.modules.notificaciones.application.dto.NotificacionDto;
+import com.coralclubes.facil.modules.notificaciones.application.service.NotificacionEmisorService;
+import com.coralclubes.facil.modules.notificaciones.application.service.NotificacionGestionService;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -47,6 +47,7 @@ public class NotificacionController {
     }
 
     @PostMapping("/enviar")
+    @PreAuthorize("hasAuthority('AUTH_NOTIFICACIONES')")
     public ApiResponse<Boolean> enviarNotificacionMasiva(
             @RequestBody EnviarNotificacionMasivaRequest request,
             Principal principal

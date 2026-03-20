@@ -1,4 +1,4 @@
-package com.coralclubes.facil.shared.infrastructure.notificiones.domain.model;
+package com.coralclubes.facil.modules.notificaciones.domain.model;
 
 import jakarta.persistence.*;
 import lombok.*;

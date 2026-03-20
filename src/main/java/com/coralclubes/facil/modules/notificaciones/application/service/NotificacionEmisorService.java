@@ -1,8 +1,10 @@
-package com.coralclubes.facil.shared.infrastructure.notificiones.application.service;
+package com.coralclubes.facil.modules.notificaciones.application.service;
 
-import com.coralclubes.facil.shared.infrastructure.notificiones.application.dto.PeticionNotificacionDto;
-import com.coralclubes.facil.shared.infrastructure.notificiones.domain.model.Notificacion;
-import com.coralclubes.facil.shared.infrastructure.notificiones.domain.repository.NotificacionRepository;
+import com.coralclubes.facil.modules.notificaciones.application.dto.NotificacionDto;
+import com.coralclubes.facil.modules.notificaciones.application.dto.PeticionNotificacionDto;
+import com.coralclubes.facil.modules.notificaciones.domain.model.Notificacion;
+import com.coralclubes.facil.modules.notificaciones.domain.repository.NotificacionRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -72,13 +74,36 @@ public class NotificacionEmisorService {
 
     private void empujarAWebSocket(Notificacion notificacion) {
         try {
+            // En WS enviamos el mismo contrato que REST: NotificacionDto (metadata como Map).
+            NotificacionDto dto = new NotificacionDto(
+                    notificacion.getId(),
+                    notificacion.getRemitenteUsername(),
+                    notificacion.getTipoMensaje(),
+                    notificacion.getNivelPrioridad(),
+                    notificacion.getTitulo(),
+                    notificacion.getMensaje(),
+                    parseContenido(notificacion.getMetadataJson()),
+                    notificacion.getFechaCreacion(),
+                    notificacion.getEstado(),
+                    notificacion.getFechaLectura()
+            );
+
             messagingTemplate.convertAndSendToUser(
                     notificacion.getDestinatarioUsername(),
                     "/queue/alertas",
-                    notificacion
+                    dto
             );
         } catch (Exception e) {
             log.warn("El usuario {} no está conectado al WS. La notificación se leerá después.", notificacion.getDestinatarioUsername());
+        }
+    }
+
+    private java.util.Map<String, Object> parseContenido(String contenidoJson) {
+        try {
+            if (contenidoJson == null || contenidoJson.isBlank()) return java.util.Map.of();
+            return objectMapper.readValue(contenidoJson, new TypeReference<java.util.Map<String, Object>>() {});
+        } catch (Exception e) {
+            return java.util.Map.of();
         }
     }
 }
