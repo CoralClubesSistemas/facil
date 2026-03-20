@@ -43,7 +43,7 @@ public class FilterExceptionHandler extends OncePerRequestFilter {
     }
 
     private void handleFilterException(Exception e, HttpServletResponse response) throws IOException {
-        businessLogger.error("SYSTEM", "Excepción en Filtro de Seguridad: " + e.getMessage(), e);
+        businessLogger.error("SYSTEM", "Excepción en Filtro de Seguridad: " + e.getMessage());
 
         response.setContentType("application/json");
         ApiResponse<?> apiResponse;

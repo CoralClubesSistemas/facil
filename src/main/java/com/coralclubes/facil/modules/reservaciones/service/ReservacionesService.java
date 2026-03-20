@@ -6,10 +6,7 @@ import com.coralclubes.facil.modules.clientes.dto.response.PuntosMembresia;
 import com.coralclubes.facil.modules.clientes.service.PuntosService;
 import com.coralclubes.facil.modules.reservaciones.dto.projection.DisponibilidadUnidadProjection;
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
-import com.coralclubes.facil.modules.reservaciones.dto.response.DisponibilidadUnidadDto;
-import com.coralclubes.facil.modules.reservaciones.dto.response.OpcionPagoPuntosDto;
-import com.coralclubes.facil.modules.reservaciones.dto.response.Promocion;
-import com.coralclubes.facil.modules.reservaciones.dto.response.ResumenCheckoutResponse;
+import com.coralclubes.facil.modules.reservaciones.dto.response.*;
 import com.coralclubes.facil.modules.reservaciones.model.promociones.dto.ReservacionContexto;
 import com.coralclubes.facil.modules.reservaciones.model.promociones.engine.PromocionesEngine;
 import com.coralclubes.facil.modules.reservaciones.repository.ReservacionesRepository;
@@ -22,6 +19,7 @@ import com.coralclubes.responses.ApiResponse;
 import com.coralclubes.utils.json.JsonUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +47,9 @@ public class ReservacionesService {
 
     private final GeneradorDocumentosService generadorDocumentosService;
     private final NotificationClient notificationClient;
+
+    @Value("${app.clients.notifications.templates.reserva-creada}")
+    private String templateReservaCreada;
 
     // =========================================================================
     // 1. GESTIÓN DE INVENTARIO Y DISPONIBILIDAD
@@ -155,17 +156,12 @@ public class ReservacionesService {
 
         // 6. Cálculos Generales e Impuestos (Solo sobre lo que quedó en MXN)
         BigDecimal subtotalOriginal = habitaciones.stream().map(ResumenCheckoutResponse.ItemCheckoutDto::getSubtotalHabitacion).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal baseGravable = habitaciones.stream().map(ResumenCheckoutResponse.ItemCheckoutDto::getTotalFinalHabitacion).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal iva = baseGravable.multiply(new BigDecimal("0.16")).setScale(2, RoundingMode.HALF_UP);
-        BigDecimal totalAPagar = baseGravable.add(iva);
+        BigDecimal totalAPagar = habitaciones.stream().map(ResumenCheckoutResponse.ItemCheckoutDto::getTotalFinalHabitacion).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // 7. Ensamblaje
         var resumen = ResumenCheckoutResponse.ResumenFinancieroDto.builder()
                 .subtotalOriginal(subtotalOriginal)
-                .totalDescuentos(subtotalOriginal.subtract(baseGravable)) // La diferencia entre el original y lo que quedó gravable
-                .baseGravable(baseGravable)
-                .iva(BigDecimal.ZERO)
-                .ish(BigDecimal.ZERO)
+                .totalDescuentos(subtotalOriginal.subtract(totalAPagar))
                 .totalAPagar(totalAPagar)
                 .cuponValido(beneficio.esValido())
                 .mensajeCupon(beneficio.mensaje())
@@ -240,19 +236,19 @@ public class ReservacionesService {
                     if (desarrolloId != null) {
                         // Construimos el DTO agnóstico para enviarlo a Clientes
                         ConsumoPuntosRequest peticionPuntos = ConsumoPuntosRequest.builder()
-                                        .membresia(contexto.getMembresia())
-                                        .desarrolloId(desarrolloId)
-                                        .totalPuntos(opcion.costoTotalPuntos())
+                                .membresia(contexto.getMembresia())
+                                .desarrolloId(desarrolloId)
+                                .totalPuntos(opcion.costoTotalPuntos())
 
-                                        // Asignamos el 100% de los puntos al rubro de Hospedaje
-                                        .puntosHospedaje(opcion.costoTotalPuntos())
-                                        .puntosInstalaciones(0)
-                                        .puntosCampoGolf(0)
+                                // Asignamos el 100% de los puntos al rubro de Hospedaje
+                                .puntosHospedaje(opcion.costoTotalPuntos())
+                                .puntosInstalaciones(0)
+                                .puntosCampoGolf(0)
 
-                                        .idMovimiento(folioPrincipal) // Enlazamos con la reserva que acaba de nacer
-                                        .descripcion("RESERVA CON PUNTOS - " + opcion.nombrePromocion())
-                                        .usuario(usuario)
-                                        .build();
+                                .idMovimiento(folioPrincipal) // Enlazamos con la reserva que acaba de nacer
+                                .descripcion("RESERVA CON PUNTOS - " + opcion.nombrePromocion())
+                                .usuario(usuario)
+                                .build();
 
                         // Delegamos el descuento de puntos
                         puntosService.consumirPuntos(peticionPuntos);
@@ -328,14 +324,7 @@ public class ReservacionesService {
                 .codigoSistema("FACIL")
                 .aliasConfig("SMTP_GENERAL")
                 .destinatarios(destinatarios)
-                .asunto("Confirmación de Reservación - Folios: " + foliosStr)
-                .cuerpo(
-                        "Estimado/a " + request.nombreReserva() + ",\n\n" +
-                        "Su reservación ha sido confirmada exitosamente. Adjuntamos la carta de ocupación con los detalles de su reserva.\n\n" +
-                        "¡Gracias por elegirnos para su próxima estancia!\n\n" +
-                        "Saludos cordiales,\n" +
-                        "Equipo de Reservaciones"
-                )
+                .codigoPlantilla(templateReservaCreada)
                 .variables(Map.of(
                         "nombreTitular", request.nombreReserva(),
                         "urlDescargaPdf", urlPdfCartaOcupacion
@@ -467,5 +456,70 @@ public class ReservacionesService {
             String mensaje,
             String mensajeMotivoVisual
     ) {
+    }
+
+    /**
+     * Obtiene el detalle enriquecido de una reservación.
+     */
+    public ApiResponse<DetalleReservacionDto> obtenerDetalleReservacion(String membresia, Integer consecutivo) {
+        if (membresia == null || membresia.isBlank() || consecutivo == null) {
+            throw new IllegalArgumentException("La membresía y el consecutivo son obligatorios.");
+        }
+
+        DetalleReservacionDto detalle = repository.obtenerDetalleReservacion(membresia, consecutivo);
+
+        return ApiResponse.success("Detalle de reservación obtenido con éxito.", detalle);
+    }
+
+    /**
+     * Consulta el resumen general de una reservación específica.
+     */
+    public ApiResponse<ResumenReservacionDto> obtenerResumenReservacion(String membresia, Integer consecutivo) {
+        if (membresia == null || membresia.isBlank() || consecutivo == null) {
+            throw new IllegalArgumentException("La membresía y el consecutivo son obligatorios.");
+        }
+
+        ResumenReservacionDto resumen = repository.obtenerResumenReservacion(membresia, consecutivo);
+
+        return ApiResponse.success("Resumen de reservación obtenido con éxito.", resumen);
+    }
+
+    /**
+     * Consulta el estado de cuenta detallado de una reservación específica.
+     */
+    public ApiResponse<List<CargoHabitacionDto>> obtenerCargosReservacion(String membresia, Integer consecutivo) {
+        if (membresia == null || membresia.isBlank() || consecutivo == null) {
+            throw new IllegalArgumentException("La membresía y el consecutivo son obligatorios.");
+        }
+
+        List<CargoHabitacionDto> cargos = repository.obtenerCargosReservacion(membresia, consecutivo);
+
+        return ApiResponse.success("Historial de cargos obtenido con éxito.", cargos);
+    }
+
+    public ApiResponse<DisponibilidadUnidadDto> obtenerDisponibilidadUnidad(Integer rhdtId, String membresia, LocalDate fechaEntrada, LocalDate fechaSalida) {
+        if (rhdtId == null || rhdtId <= 0) {
+            throw new IllegalArgumentException("El ID del tipo de unidad es obligatorio.");
+        }
+
+        DisponibilidadUnidadProjection projection = repository.obtenerDisponibilidadUnidadEspecifica(rhdtId, fechaEntrada, fechaSalida, membresia);
+
+        if (projection == null) {
+            return ApiResponse.success("No se encontró información para el tipo de unidad solicitado.", null);
+        }
+
+        String imagenUrl = projection.uuidImagen() != null ? storageClient.obtenerUrlDescarga(projection.uuidImagen()) : null;
+
+        DisponibilidadUnidadDto dto = DisponibilidadUnidadDto.builder()
+                .idTipoUnidad(projection.idTipoUnidad())
+                .nombreUnidad(projection.nombreUnidad())
+                .descripcionCorta(projection.descripcionCorta())
+                .capacidad(projection.capacidad())
+                .stockDisponible(projection.stockDisponible())
+                .costoEstancia(projection.costoEstancia())
+                .urlImagen(imagenUrl)
+                .build();
+
+        return ApiResponse.success("Disponibilidad de unidad obtenida exitosamente", dto);
     }
 }

@@ -2,6 +2,9 @@ package com.coralclubes.facil.modules.reservaciones.controller.admin;
 
 import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
+import com.coralclubes.facil.modules.reservaciones.dto.response.ArticuloAmenidadDto;
+import com.coralclubes.facil.modules.reservaciones.dto.response.ReglaAmenidadActualDto;
+import com.coralclubes.facil.modules.reservaciones.dto.response.UnidadBloqueadaDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.UnidadFisicaDto;
 import com.coralclubes.facil.modules.reservaciones.service.UnidadesService;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
@@ -136,8 +139,43 @@ public class UnidadesAdminController {
     @DeleteMapping("/fisicas/delete")
     @PreAuthorize("hasAuthority('AUTH_DRUN')")
     public ResponseEntity<ApiResponse<Boolean>> desactivarUnidadFisica(
-            @RequestParam Integer idUnidadFisica) {
-        ApiResponse<Boolean> response = service.desactivarUnidadFisica(idUnidadFisica);
+            @RequestBody DesactivarUnidadRequest request) {
+        ApiResponse<Boolean> response = service.desactivarUnidadFisica(request);
+        return ResponseEntity.status(response.status()).body(response);
+    }
+
+    @GetMapping("/fisicas/bloqueadas")
+    @PreAuthorize("hasAuthority('MOD_SMNUUNIDADESRESERVACIONES')")
+    public ResponseEntity<ApiResponse<List<UnidadBloqueadaDto>>> obtenerUnidadesBloqueadas() {
+        return ResponseEntity.ok(service.obtenerUnidadesBloqueadas());
+    }
+
+    @PostMapping("/fisicas/reactivar")
+    @PreAuthorize("hasAuthority('MOD_SMNUUNIDADESRESERVACIONES')")
+    public ResponseEntity<ApiResponse<Boolean>> reactivarUnidadFisica(
+            @Valid @RequestBody ReactivarUnidadRequest request) {
+        ApiResponse<Boolean> response = service.reactivarUnidadFisica(request);
+        return ResponseEntity.status(response.status()).body(response);
+    }
+
+    @GetMapping("/amenidades/catalogo")
+    @PreAuthorize("hasAuthority('MOD_SMNUUNIDADESRESERVACIONES')")
+    public ResponseEntity<ApiResponse<List<ArticuloAmenidadDto>>> obtenerCatalogoAmenidades() {
+        return ResponseEntity.ok(service.obtenerCatalogoAmenidades());
+    }
+
+    @GetMapping("/{idTipoUnidad}/amenidades")
+    @PreAuthorize("hasAuthority('MOD_SMNUUNIDADESRESERVACIONES')")
+    public ResponseEntity<ApiResponse<List<ReglaAmenidadActualDto>>> obtenerReglasAmenidades(
+            @PathVariable("idTipoUnidad") Integer idTipoUnidad) {
+        return ResponseEntity.ok(service.obtenerReglasAmenidades(idTipoUnidad));
+    }
+
+    @PostMapping("/amenidades/save")
+    @PreAuthorize("hasAuthority('MOD_SMNUUNIDADESRESERVACIONES')")
+    public ResponseEntity<ApiResponse<Boolean>> guardarReglasAmenidades(
+            @Valid @RequestBody GuardarAmenidadesRequest request) {
+        ApiResponse<Boolean> response = service.guardarReglasAmenidades(request);
         return ResponseEntity.status(response.status()).body(response);
     }
 }

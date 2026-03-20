@@ -64,6 +64,8 @@ app:
           aws-ses: AWS_SES
       templates:
           reset-password: reset-pass-v1
+          reserva-creada: reserva-creada-v1
+          reserva-cancelada: reserva-cancelada-v1
 
 
   security:

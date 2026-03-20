@@ -13,8 +13,11 @@ import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.Respu
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlImagenRequest;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaDto;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
+import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
 import com.coralclubes.responses.codes.GeneralResponseCode;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -33,6 +36,9 @@ public class UnidadesService {
     private final UnidadesRepository tipoUnidadRepo;
     private final UserContext userContext;
     private final StorageClient storageClient;
+    private final BusinessLogger businessLogger;
+    private final ObjectMapper objectMapper;
+    private final AmaDeLlavesService amaDeLlavesService;
 
     @Value("${app.clients.storage.aliases.default}")
     private String aliasStorageDefault;
@@ -229,9 +235,9 @@ public class UnidadesService {
         return ApiResponse.success("Se liberaron " + desasignadas + " unidades correctamente", desasignadas);
     }
 
-    public ApiResponse<Boolean> desactivarUnidadFisica(Integer idUnidadFisica) {
+    public ApiResponse<Boolean> desactivarUnidadFisica(DesactivarUnidadRequest request) {
         String usuario = userContext.getUsername();
-        boolean desactivado = tipoUnidadRepo.spResvDesactivarUnidadFisica(idUnidadFisica, usuario);
+        boolean desactivado = tipoUnidadRepo.spResvDesactivarUnidadFisica(request, usuario);
         if (!desactivado) {
             return ApiResponse.error(GeneralResponseCode.INTERNAL_SERVER_ERROR, "No se pudo dar de baja la unidad.");
         }
@@ -273,5 +279,63 @@ public class UnidadesService {
                 .build();
 
         return ApiResponse.success(uiDetalles);
+    }
+
+    public ApiResponse<List<UnidadBloqueadaDto>> obtenerUnidadesBloqueadas() {
+        Integer idDesarrollo = userContext.getIdDesarrollo();
+
+        List<UnidadBloqueadaDto> bloqueadas = tipoUnidadRepo.obtenerUnidadesBloqueadas(idDesarrollo);
+        return ApiResponse.success("Unidades bloqueadas obtenidas exitosamente", bloqueadas);
+    }
+
+    public ApiResponse<Boolean> reactivarUnidadFisica(ReactivarUnidadRequest request) {
+        String usuario = userContext.getUsername();
+
+        // Ejecutar SP de Reactivación en DB (que la pasa a estatus Sucia)
+        tipoUnidadRepo.reactivarUnidadFisica(request.idUnidadFisica(), usuario);
+        // Obtenemos el número de habitación para la creación de la tarea
+        DetallesUnidadFisica numeroHabitacion = tipoUnidadRepo.spResvObtenerDetallesUnidadFisica(request.idUnidadFisica())
+                .orElseThrow(() -> new ServiceUnavailableException("No se pudieron obtener los detalles de la unidad física."));
+
+        // Disparar creación de tarea y WebSocket
+        amaDeLlavesService.crearTareaYNotificar(
+                request.idUnidadFisica(),
+                numeroHabitacion.numeroUnidadFisica(),
+                userContext.getIdDesarrollo(),
+                usuario,
+                "REACTIVACION_UNIDAD_FISICA"
+        );
+
+        return ApiResponse.success("La habitación ha sido reactivada y enviada a limpieza (Estatus: SUCIA).", true);
+    }
+
+    public ApiResponse<List<ArticuloAmenidadDto>> obtenerCatalogoAmenidades() {
+        List<ArticuloAmenidadDto> catalogo = tipoUnidadRepo.obtenerCatalogoAmenidades();
+        return ApiResponse.success("Catálogo de amenidades obtenido exitosamente", catalogo);
+    }
+
+    public ApiResponse<List<ReglaAmenidadActualDto>> obtenerReglasAmenidades(Integer rhdtId) {
+        List<ReglaAmenidadActualDto> reglas = tipoUnidadRepo.obtenerReglasAmenidades(rhdtId);
+        return ApiResponse.success("Reglas actuales obtenidas", reglas);
+    }
+
+    public ApiResponse<Boolean> guardarReglasAmenidades(GuardarAmenidadesRequest request) {
+        try {
+            String usuario = userContext.getUsername();
+
+            // Convertimos la lista de objetos Java a un String JSON
+            String jsonReglas = objectMapper.writeValueAsString(request.reglas());
+
+            // Mandamos a SQL Server
+            tipoUnidadRepo.guardarReglasAmenidades(request.rhdtId(), jsonReglas, usuario);
+
+            businessLogger.info(usuario, "Reglas de amenidades actualizadas para el Tipo Unidad ID: {}", request.rhdtId());
+
+            return ApiResponse.success("La configuración de amenidades se ha guardado correctamente.", true);
+
+        } catch (JsonProcessingException e) {
+            businessLogger.error("SYSTEM", "Error al parsear reglas de amenidades a JSON");
+            return ApiResponse.error(GeneralResponseCode.BAD_REQUEST, "Error interno al procesar la lista de amenidades.");
+        }
     }
 }

@@ -4,11 +4,11 @@ import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleDto;
 import com.coralclubes.facil.modules.reservaciones.dto.projection.DisponibilidadUnidadProjection;
 import com.coralclubes.facil.modules.reservaciones.dto.request.AplicarPromocionRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.request.ConfirmarReservaRequest;
-import com.coralclubes.facil.modules.reservaciones.dto.response.AplicarPromocionResponse;
-import com.coralclubes.facil.modules.reservaciones.dto.response.DisponibilidadUnidadDto;
-import com.coralclubes.facil.modules.reservaciones.dto.response.OpcionPagoPuntosDto;
+import com.coralclubes.facil.modules.reservaciones.dto.response.*;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import com.coralclubes.responses.ApiResponse;
+import com.coralclubes.utils.json.JsonUtils;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -49,6 +49,90 @@ public class ReservacionesRepository {
             rs.getInt("paqueteId"),
             rs.getInt("consecutivo"),
             rs.getBigDecimal("porcentajeDescuento")
+    );
+
+    RowMapper<DetalleReservacionDto> detalleReservacionMapper = (rs, rowNum) -> {
+
+        // Extraemos y parseamos el JSON de Cargos (puede venir NULL si la tabla de cargos estuviera vacía)
+        String cargosJsonStr = rs.getString("CargosJson");
+        List<CargoHabitacionDto> listadoCargos = (cargosJsonStr != null && !cargosJsonStr.isBlank())
+                ? JsonUtils.fromJson(cargosJsonStr, new TypeReference<>() {
+        }) : List.of();
+
+        // Extraemos y parseamos el JSON de transferencias (puede venir NULL si no hay transferencias)
+        String transferenciasJsonStr = rs.getString("TransferenciasJson");
+        List<TransferenciaHabitacionDto> listadoTransferencias = (transferenciasJsonStr != null && !transferenciasJsonStr.isBlank())
+                ? JsonUtils.fromJson(transferenciasJsonStr, new TypeReference<>() {
+        }) : List.of();
+
+        return DetalleReservacionDto.builder()
+                .membresia(rs.getString("Membresia"))
+                .consecutivo(rs.getInt("Consecutivo"))
+                .desarrolloId(rs.getInt("DesarrolloId"))
+                .nombreDesarrollo(rs.getString("NombreDesarrollo"))
+                .nombreHuesped(rs.getString("NombreHuesped"))
+                .esSocio(rs.getBoolean("EsSocio"))
+                .rhdtId(rs.getInt("RhdtId"))
+                .tipoUnidad(rs.getString("TipoUnidad"))
+                .idUnidad(rs.getInt("IdUnidad"))
+                .numeroHabitacion(rs.getString("NumeroHabitacion"))
+                .fechaEntrada(rs.getDate("FechaEntrada").toLocalDate())
+                .fechaSalida(rs.getDate("FechaSalida").toLocalDate())
+
+                // Extraemos las nuevas fechas (Pueden ser null si aún no hace checkin/out)
+                .fechaHoraCheckIn(rs.getTimestamp("FechaHoraCheckIn") != null ? rs.getTimestamp("FechaHoraCheckIn").toLocalDateTime() : null)
+                .fechaHoraCheckOut(rs.getTimestamp("FechaHoraCheckOut") != null ? rs.getTimestamp("FechaHoraCheckOut").toLocalDateTime() : null)
+
+                .estatusClave(rs.getString("EstatusClave"))
+                .estatusDescripcion(rs.getString("EstatusDescripcion"))
+                .importeTotal(rs.getBigDecimal("ImporteTotal"))
+                .importePendiente(rs.getBigDecimal("ImportePendiente"))
+                .ultimoReciboPagado(rs.getString("UltimoReciboPagado"))
+                .promocionAplicada(rs.getString("PromocionAplicada"))
+                .cuponPaqueteId(rs.getInt("CuponPaqueteId"))
+                .puntosConsumidos(rs.getInt("PuntosConsumidos"))
+                .peticionesEspeciales(rs.getString("PeticionesEspeciales"))
+                .numeroSocios(rs.getInt("NumeroSocios"))
+
+                // Inyectamos la lista de cargos ya parseada
+                .cargos(listadoCargos)
+
+                // Historial de transferencias de unidades
+                .cantidadTransferencias(rs.getInt("CantidadTransferencias"))
+                .haSidoTransferida(rs.getBoolean("HaSidoTransferida"))
+                .transferenciasHistorial(listadoTransferencias)
+
+                .build();
+    };
+
+    private final RowMapper<ResumenReservacionDto> resumenReservacionMapper = (rs, rowNum) -> new ResumenReservacionDto(
+            rs.getString("Membresia"),
+            rs.getInt("Consecutivo"),
+            rs.getString("NombreContacto"),
+            rs.getString("EmailContacto"),
+            rs.getString("TelefonoContacto"),
+            rs.getInt("DesarrolloId"),
+            rs.getString("NombreDesarrollo"),
+            rs.getInt("RhdtId"),
+            rs.getString("TipoUnidad"),
+            rs.getString("NumeroUnidad"),
+            rs.getInt("IdUnidadFisica"),
+            rs.getDate("FechaEntrada") != null ? rs.getDate("FechaEntrada").toLocalDate() : null,
+            rs.getDate("FechaSalida") != null ? rs.getDate("FechaSalida").toLocalDate() : null,
+            rs.getInt("Noches"),
+            rs.getString("EstatusClave"),
+            rs.getString("EstatusDescripcion"),
+            rs.getBigDecimal("ImporteTotal"),
+            rs.getBigDecimal("ImportePendiente"),
+            rs.getString("UltimoReciboPagado")
+    );
+
+    private final RowMapper<CargoHabitacionDto> cargoHabitacionMapper = (rs, rowNum) -> new CargoHabitacionDto(
+            rs.getInt("IdMovimiento"),
+            rs.getString("Descripcion"),
+            rs.getBigDecimal("ImporteCargo"),
+            rs.getBigDecimal("ImportePendiente"),
+            rs.getTimestamp("FechaRegistro") != null ? rs.getTimestamp("FechaRegistro").toLocalDateTime() : null
     );
 
     public List<DisponibilidadUnidadProjection> buscarDisponibilidad(
@@ -163,5 +247,56 @@ public class ReservacionesRepository {
         params.put("Usuario", usuario);
 
         spExecutor.execute("spResvConsumirCuponReservacion", params);
+    }
+
+    public DetalleReservacionDto obtenerDetalleReservacion(String membresia, Integer consecutivo) {
+        Map<String, Object> params = Map.of(
+                "Membresia", membresia,
+                "Consecutivo", consecutivo
+        );
+        return spExecutor.querySingle("spResvObtenerDetalleReservacion", params, detalleReservacionMapper)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró la reservación solicitada."));
+    }
+
+    /**
+     * Obtiene el listado desglosado de todos los cargos financieros de una reservación.
+     * Ideal para el módulo de Caja / Cobranza.
+     */
+    public List<CargoHabitacionDto> obtenerCargosReservacion(String membresia, Integer consecutivo) {
+        Map<String, Object> params = Map.of(
+                "Membresia", membresia,
+                "Consecutivo", consecutivo
+        );
+
+        return spExecutor.queryList(
+                "spResvObtenerCargosReservacion",
+                params,
+                cargoHabitacionMapper
+        );
+    }
+
+    public DisponibilidadUnidadProjection obtenerDisponibilidadUnidadEspecifica(
+            Integer tipoUnidadId,
+            LocalDate fechaEntrada,
+            LocalDate fechaSalida,
+            String membresia) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("RhdtId", tipoUnidadId);
+        params.put("FechaEntrada", fechaEntrada);
+        params.put("FechaSalida", fechaSalida);
+        params.put("Membresia", membresia);
+
+        return spExecutor.querySingle("spResvCotizarTipoUnidadEspecifica", params, disponibilidadMapper)
+                .orElse(null);
+    }
+
+    public ResumenReservacionDto obtenerResumenReservacion(String membresia, Integer consecutivo) {
+        Map<String, Object> params = Map.of(
+                "Membresia", membresia,
+                "Consecutivo", consecutivo
+        );
+
+        return spExecutor.querySingle("spResvObtenerResumenReservacion", params, resumenReservacionMapper)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró el resumen de la reservación solicitada."));
     }
 }

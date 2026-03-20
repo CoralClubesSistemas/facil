@@ -1,6 +1,7 @@
 package com.coralclubes.facil.shared.infrastructure.notificiones.infrastructure.inbound.rest;
 
 import com.coralclubes.facil.shared.infrastructure.notificiones.application.dto.EnviarNotificacionMasivaRequest;
+import com.coralclubes.facil.shared.infrastructure.notificiones.application.dto.NotificacionDto;
 import com.coralclubes.facil.shared.infrastructure.notificiones.application.service.NotificacionEmisorService;
 import com.coralclubes.facil.shared.infrastructure.notificiones.application.service.NotificacionGestionService;
 import com.coralclubes.facil.shared.infrastructure.notificiones.domain.model.Notificacion;
@@ -21,9 +22,9 @@ public class NotificacionController {
     private final NotificacionEmisorService emisorService;
 
     @GetMapping("/no-leidas")
-    public ResponseEntity<List<Notificacion>> obtenerNoLeidas(Principal principal) {
+    public ResponseEntity<List<NotificacionDto>> obtenerNoLeidas(Principal principal) {
         // principal.getName() extrae el username del JWT validado
-        List<Notificacion> notificaciones = gestionService.obtenerNoLeidas(principal.getName());
+        List<NotificacionDto> notificaciones = gestionService.obtenerNoLeidas(principal.getName());
         return ResponseEntity.ok(notificaciones);
     }
 

@@ -1,22 +1,16 @@
 package com.coralclubes.facil.modules.reservaciones.repository;
 
 import com.coralclubes.facil.modules.reservaciones.dto.projection.TipoUnidadDetalles;
-import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
+import com.coralclubes.facil.modules.reservaciones.dto.request.*;
+import com.coralclubes.facil.modules.reservaciones.dto.response.*;
 import com.coralclubes.facil.shared.infrastructure.domain.dto.ImagenDto;
 import com.coralclubes.facil.modules.reservaciones.dto.projection.TipoUnidadCardDto;
-import com.coralclubes.facil.modules.reservaciones.dto.response.TipoUnidadDetalleDto;
-import com.coralclubes.facil.modules.reservaciones.dto.request.EliminarImagenRequest;
-import com.coralclubes.facil.modules.reservaciones.dto.request.ImagenRequest;
-import com.coralclubes.facil.modules.reservaciones.dto.request.RelacionCaracteristicaRequest;
-import com.coralclubes.facil.modules.reservaciones.dto.request.TipoUnidadRequest;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import com.coralclubes.utils.json.JsonUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import com.coralclubes.facil.modules.reservaciones.dto.response.UnidadFisicaDto;
-import com.coralclubes.facil.modules.reservaciones.dto.request.UnidadFisicaRequest;
 import com.coralclubes.dto.SelectGenerico;
 
 import java.util.HashMap;
@@ -106,6 +100,51 @@ public class UnidadesRepository {
             .caracteristicas(rs.getString("Caracteristicas") != null ? JsonUtils.fromJson(rs.getString("Caracteristicas"), new TypeReference<List<CaracteristicaDto>>() {
             }) : List.of())
             .build());
+
+    private final RowMapper<UnidadBloqueadaDto> unidadBloqueadaMapper = (rs, rowNum) -> new UnidadBloqueadaDto(
+            rs.getInt("IdUnidadFisica"),
+            rs.getString("NumeroUnidad"),
+            rs.getString("Desarrollo"),
+            rs.getString("TipoUnidad"),
+            rs.getDate("FechaInicio") != null ? rs.getDate("FechaInicio").toLocalDate() : null,
+            rs.getDate("FechaFin") != null ? rs.getDate("FechaFin").toLocalDate() : null,
+            rs.getString("RazonBloqueo"),
+            rs.getString("UsuarioBloqueo"),
+            rs.getTimestamp("FechaRegistro") != null ? rs.getTimestamp("FechaRegistro").toLocalDateTime() : null,
+            rs.getString("ComentarioLargo")
+    );
+
+    private final RowMapper<ArticuloAmenidadDto> articuloAmenidadMapper = (rs, rowNum) -> new ArticuloAmenidadDto(
+            rs.getInt("idArticulo"),
+            rs.getString("skuSicofi"),
+            rs.getString("nombreArticulo"),
+            rs.getString("descripcion"),
+            rs.getString("unidadMedida"),
+            rs.getString("marca")
+    );
+
+    private final RowMapper<ReglaAmenidadActualDto> reglaAmenidadActualMapper = (rs, rowNum) -> new ReglaAmenidadActualDto(
+            rs.getInt("idArticulo"),
+            rs.getString("nombreArticulo"),
+            rs.getString("unidadMedida"),
+            rs.getInt("cantidadBase"),
+            rs.getInt("cantidadPorPersona")
+    );
+
+    private final RowMapper<DetallesUnidadFisica> detallesUnidadFisicaMapper = (rs, rowNum) -> new DetallesUnidadFisica(
+            rs.getInt("idUnidadFisica"),
+            rs.getString("numeroUnidadFisica"),
+            rs.getInt("tipoUnidad"),
+            rs.getString("nombreTipoUnidad"),
+            rs.getInt("capacidadMaxima"),
+            rs.getBoolean("disponible"),
+            rs.getInt("idDesarrollo"),
+            rs.getString("nombreDesarrollo"),
+            rs.getObject("piso") != null ? rs.getInt("piso") : null,
+            rs.getInt("idEstatus"),
+            rs.getString("nombreEstatus"),
+            rs.getObject("idPadre") != null ? rs.getInt("idPadre") : null
+    );
 
     // =========================================================================
     // MÉTODOS DE ESCRITURA (Write)
@@ -205,9 +244,16 @@ public class UnidadesRepository {
                 scalarIntMapper, usuario, false, true);
     }
 
-    public boolean spResvDesactivarUnidadFisica(Integer idUnidadFisica, String usuario) {
+    public boolean spResvDesactivarUnidadFisica(DesactivarUnidadRequest request, String usuario) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("IdUnidadFisica", request.idUnidadFisica());
+        params.put("FechaInicio", request.fechaInicio());
+        params.put("FechaFin", request.fechaFin());
+        params.put("RazonBloqueo", request.razonBloqueo());
+        params.put("Usuario", usuario);
+
         return spExecutor.executeLog("spResvDesactivarUnidadFisica",
-                Map.of("IdUnidadFisica", idUnidadFisica, "Usuario", usuario),
+                params,
                 usuario, true, true);
     }
 
@@ -228,5 +274,58 @@ public class UnidadesRepository {
 
     public Optional<TipoUnidadDetalles> spResvObtenerDetalleTipoUnidad(Integer idTipoUnidad) {
         return spExecutor.querySingle("spResvObtenerDetalleTipoUnidad", Map.of("RhdtId", idTipoUnidad), detallesUIRowMapper);
+    }
+
+    public List<UnidadBloqueadaDto> obtenerUnidadesBloqueadas(Integer idDesarrollo) {
+        return spExecutor.queryList(
+                "spResvObtenerUnidadesBloqueadas",
+                Map.of("IdDesarrollo", idDesarrollo),
+                unidadBloqueadaMapper
+        );
+    }
+
+    public void reactivarUnidadFisica(Integer idUnidadFisica, String usuario) {
+        spExecutor.execute(
+                "spResvReactivarUnidadFisica",
+                Map.of(
+                        "IdUnidadFisica", idUnidadFisica,
+                        "Usuario", usuario
+                )
+        );
+    }
+
+    public List<ArticuloAmenidadDto> obtenerCatalogoAmenidades() {
+        return spExecutor.queryList(
+                "spInvObtenerCatalogoAmenidades",
+                Map.of(),
+                articuloAmenidadMapper
+        );
+    }
+
+    public List<ReglaAmenidadActualDto> obtenerReglasAmenidades(Integer rhdtId) {
+        return spExecutor.queryList(
+                "spAmaObtenerReglasAmenidades",
+                Map.of("RhdtId", rhdtId),
+                reglaAmenidadActualMapper
+        );
+    }
+
+    public void guardarReglasAmenidades(Integer rhdtId, String jsonReglas, String usuario) {
+        spExecutor.execute(
+                "spAmaGuardarReglasAmenidades",
+                Map.of(
+                        "RhdtId", rhdtId,
+                        "JsonReglas", jsonReglas,
+                        "Usuario", usuario
+                )
+        );
+    }
+
+    public Optional<DetallesUnidadFisica> spResvObtenerDetallesUnidadFisica(Integer idUnidadFisica) {
+        return spExecutor.querySingle(
+                "spResvObtenerDetallesUnidadFisica",
+                Map.of("IdUnidadFisica", idUnidadFisica),
+                detallesUnidadFisicaMapper
+        );
     }
 }

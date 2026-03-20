@@ -13,6 +13,7 @@ import com.coralclubes.facil.shared.infrastructure.security.dto.request.LoginReq
 import com.coralclubes.facil.shared.infrastructure.security.dto.request.RefreshTokenRequest;
 import com.coralclubes.facil.shared.infrastructure.security.dto.request.ValidacionAutorizacion;
 import com.coralclubes.facil.shared.infrastructure.security.dto.response.*;
+import com.coralclubes.facil.shared.infrastructure.security.enums.TipoAutorizacion;
 import com.coralclubes.facil.shared.infrastructure.security.repository.LoginRepository;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
@@ -145,9 +146,20 @@ public class AuthService {
      * @return ApiResponse con un booleano indicando si la autorización es válida o no.
      */
     public ApiResponse<Boolean> validarAutorizacionFueraDePolitica(ValidacionAutorizacion request) {
+        // 1. Validamos que las credenciales físicas sean correctas
         validarLoginSimple(new LoginRequest(request.username(), request.password()));
 
-        int validado = loginRepository.spLoginValidarAutorizacionFueraDePolitica(request.username(), request.autorizacion());
+        // 2. Mapeo Seguro (Doble Parseo)
+        String claveRealBD;
+        try {
+            TipoAutorizacion tipo = TipoAutorizacion.valueOf(request.autorizacion());
+            claveRealBD = tipo.getDbClave();
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("El tipo de autorización solicitado no existe o es inválido.");
+        }
+
+        // 3. Ejecutamos el SP con la clave real de la BD
+        int validado = loginRepository.spLoginValidarAutorizacionFueraDePolitica(request.username(), claveRealBD);
         boolean esValido = validado == 1;
 
         return ApiResponse.from(esValido ? LoginResponseCode.LOGIN_AUTHORIZATION_SUCCESS : LoginResponseCode.LOGIN_NOT_PERMITIONS, esValido);

@@ -50,9 +50,6 @@ public class ResumenCheckoutResponse {
     public static class ResumenFinancieroDto {
         private BigDecimal subtotalOriginal;
         private BigDecimal totalDescuentos;
-        private BigDecimal baseGravable;
-        private BigDecimal iva;
-        private BigDecimal ish;
         private BigDecimal totalAPagar;
         private boolean cuponValido;
         private String mensajeCupon;

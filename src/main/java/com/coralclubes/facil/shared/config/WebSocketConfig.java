@@ -41,5 +41,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
         // 3. Prefijo para mensajes que el Frontend envía HACIA el Backend
         registry.setApplicationDestinationPrefixes("/app");
+
+        // 4. Prefijo para mensajes dirigidos a destinos específicos de usuarios (p. ej., respuestas privadas)
+        registry.setUserDestinationPrefix("/user");
     }
 }
