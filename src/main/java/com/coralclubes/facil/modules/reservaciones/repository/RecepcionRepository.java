@@ -101,11 +101,15 @@ public class RecepcionRepository {
     }
 
     /**
-     * Obtiene las habitaciones físicas (ej. 804, 805) que están limpias y disponibles
-     * para un tipo de unidad específico.
+     * Obtiene las habitaciones físicas que están limpias y disponibles
+     * para un tipo de unidad específico, perdonando la auto-colisión de la reserva actual.
      */
-    public List<UnidadDisponibleDto> obtenerUnidadesDisponiblesParaCheckIn(Integer tipoUnidadId) {
-        Map<String, Object> params = Map.of("TipoUnidad", tipoUnidadId);
+    public List<UnidadDisponibleDto> obtenerUnidadesDisponiblesParaCheckIn(String membresia, Integer consecutivo, Integer tipoUnidadId) {
+        Map<String, Object> params = Map.of(
+                "Membresia", membresia,
+                "Consecutivo", consecutivo,
+                "TipoUnidad", tipoUnidadId
+        );
 
         return spExecutor.queryList(
                 "spResvObtenerUnidadesDisponiblesParaCheckIn",

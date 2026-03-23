@@ -98,14 +98,17 @@ public class RecepcionService {
     }
 
     /**
-     * Obtiene el catálogo de cuartos físicos disponibles para hacer Check-In.
+     * Obtiene el catálogo de cuartos físicos disponibles para hacer Check-In o Transferencia.
      */
-    public ApiResponse<List<UnidadDisponibleDto>> obtenerUnidadesDisponiblesCheckIn(Integer rhdtId) {
+    public ApiResponse<List<UnidadDisponibleDto>> obtenerUnidadesDisponiblesCheckIn(String membresia, Integer consecutivo, Integer rhdtId) {
         if (rhdtId == null || rhdtId <= 0) {
             throw new IllegalArgumentException("El ID del tipo de unidad es obligatorio.");
         }
+        if (membresia == null || membresia.isBlank() || consecutivo == null) {
+            throw new IllegalArgumentException("La membresía y el consecutivo son obligatorios para validar la disponibilidad real.");
+        }
 
-        List<UnidadDisponibleDto> unidades = repository.obtenerUnidadesDisponiblesParaCheckIn(rhdtId);
+        List<UnidadDisponibleDto> unidades = repository.obtenerUnidadesDisponiblesParaCheckIn(membresia, consecutivo, rhdtId);
         return ApiResponse.success("Unidades disponibles obtenidas", unidades);
     }
 
@@ -166,11 +169,25 @@ public class RecepcionService {
     public ApiResponse<Boolean> transferirUnidad(TransferirUnidadRequest request) {
         String usuario = userContext.getUsername();
 
+        // 1. Obtener el RUN_ID antes del checkout
+        ResumenReservacionDto detalle = reservacionesService.obtenerResumenReservacion(request.membresia(), request.consecutivo()).data();
+
         boolean exec = repository.transferirUnidad(request, usuario);
 
         if (exec) {
             businessLogger.info(usuario, "Transferencia de habitación realizada para Membresía: {}, Consecutivo: {}, Nuevo RHDT ID: {}, Nuevo RUN ID: {}, Importe Diferencia: {}",
                     request.membresia(), request.consecutivo(), request.nuevoRhdtId(), request.nuevoRunId(), request.importeDiferencia());
+
+            // 3. Disparar creación de tarea y WebSocket
+            if (detalle.idUnidadFisica() != null && request.bloquearUnidadAnterior()) {
+                amaDeLlavesService.crearTareaYNotificar(
+                        detalle.idUnidadFisica(),
+                        detalle.numeroUnidad(),
+                        detalle.desarrolloId(),
+                        usuario,
+                        "TRANSFERENCIA-HABITACION"
+                );
+            }
 
             return ApiResponse.success("La transferencia de habitación se realizó con éxito.", true);
         } else {
@@ -232,7 +249,6 @@ public class RecepcionService {
         String usuario = userContext.getUsername();
 
         ResumenReservacionDto detalle = reservacionesService.obtenerResumenReservacion(request.membresia(), request.consecutivo()).data();
-        Integer idUnidadFisica = detalle.idUnidadFisica();
 
         boolean exec = repository.cancelarReservacion(request, usuario);
 
@@ -243,16 +259,6 @@ public class RecepcionService {
             BigDecimal costoCancelacion = request.cobrarCuotaCancelacion() ? repository.calcularPenalizacionCancelacion(request.membresia(), request.consecutivo()) : BigDecimal.ZERO;
 
             enviarCorreoCancelacion(detalle, costoCancelacion);
-
-            if (idUnidadFisica != null && idUnidadFisica > 0) {
-                amaDeLlavesService.crearTareaYNotificar(
-                        idUnidadFisica,
-                        detalle.numeroUnidad(),
-                        detalle.desarrolloId(),
-                        usuario,
-                        "CANCELACIÓN DE RESERVACIÓN"
-                );
-            }
 
             return ApiResponse.success("La reservación ha sido cancelada y la habitación liberada con éxito.", true);
         } else {

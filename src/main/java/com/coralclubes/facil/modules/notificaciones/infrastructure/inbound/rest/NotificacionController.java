@@ -4,58 +4,56 @@ import com.coralclubes.facil.modules.notificaciones.application.dto.EnviarNotifi
 import com.coralclubes.facil.modules.notificaciones.application.dto.NotificacionDto;
 import com.coralclubes.facil.modules.notificaciones.application.service.NotificacionEmisorService;
 import com.coralclubes.facil.modules.notificaciones.application.service.NotificacionGestionService;
+import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/admin/notificaciones")
 @RequiredArgsConstructor
 public class NotificacionController {
+    private final UserContext userContext;
 
     private final NotificacionGestionService gestionService;
     private final NotificacionEmisorService emisorService;
 
     @GetMapping("/no-leidas")
-    public ResponseEntity<List<NotificacionDto>> obtenerNoLeidas(Principal principal) {
-        // principal.getName() extrae el username del JWT validado
-        List<NotificacionDto> notificaciones = gestionService.obtenerNoLeidas(principal.getName());
+    public ResponseEntity<List<NotificacionDto>> obtenerNoLeidas() {
+        List<NotificacionDto> notificaciones = gestionService.obtenerNoLeidas();
         return ResponseEntity.ok(notificaciones);
     }
 
     @GetMapping("/contador")
-    public ResponseEntity<Long> contarNoLeidas(Principal principal) {
-        long contador = gestionService.contarNoLeidas(principal.getName());
+    public ResponseEntity<Long> contarNoLeidas() {
+        long contador = gestionService.contarNoLeidas();
         return ResponseEntity.ok(contador);
     }
 
     @PutMapping("/{id}/marcar-leida")
-    public ResponseEntity<Void> marcarComoLeida(@PathVariable Long id, Principal principal) {
-        gestionService.marcarComoLeida(id, principal.getName());
+    public ResponseEntity<Void> marcarComoLeida(@PathVariable Long id) {
+        gestionService.marcarComoLeida(id);
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/marcar-todas-leidas")
-    public ResponseEntity<Void> marcarTodasComoLeidas(Principal principal) {
-        gestionService.marcarTodasComoLeidas(principal.getName());
+    public ResponseEntity<Void> marcarTodasComoLeidas() {
+        gestionService.marcarTodasComoLeidas();
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/enviar")
     @PreAuthorize("hasAuthority('AUTH_NOTIFICACIONES')")
     public ApiResponse<Boolean> enviarNotificacionMasiva(
-            @RequestBody EnviarNotificacionMasivaRequest request,
-            Principal principal
+            @RequestBody EnviarNotificacionMasivaRequest request
     ) {
-        // El remitente es el administrador autenticado que lanza la petición
-        String remitente = principal.getName();
+        String username = userContext.getUsername();
 
-        emisorService.enviarAMultiples(remitente, request.destinatarios(), request.contenido());
+        emisorService.enviarAMultiples(username, request.destinatarios(), request.contenido());
 
         return ApiResponse.success("Notificaciones enviadas exitosamente.", true);
     }

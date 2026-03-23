@@ -45,10 +45,12 @@ public class RecepcionController {
 
     @GetMapping("/unidades-check-in")
     public ResponseEntity<ApiResponse<List<UnidadDisponibleDto>>> obtenerUnidadesDisponiblesCheckIn(
+            @RequestParam String membresia,
+            @RequestParam Integer consecutivo,
             @RequestParam Integer rhdtId
     ) {
 
-        var response = recepcionService.obtenerUnidadesDisponiblesCheckIn(rhdtId);
+        var response = recepcionService.obtenerUnidadesDisponiblesCheckIn(membresia, consecutivo, rhdtId);
         return ResponseEntity.ok(response);
     }
 

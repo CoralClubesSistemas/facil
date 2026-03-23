@@ -3,6 +3,7 @@ package com.coralclubes.facil.modules.notificaciones.application.service;
 import com.coralclubes.facil.modules.notificaciones.application.dto.NotificacionDto;
 import com.coralclubes.facil.modules.notificaciones.domain.model.Notificacion;
 import com.coralclubes.facil.modules.notificaciones.domain.repository.NotificacionRepository;
+import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
@@ -19,10 +20,13 @@ public class NotificacionGestionService {
 
     private final NotificacionRepository notificacionRepository;
     private final ObjectMapper objectMapper;
+    private final UserContext userContext;
 
     // 1. Obtener todas las no leídas al iniciar sesión
     @Transactional(readOnly = true)
-    public List<NotificacionDto> obtenerNoLeidas(String username) {
+    public List<NotificacionDto> obtenerNoLeidas() {
+        String username = userContext.getUsername();
+
         List<Notificacion> resp = notificacionRepository.findByDestinatarioUsernameAndEstadoOrderByFechaCreacionDesc(username, "NO_LEIDO");
 
         return resp.stream().map(n -> new NotificacionDto(
@@ -49,13 +53,17 @@ public class NotificacionGestionService {
 
     // 2. Obtener solo el contador (para el numero rojo en la campanita)
     @Transactional(readOnly = true)
-    public long contarNoLeidas(String username) {
+    public long contarNoLeidas() {
+        String username = userContext.getUsername();
+
         return notificacionRepository.countByDestinatarioUsernameAndEstado(username, "NO_LEIDO");
     }
 
     // 3. Marcar una notificación específica como leída (cuando hace clic en ella)
     @Transactional
-    public void marcarComoLeida(Long id, String username) {
+    public void marcarComoLeida(Long id) {
+        String username = userContext.getUsername();
+
         notificacionRepository.findById(id).ifPresent(notificacion -> {
             // Validar que la notificación realmente le pertenece a este usuario
             if (notificacion.getDestinatarioUsername().equals(username) && "NO_LEIDO".equals(notificacion.getEstado())) {
@@ -68,7 +76,9 @@ public class NotificacionGestionService {
 
     // 4. Marcar todas como leídas
     @Transactional
-    public void marcarTodasComoLeidas(String username) {
+    public void marcarTodasComoLeidas() {
+        String username = userContext.getUsername();
+
         List<Notificacion> notificaciones = notificacionRepository
                 .findByDestinatarioUsernameAndEstadoOrderByFechaCreacionDesc(username, "NO_LEIDO");
 

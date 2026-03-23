@@ -132,7 +132,7 @@ public class AmaDeLlavesService {
 
                 PeticionNotificacionDto peticion = new PeticionNotificacionDto(
                         "ALERTA_HOUSEKEEPING",
-                        2,
+                        3,
                         titulo,
                         mensaje,
                         metadata);

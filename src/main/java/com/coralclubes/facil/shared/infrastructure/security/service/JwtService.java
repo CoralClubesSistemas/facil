@@ -5,11 +5,15 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -68,6 +72,14 @@ public class JwtService {
      */
     public String getUsernameFromToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
+    }
+
+    public Authentication getAuthentication(String token) {
+        String username = getUsernameFromToken(token);
+
+        // Usamos el constructor de 3 parámetros (aunque las autoridades estén vacías)
+        // para que Spring marque la sesión como Autenticada = TRUE.
+        return new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
     }
 
     /**

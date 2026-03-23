@@ -47,6 +47,9 @@ public class NotificacionEmisorService {
         // Insert Masivo a la base de datos
         List<Notificacion> guardadas = notificacionRepository.saveAll(notificaciones);
 
+        log.info("Notificación enviada a {} usuarios. Remitente: {}, Título: {}", guardadas.size(), remitente, dto.titulo());
+        log.info("Destinatarios: {}", guardadas.stream().map(Notificacion::getDestinatarioUsername).toList());
+
         // Disparamos el WebSocket individualmente
         guardadas.forEach(this::empujarAWebSocket);
     }

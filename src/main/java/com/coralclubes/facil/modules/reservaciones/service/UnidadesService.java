@@ -294,14 +294,14 @@ public class UnidadesService {
         // Ejecutar SP de Reactivación en DB (que la pasa a estatus Sucia)
         tipoUnidadRepo.reactivarUnidadFisica(request.idUnidadFisica(), usuario);
         // Obtenemos el número de habitación para la creación de la tarea
-        DetallesUnidadFisica numeroHabitacion = tipoUnidadRepo.spResvObtenerDetallesUnidadFisica(request.idUnidadFisica())
+        DetallesUnidadFisica detalleHabitacion = tipoUnidadRepo.spResvObtenerDetallesUnidadFisica(request.idUnidadFisica())
                 .orElseThrow(() -> new ServiceUnavailableException("No se pudieron obtener los detalles de la unidad física."));
 
         // Disparar creación de tarea y WebSocket
         amaDeLlavesService.crearTareaYNotificar(
                 request.idUnidadFisica(),
-                numeroHabitacion.numeroUnidadFisica(),
-                userContext.getIdDesarrollo(),
+                detalleHabitacion.numeroUnidadFisica(),
+                detalleHabitacion.idDesarrollo(),
                 usuario,
                 "REACTIVACION_UNIDAD_FISICA"
         );
