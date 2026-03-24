@@ -170,14 +170,13 @@ public class ReservacionesRepository {
                 .orElseThrow(() -> new RuntimeException("Error en base de datos: No se generó el UUID del carrito."));
     }
 
-    public boolean eliminarReservaTemporal(UUID groupId) {
+    public void eliminarReservaTemporal(UUID groupId) {
         Map<String, Object> params = new HashMap<>();
         params.put("GROUP_ID", groupId.toString());
 
         RowMapper<Integer> mapper = (rs, rowNum) -> rs.getInt("Exito");
 
-        return spExecutor.querySingle("spResvEliminarReservaTemporal", params, mapper)
-                .orElse(0) > 0;
+        spExecutor.querySingle("spResvEliminarReservaTemporal", params, mapper);
     }
 
     public String obtenerContextoReservaTemporalJson(UUID groupId) {

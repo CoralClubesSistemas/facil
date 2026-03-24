@@ -76,7 +76,7 @@ public class UnidadesService {
 
     public ApiResponse<Boolean> eliminarImagenesTipoUnidad(EliminarImagenesRequest request) {
         String usuario = userContext.getUsername();
-        boolean eliminado = tipoUnidadRepo.spResvEliminarImagenesTipoUnidad(request.id(), request.imagenesAEliminar(), usuario);
+        tipoUnidadRepo.spResvEliminarImagenesTipoUnidad(request.id(), request.imagenesAEliminar(), usuario);
 
         // Solicitamos la eliminacion de las imágenes al microservicio de almacenamiento (de manera asíncrona, sin esperar la respuesta)
         request.imagenesAEliminar().forEach(imagen -> {
@@ -86,29 +86,20 @@ public class UnidadesService {
             }
         });
 
-        if (!eliminado) {
-            return ApiResponse.error(GeneralResponseCode.INTERNAL_SERVER_ERROR, "No se pudieron eliminar las imágenes seleccionadas.");
-        }
         return ApiResponse.success("Imágenes eliminadas correctamente", true);
     }
 
     public ApiResponse<Boolean> cambiarImagenPortadaTipoUnidad(CambiarPortadaRequest request) {
         String usuario = userContext.getUsername();
-        boolean actualizado = tipoUnidadRepo.spResvCambiarImagenPortadaTipoUnidad(request.id(), request.nuevaPortadaUuid(), usuario);
+        tipoUnidadRepo.spResvCambiarImagenPortadaTipoUnidad(request.id(), request.nuevaPortadaUuid(), usuario);
 
-        if (!actualizado) {
-            return ApiResponse.error(GeneralResponseCode.INTERNAL_SERVER_ERROR, "No se pudo actualizar la portada.");
-        }
         return ApiResponse.success("Portada actualizada correctamente", true);
     }
 
     public ApiResponse<Boolean> desactivarTipoUnidad(Integer idTipoUnidad) {
         String usuario = userContext.getUsername();
-        boolean desactivado = tipoUnidadRepo.spResvDesactivarTipoUnidad(idTipoUnidad, usuario);
+        tipoUnidadRepo.spResvDesactivarTipoUnidad(idTipoUnidad, usuario);
 
-        if (!desactivado) {
-            return ApiResponse.error(GeneralResponseCode.INTERNAL_SERVER_ERROR, "No se pudo desactivar el tipo de unidad.");
-        }
         return ApiResponse.success("Tipo de unidad desactivado correctamente", true);
     }
 
@@ -237,10 +228,7 @@ public class UnidadesService {
 
     public ApiResponse<Boolean> desactivarUnidadFisica(DesactivarUnidadRequest request) {
         String usuario = userContext.getUsername();
-        boolean desactivado = tipoUnidadRepo.spResvDesactivarUnidadFisica(request, usuario);
-        if (!desactivado) {
-            return ApiResponse.error(GeneralResponseCode.INTERNAL_SERVER_ERROR, "No se pudo dar de baja la unidad.");
-        }
+        tipoUnidadRepo.spResvDesactivarUnidadFisica(request, usuario);
         return ApiResponse.success("Unidad física dada de baja correctamente", true);
     }
 

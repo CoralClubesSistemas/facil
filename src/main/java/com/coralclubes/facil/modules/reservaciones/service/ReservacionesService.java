@@ -90,10 +90,7 @@ public class ReservacionesService {
     }
 
     public ApiResponse<Boolean> liberarInventario(UUID groupId) {
-        boolean exito = repository.eliminarReservaTemporal(groupId);
-        if (!exito) {
-            return ApiResponse.success("El inventario ya estaba liberado o no se encontró.", false);
-        }
+        repository.eliminarReservaTemporal(groupId);
         return ApiResponse.success("Inventario liberado exitosamente.", true);
     }
 

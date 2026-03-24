@@ -189,7 +189,7 @@ public class RecepcionRepository {
      * Libera (ensucia) la actual, ocupa la nueva, gestiona padres/hijos
      * y genera un cargo de upgrade si aplica.
      */
-    public boolean transferirUnidad(TransferirUnidadRequest request, String usuario) {
+    public void transferirUnidad(TransferirUnidadRequest request, String usuario) {
         Map<String, Object> params = new HashMap<>();
         params.put("Membresia", request.membresia());
         params.put("Consecutivo", request.consecutivo());
@@ -200,7 +200,7 @@ public class RecepcionRepository {
         params.put("BloquearUnidadAnterior", request.bloquearUnidadAnterior());
         params.put("Usuario", usuario);
 
-        return spExecutor.executeLog("spResvTransferirUnidad", params);
+        spExecutor.executeLog("spResvTransferirUnidad", params);
     }
 
     /**
@@ -219,11 +219,58 @@ public class RecepcionRepository {
         return penalizacion != null ? penalizacion : BigDecimal.ZERO;
     }
 
+    private final RowMapper<CheckInOutEspecialCotizacionDto> cotizacionCheckInOutMapper = (rs, rowNum) -> CheckInOutEspecialCotizacionDto.builder()
+            .aplicaCheckinAnticipado(rs.getBoolean("AplicaCheckinAnticipado"))
+            .minutosAntesCheckin(rs.getInt("MinutosAntesCheckin"))
+            .cargoCheckin(rs.getBigDecimal("CargoCheckin"))
+            .yaTieneCargoCheckin(rs.getBoolean("YaTieneCargoCheckin"))
+            .aplicaCheckoutPosterior(rs.getBoolean("AplicaCheckoutPosterior"))
+            .minutosDespuesCheckout(rs.getInt("MinutosDespuesCheckout"))
+            .cargoCheckout(rs.getBigDecimal("CargoCheckout"))
+            .yaTieneCargoCheckout(rs.getBoolean("YaTieneCargoCheckout"))
+            .fechaEntrada(rs.getTimestamp("FechaEntrada") != null ? rs.getTimestamp("FechaEntrada").toLocalDateTime() : null)
+            .fechaSalida(rs.getTimestamp("FechaSalida") != null ? rs.getTimestamp("FechaSalida").toLocalDateTime() : null)
+            .minutosMaxCheckin(rs.getInt("MinutosMaxCheckin"))
+            .minutosMaxCheckout(rs.getInt("MinutosMaxCheckout"))
+            .build();
+
+    /**
+     * Ejecuta el SP que evalúa si aplica cargo por Check-in anticipado o Check-out posterior,
+     * y devuelve la cotización sin generar ningún movimiento.
+     */
+    public CheckInOutEspecialCotizacionDto cotizarCheckInOutEspecial(String membresia, Integer consecutivo) {
+        Map<String, Object> params = Map.of(
+                "Membresia", membresia,
+                "Consecutivo", consecutivo
+        );
+
+        return spExecutor.querySingle(
+                "spResvCotizarCheckInOutEspecial",
+                params,
+                cotizacionCheckInOutMapper
+        ).orElse(null);
+    }
+
+    /**
+     * Ejecuta el SP que registra un cargo por Check-in anticipado o Check-out posterior.
+     * El SP valida umbrales de horas y disponibilidad de la unidad antes de generar el cargo.
+     */
+    public void registrarMovimientoCheckInOutEspecial(CheckInOutEspecialRequest request, String usuario) {
+        Map<String, Object> params = Map.of(
+                "Membresia", request.membresia(),
+                "Consecutivo", request.consecutivo(),
+                "TipoOperacion", request.tipoOperacion().name(),
+                "Usuario", usuario
+        );
+
+        spExecutor.executeLog("spResvRegistrarMovimientoCheckInOutEspecial", params);
+    }
+
     /**
      * Ejecuta el SP que cancela la reservación, libera los cuartos,
      * abona el saldo pendiente y carga la penalización si aplica.
      */
-    public boolean cancelarReservacion(CancelarReservacionRequest request, String usuario) {
+    public void cancelarReservacion(CancelarReservacionRequest request, String usuario) {
         Map<String, Object> params = new HashMap<>();
         params.put("Membresia", request.membresia());
         params.put("Consecutivo", request.consecutivo());
@@ -231,6 +278,6 @@ public class RecepcionRepository {
         params.put("CobrarCuotaCancelacion", request.cobrarCuotaCancelacion() ? 1 : 0);
         params.put("Usuario", usuario);
 
-        return spExecutor.executeLog("spResvCancelarReservacion", params);
+        spExecutor.executeLog("spResvCancelarReservacion", params);
     }
 }

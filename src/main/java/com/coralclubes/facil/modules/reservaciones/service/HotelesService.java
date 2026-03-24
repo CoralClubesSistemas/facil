@@ -85,7 +85,7 @@ public class HotelesService {
     @Transactional
     public ApiResponse<Boolean> eliminarImagenesHotel(EliminarImagenesRequest request) {
         String usuario = userContext.getUsername();
-        boolean eliminado = repo.spResvEliminarImagenesHotel(request.id(), request.imagenesAEliminar(), usuario);
+        repo.spResvEliminarImagenesHotel(request.id(), request.imagenesAEliminar(), usuario);
 
         // Solicitamos la eliminacion de las imágenes al microservicio de almacenamiento (de manera asíncrona, sin esperar la respuesta)
         request.imagenesAEliminar().forEach(imagen -> {
@@ -95,37 +95,19 @@ public class HotelesService {
             }
         });
 
-        if (!eliminado) {
-            return ApiResponse.error(GeneralResponseCode.INTERNAL_SERVER_ERROR, "No se pudieron eliminar las imágenes seleccionadas.");
-        }
-
         return ApiResponse.success("Imágenes eliminadas correctamente", true);
     }
 
-    /**
-     * Cambia la imagen principal (portada) del hotel.
-     */
     public ApiResponse<Boolean> cambiarImagenPortadaHotel(CambiarPortadaRequest request) {
         String usuario = userContext.getUsername();
-        boolean actualizado = repo.spResvCambiarImagenPortadaHotel(request.id(), request.nuevaPortadaUuid(), usuario);
-
-        if (!actualizado) {
-            return ApiResponse.error(GeneralResponseCode.INTERNAL_SERVER_ERROR, "No se pudo actualizar la imagen de portada.");
-        }
+        repo.spResvCambiarImagenPortadaHotel(request.id(), request.nuevaPortadaUuid(), usuario);
 
         return ApiResponse.success("Imagen de portada actualizada correctamente", true);
     }
 
-    /**
-     * Desactiva un hotel (Soft Delete).
-     */
     public ApiResponse<Boolean> desactivarHotel(Integer idHotel) {
         String usuario = userContext.getUsername();
-        boolean desactivado = repo.spResvDesactivarHotel(idHotel, usuario);
-
-        if (!desactivado) {
-            return ApiResponse.error(GeneralResponseCode.INTERNAL_SERVER_ERROR, "No se pudo desactivar el hotel.");
-        }
+        repo.spResvDesactivarHotel(idHotel, usuario);
 
         return ApiResponse.success("Hotel desactivado correctamente", true);
     }

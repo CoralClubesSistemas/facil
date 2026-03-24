@@ -121,7 +121,7 @@ public class HotelesRepository {
         return spExecutor.querySingleLog("spResvGuardarImagenesHotel", params, scalarIntMapper, usuario, false, true);
     }
 
-    public boolean spResvEliminarImagenesHotel(Integer hotelId, List<EliminarImagenRequest> imagenes, String usuario) {
+    public void spResvEliminarImagenesHotel(Integer hotelId, List<EliminarImagenRequest> imagenes, String usuario) {
         String jsonImagenes = JsonUtils.toJson(imagenes);
 
         Map<String, Object> params = Map.of(
@@ -129,25 +129,25 @@ public class HotelesRepository {
                 "ImagenesJson", jsonImagenes
         );
 
-        return spExecutor.executeLog("spResvEliminarImagenesHotel", params, usuario, false, true);
+        spExecutor.executeLog("spResvEliminarImagenesHotel", params, usuario, false, true);
     }
 
-    public boolean spResvCambiarImagenPortadaHotel(Integer hotelId, UUID nuevaPortadaUuid, String usuario) {
+    public void spResvCambiarImagenPortadaHotel(Integer hotelId, UUID nuevaPortadaUuid, String usuario) {
         Map<String, Object> params = Map.of(
                 "HotelId", hotelId,
                 "NuevaPortadaUuid", nuevaPortadaUuid.toString()
         );
 
-        return spExecutor.executeLog("spResvCambiarImagenPortadaHotel", params, usuario, false, false);
+        spExecutor.executeLog("spResvCambiarImagenPortadaHotel", params, usuario, false, false);
     }
 
-    public boolean spResvDesactivarHotel(Integer hotelId, String usuario) {
+    public void spResvDesactivarHotel(Integer hotelId, String usuario) {
         Map<String, Object> params = Map.of(
                 "HotelId", hotelId,
                 "Usuario", usuario
         );
 
-        return spExecutor.executeLog("spResvDesactivarHotel", params, usuario, true, true);
+        spExecutor.executeLog("spResvDesactivarHotel", params, usuario, true, true);
     }
 
 

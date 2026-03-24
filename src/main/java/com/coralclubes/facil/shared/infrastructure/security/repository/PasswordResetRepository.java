@@ -72,9 +72,8 @@ public class PasswordResetRepository {
      * Actualiza la contraseña
      */
     @Transactional
-    public boolean spLoginCambiarPassword(String usuario, String newPassword) {
-        // Usamos el executor para el SP, ocultando el password del log
-        return spExecutor.execute(
+    public void spLoginCambiarPassword(String usuario, String newPassword) {
+        spExecutor.execute(
                 "spLoginCambiarPassword",
                 Map.of("USUARIO", usuario, "PASSWORD", newPassword)
         );

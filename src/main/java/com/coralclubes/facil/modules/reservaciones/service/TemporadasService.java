@@ -46,11 +46,7 @@ public class TemporadasService {
     public ApiResponse<Boolean> eliminarTemporada(Integer idTemporadaFecha) {
         String usuario = userContext.getUsername();
 
-        boolean eliminado = repository.spResvEliminarTemporadaReservacion(idTemporadaFecha, usuario);
-
-        if (!eliminado) {
-            return ApiResponse.error(GeneralResponseCode.SERVICE_UNAVAILABLE, "No se pudo eliminar la temporada.");
-        }
+        repository.spResvEliminarTemporadaReservacion(idTemporadaFecha, usuario);
 
         return ApiResponse.success("Temporada eliminada correctamente", true);
     }

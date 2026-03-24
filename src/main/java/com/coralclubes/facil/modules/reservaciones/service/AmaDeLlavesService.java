@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.reservaciones.service;
 
 import com.coralclubes.facil.modules.reservaciones.dto.request.CambiarEstatusTareaRequest;
+import com.coralclubes.facil.modules.reservaciones.dto.request.ConsumoRealDto;
 import com.coralclubes.facil.modules.reservaciones.dto.request.FinalizarTareaRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.request.GuardarCamaristaRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.response.CamaristaDto;
@@ -83,19 +84,21 @@ public class AmaDeLlavesService {
     }
 
     public ApiResponse<Boolean> finalizarTarea(Integer idTarea, FinalizarTareaRequest request) {
-        try {
             String usuario = userContext.getUsername();
             // Convertimos la lista de consumos a JSON String para SQL Server
-            String jsonConsumos = objectMapper.writeValueAsString(request.consumos());
+            String jsonConsumos = convertirConsumosAString(request.consumos());
 
             repository.finalizarTarea(idTarea, request.idAlmacenOrigen(), jsonConsumos, usuario);
 
             return ApiResponse.success("Tarea finalizada, inventario actualizado y cuarto liberado", true);
+    }
 
+    private String convertirConsumosAString(List<ConsumoRealDto> consumos) {
+        try {
+        return objectMapper.writeValueAsString(consumos);
         } catch (JsonProcessingException e) {
-            log.error("Error al parsear consumos a JSON", e);
-            return ApiResponse.error(GeneralResponseCode.INTERNAL_SERVER_ERROR,
-                    "Error procesando el listado de consumos.");
+            log.error("Error al convertir consumos a JSON: {}", e.getMessage());
+            return "[]";
         }
     }
 

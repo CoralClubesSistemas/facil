@@ -55,13 +55,12 @@ public class PromocionesRepository {
         return spExecutor.querySingleLog("spResvGuardarPromocionIntegral", params, scalarIntMapper, usuario, false, true);
     }
 
-    public boolean spResvEliminarPromocion(Integer idPromocion, String usuario) {
+    public void spResvEliminarPromocion(Integer idPromocion, String usuario) {
         Map<String, Object> params = new HashMap<>();
         params.put("IdPromocion", idPromocion);
         params.put("Usuario", usuario);
 
-        Optional<Integer> result = spExecutor.querySingleLog("spResvEliminarPromocion", params, scalarIntMapper, usuario, true, true);
-        return result.isPresent() && result.get() > 0;
+        spExecutor.querySingleLog("spResvEliminarPromocion", params, scalarIntMapper, usuario, true, true);
     }
 
     // =========================================================================
@@ -99,14 +98,13 @@ public class PromocionesRepository {
         return spExecutor.querySingleLog("spResvDetallarConsumoOferta", params, scalarIntMapper, usuario, true, true);
     }
 
-    public boolean spResvEnlazarImagenPromocion(Integer idPromocion, UUID uuidImagen, String usuario) {
+    public void spResvEnlazarImagenPromocion(Integer idPromocion, UUID uuidImagen, String usuario) {
         Map<String, Object> params = new HashMap<>();
         params.put("IdPromocion", idPromocion);
         params.put("UuidImagen", uuidImagen != null ? uuidImagen.toString() : null);
         params.put("Usuario", usuario);
 
-        Optional<Integer> result = spExecutor.querySingle("spResvEnlazarImagenPromocion", params, scalarIntMapper);
-        return result.isPresent() && result.get() > 0;
+        spExecutor.querySingle("spResvEnlazarImagenPromocion", params, scalarIntMapper);
     }
 
     public Optional<UUID> spResvObtenerUuidImagenPromocion(Integer idPromocion) {

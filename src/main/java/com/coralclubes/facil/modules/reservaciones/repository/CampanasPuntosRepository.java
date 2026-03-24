@@ -66,13 +66,12 @@ public class CampanasPuntosRepository {
         return spExecutor.querySingleLog("spResvGuardarPromocionPuntos", params, scalarIntMapper, usuario, true, true);
     }
 
-    public boolean eliminarCampanaPuntos(Integer idPromocion, String usuario) {
+    public void eliminarCampanaPuntos(Integer idPromocion, String usuario) {
         Map<String, Object> params = new HashMap<>();
         params.put("RRP_ID", idPromocion);
         params.put("Usuario", usuario);
 
-        Optional<Integer> result = spExecutor.querySingleLog("spResvEliminarPromocionPuntos", params, scalarIntMapper, usuario, true, true);
-        return result.isPresent() && result.get() > 0;
+        spExecutor.querySingleLog("spResvEliminarPromocionPuntos", params, scalarIntMapper, usuario, true, true);
     }
 
     public List<OpcionPagoPuntosDto> evaluarPromocionesPuntosCarrito(UUID groupId) {

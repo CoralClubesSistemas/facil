@@ -59,9 +59,7 @@
 
         public ApiResponse<Boolean> eliminarCampana(Integer idPromocion) {
             String usuario = userContext.getUsername();
-            boolean exito = repository.eliminarCampanaPuntos(idPromocion, usuario);
-
-            if (!exito) throw new IllegalArgumentException("No se pudo dar de baja la campaña de puntos.");
+            repository.eliminarCampanaPuntos(idPromocion, usuario);
             return ApiResponse.success("Campaña dada de baja exitosamente.", true);
         }
 

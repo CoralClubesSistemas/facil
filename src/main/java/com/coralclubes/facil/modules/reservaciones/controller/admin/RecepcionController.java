@@ -59,6 +59,21 @@ public class RecepcionController {
         return ResponseEntity.ok(recepcionService.registrarCheckOut(request));
     }
 
+    @GetMapping("/check-in-out-especial/cotizar")
+    public ResponseEntity<ApiResponse<CheckInOutEspecialCotizacionDto>> cotizarCheckInOutEspecial(
+            @RequestParam String membresia,
+            @RequestParam Integer consecutivo) {
+        System.out.println("Recibido cotizarCheckInOutEspecial para membresia: " + membresia + ", consecutivo: " + consecutivo);
+
+        return ResponseEntity.ok(recepcionService.cotizarCheckInOutEspecial(membresia, consecutivo));
+    }
+
+    @PostMapping("/check-in-out-especial")
+    public ResponseEntity<ApiResponse<Boolean>> registrarMovimientoCheckInOutEspecial(
+            @Valid @RequestBody CheckInOutEspecialRequest request) {
+        return ResponseEntity.ok(recepcionService.registrarMovimientoCheckInOutEspecial(request));
+    }
+
     @GetMapping("/operaciones/cargos")
     public ResponseEntity<ApiResponse<List<CargoHabitacionDto>>> obtenerCargosReservacion(
             @RequestParam String membresia,

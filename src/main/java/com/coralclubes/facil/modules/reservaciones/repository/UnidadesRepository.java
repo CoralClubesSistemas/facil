@@ -176,14 +176,14 @@ public class UnidadesRepository {
                 scalarIntMapper, usuario, false, true);
     }
 
-    public boolean spResvEliminarImagenesTipoUnidad(Integer tipoUnidadId, List<EliminarImagenRequest> imagenesAEliminar, String usuario) {
-        return spExecutor.executeLog("spResvEliminarImagenesTipoUnidad",
+    public void spResvEliminarImagenesTipoUnidad(Integer tipoUnidadId, List<EliminarImagenRequest> imagenesAEliminar, String usuario) {
+        spExecutor.executeLog("spResvEliminarImagenesTipoUnidad",
                 Map.of("TipoUnidadId", tipoUnidadId, "ImagenesJson", JsonUtils.toJson(imagenesAEliminar)),
                 usuario, false, true);
     }
 
-    public boolean spResvCambiarImagenPortadaTipoUnidad(Integer tipoUnidadId, UUID nuevaPortadaUuid, String usuario) {
-        return spExecutor.executeLog("spResvCambiarImagenPortadaTipoUnidad",
+    public void spResvCambiarImagenPortadaTipoUnidad(Integer tipoUnidadId, UUID nuevaPortadaUuid, String usuario) {
+        spExecutor.executeLog("spResvCambiarImagenPortadaTipoUnidad",
                 Map.of("TipoUnidadId", tipoUnidadId,
                         "NuevaPortadaUuid", nuevaPortadaUuid.toString()
                 ),
@@ -192,8 +192,8 @@ public class UnidadesRepository {
                 false);
     }
 
-    public boolean spResvDesactivarTipoUnidad(Integer tipoUnidadId, String usuario) {
-        return spExecutor.executeLog("spResvDesactivarTipoUnidad",
+    public void spResvDesactivarTipoUnidad(Integer tipoUnidadId, String usuario) {
+        spExecutor.executeLog("spResvDesactivarTipoUnidad",
                 Map.of("TipoUnidadId", tipoUnidadId, "Usuario", usuario),
                 usuario, true, true);
     }
@@ -244,7 +244,7 @@ public class UnidadesRepository {
                 scalarIntMapper, usuario, false, true);
     }
 
-    public boolean spResvDesactivarUnidadFisica(DesactivarUnidadRequest request, String usuario) {
+    public void spResvDesactivarUnidadFisica(DesactivarUnidadRequest request, String usuario) {
         Map<String, Object> params = new HashMap<>();
         params.put("IdUnidadFisica", request.idUnidadFisica());
         params.put("FechaInicio", request.fechaInicio());
@@ -252,7 +252,7 @@ public class UnidadesRepository {
         params.put("RazonBloqueo", request.razonBloqueo());
         params.put("Usuario", usuario);
 
-        return spExecutor.executeLog("spResvDesactivarUnidadFisica",
+        spExecutor.executeLog("spResvDesactivarUnidadFisica",
                 params,
                 usuario, true, true);
     }

@@ -3,7 +3,6 @@ package com.coralclubes.facil.modules.reservaciones.service;
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
 import com.coralclubes.facil.modules.reservaciones.dto.response.*;
 import com.coralclubes.facil.modules.reservaciones.repository.RecepcionRepository;
-import com.coralclubes.facil.modules.reservaciones.repository.ReservacionesRepository;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.NotificationClient;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.dto.SolicitudNotificacionDto;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
@@ -93,6 +92,38 @@ public class RecepcionService {
         return ApiResponse.success("Check-Out registrado exitosamente. La habitación ha sido liberada.", true);
     }
 
+    /**
+     * Cotiza si aplica cargo por Check-in anticipado o Check-out posterior.
+     * No genera ningún movimiento, solo evalúa y devuelve los montos.
+     */
+    public ApiResponse<CheckInOutEspecialCotizacionDto> cotizarCheckInOutEspecial(String membresia, Integer consecutivo) {
+        if (membresia == null || membresia.isBlank() || consecutivo == null) {
+            throw new IllegalArgumentException("La membresía y el consecutivo son obligatorios.");
+        }
+
+        CheckInOutEspecialCotizacionDto cotizacion = repository.cotizarCheckInOutEspecial(membresia, consecutivo);
+
+        if (cotizacion == null) {
+            return ApiResponse.error(GeneralResponseCode.NOT_FOUND, "No se encontró la reservación especificada.");
+        }
+
+        return ApiResponse.success("Cotización de operación especial obtenida.", cotizacion);
+    }
+
+    /**
+     * Registra un cargo por Check-in anticipado o Check-out posterior.
+     * El SP en BD se encarga de validar umbrales de horas, disponibilidad y estatus.
+     */
+    public ApiResponse<Boolean> registrarMovimientoCheckInOutEspecial(CheckInOutEspecialRequest request) {
+        String usuario = userContext.getUsername();
+
+        repository.registrarMovimientoCheckInOutEspecial(request, usuario);
+
+        businessLogger.info(usuario, "Cargo por {} registrado: Membresía {}, Consecutivo {}",
+                request.tipoOperacion(), request.membresia(), request.consecutivo());
+        return ApiResponse.success("Cargo por " + request.tipoOperacion().name() + " registrado correctamente.", true);
+    }
+
     public ApiResponse<DetalleReservacionDto> obtenerDetalleReservacion(String membresia, Integer consecutivo) {
         return reservacionesService.obtenerDetalleReservacion(membresia, consecutivo);
     }
@@ -172,30 +203,23 @@ public class RecepcionService {
         // 1. Obtener el RUN_ID antes del checkout
         ResumenReservacionDto detalle = reservacionesService.obtenerResumenReservacion(request.membresia(), request.consecutivo()).data();
 
-        boolean exec = repository.transferirUnidad(request, usuario);
+        repository.transferirUnidad(request, usuario);
 
-        if (exec) {
-            businessLogger.info(usuario, "Transferencia de habitación realizada para Membresía: {}, Consecutivo: {}, Nuevo RHDT ID: {}, Nuevo RUN ID: {}, Importe Diferencia: {}",
-                    request.membresia(), request.consecutivo(), request.nuevoRhdtId(), request.nuevoRunId(), request.importeDiferencia());
+        businessLogger.info(usuario, "Transferencia de habitación realizada para Membresía: {}, Consecutivo: {}, Nuevo RHDT ID: {}, Nuevo RUN ID: {}, Importe Diferencia: {}",
+                request.membresia(), request.consecutivo(), request.nuevoRhdtId(), request.nuevoRunId(), request.importeDiferencia());
 
-            // 3. Disparar creación de tarea y WebSocket
-            if (detalle.idUnidadFisica() != null && request.bloquearUnidadAnterior()) {
-                amaDeLlavesService.crearTareaYNotificar(
-                        detalle.idUnidadFisica(),
-                        detalle.numeroUnidad(),
-                        detalle.desarrolloId(),
-                        usuario,
-                        "TRANSFERENCIA-HABITACION"
-                );
-            }
-
-            return ApiResponse.success("La transferencia de habitación se realizó con éxito.", true);
-        } else {
-            businessLogger.error(usuario, "Error al transferir habitación para Membresía: {}, Consecutivo: {}, Nuevo RHDT ID: {}, Nuevo RUN ID: {}, Importe Diferencia: {}",
-                    request.membresia(), request.consecutivo(), request.nuevoRhdtId(), request.nuevoRunId(), request.importeDiferencia());
-
-            return ApiResponse.error(GeneralResponseCode.CONFLICT, "Ocurrió un error al realizar la transferencia de habitación. Por favor, inténtelo de nuevo.");
+        // 3. Disparar creación de tarea y WebSocket
+        if (detalle.idUnidadFisica() != null) {
+            amaDeLlavesService.crearTareaYNotificar(
+                    detalle.idUnidadFisica(),
+                    detalle.numeroUnidad(),
+                    detalle.desarrolloId(),
+                    usuario,
+                    "TRANSFERENCIA-HABITACION"
+            );
         }
+
+        return ApiResponse.success("La transferencia de habitación se realizó con éxito.", true);
     }
 
     public ApiResponse<BigDecimal> calcularDiferenciaTransferencia(String membresia, Integer consecutivo, Integer nuevoRhdtId) {
@@ -250,23 +274,16 @@ public class RecepcionService {
 
         ResumenReservacionDto detalle = reservacionesService.obtenerResumenReservacion(request.membresia(), request.consecutivo()).data();
 
-        boolean exec = repository.cancelarReservacion(request, usuario);
+        repository.cancelarReservacion(request, usuario);
 
-        if (exec) {
-            businessLogger.info(usuario, "Cancelación de reservación realizada para Membresía: {}, Consecutivo: {}, Motivo: {}, Cobro Penalización: {}",
-                    request.membresia(), request.consecutivo(), request.motivoCancelacion(), request.cobrarCuotaCancelacion());
+        businessLogger.info(usuario, "Cancelación de reservación realizada para Membresía: {}, Consecutivo: {}, Motivo: {}, Cobro Penalización: {}",
+                request.membresia(), request.consecutivo(), request.motivoCancelacion(), request.cobrarCuotaCancelacion());
 
-            BigDecimal costoCancelacion = request.cobrarCuotaCancelacion() ? repository.calcularPenalizacionCancelacion(request.membresia(), request.consecutivo()) : BigDecimal.ZERO;
+        BigDecimal costoCancelacion = request.cobrarCuotaCancelacion() ? repository.calcularPenalizacionCancelacion(request.membresia(), request.consecutivo()) : BigDecimal.ZERO;
 
-            enviarCorreoCancelacion(detalle, costoCancelacion);
+        enviarCorreoCancelacion(detalle, costoCancelacion);
 
-            return ApiResponse.success("La reservación ha sido cancelada y la habitación liberada con éxito.", true);
-        } else {
-            businessLogger.error(usuario, "Error al cancelar reservación para Membresía: {}, Consecutivo: {}",
-                    request.membresia(), request.consecutivo());
-
-            return ApiResponse.error(GeneralResponseCode.CONFLICT, "Ocurrió un error al realizar la cancelación de la reservación. Por favor, inténtelo de nuevo.");
-        }
+        return ApiResponse.success("La reservación ha sido cancelada y la habitación liberada con éxito.", true);
     }
 
     private void enviarCorreoCancelacion(ResumenReservacionDto detalle, BigDecimal costoCancelacion) {

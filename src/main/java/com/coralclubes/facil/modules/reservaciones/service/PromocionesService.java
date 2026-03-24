@@ -79,11 +79,8 @@ public class PromocionesService {
             }
         }
 
-        boolean success = repository.spResvEliminarPromocion(idPromocion, usuario);
+        repository.spResvEliminarPromocion(idPromocion, usuario);
 
-        if (!success) {
-            throw new ServiceUnavailableException("No se pudo eliminar la promoción.");
-        }
         return ApiResponse.success("Promoción eliminada.", true);
     }
 
@@ -153,11 +150,8 @@ public class PromocionesService {
 
     public ApiResponse<Boolean> enlazarImagenPromocion(EnlazarImagenRequest request) {
         String usuario = userContext.getUsername();
-        boolean exito = repository.spResvEnlazarImagenPromocion(request.idPromocion(), request.uuidImagen(), usuario);
+        repository.spResvEnlazarImagenPromocion(request.idPromocion(), request.uuidImagen(), usuario);
 
-        if (!exito) {
-            throw new ServiceUnavailableException("No se pudo enlazar la imagen a la promoción.");
-        }
         return ApiResponse.success("Imagen enlazada correctamente.", true);
     }
 }

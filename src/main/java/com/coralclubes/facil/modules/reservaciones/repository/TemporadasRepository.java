@@ -74,12 +74,11 @@ public class TemporadasRepository {
         return spExecutor.querySingleLog("spResvGuardarTemporadaReservacion", params, scalarIntMapper, usuario, false, true);
     }
 
-    public boolean spResvEliminarTemporadaReservacion(Integer idTemporadaFecha, String usuario) {
+    public void spResvEliminarTemporadaReservacion(Integer idTemporadaFecha, String usuario) {
         Map<String, Object> params = new HashMap<>();
         params.put("IdTemporadaFecha", idTemporadaFecha);
 
-        Optional<Boolean> result = spExecutor.querySingleLog("spResvEliminarTemporadaReservacion", params, scalarBooleanMapper, usuario, true, true);
-        return result.orElse(false);
+        spExecutor.querySingleLog("spResvEliminarTemporadaReservacion", params, scalarBooleanMapper, usuario, true, true);
     }
 
     public List<TemporadaFechaResponse> spResvObtenerTemporadasFecha(Integer idDesarrollo, LocalDate fecha) {

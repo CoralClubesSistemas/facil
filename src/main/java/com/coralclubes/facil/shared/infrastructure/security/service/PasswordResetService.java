@@ -109,11 +109,7 @@ public class PasswordResetService {
 
         // Actualizar Password (Encriptado)
         String encodedPassword = passwordEncoder.encode(request.newPassword());
-        boolean updated = resetRepo.spLoginCambiarPassword(resetToken.username(), encodedPassword);
-
-        if (!updated) {
-            return ApiResponse.error(GeneralResponseCode.INTERNAL_SERVER_ERROR, "No se pudo actualizar la contraseña.");
-        }
+        resetRepo.spLoginCambiarPassword(resetToken.username(), encodedPassword);
 
         // Quemar Token
         resetRepo.deletePasswordResetToken(request.token());

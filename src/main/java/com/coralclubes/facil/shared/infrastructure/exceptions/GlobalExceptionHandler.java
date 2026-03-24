@@ -4,10 +4,14 @@ import com.coralclubes.RestApiExceptionHandler;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
 import com.coralclubes.responses.codes.AuthResponseCode;
+import com.coralclubes.responses.codes.DbResponseCode;
 import com.coralclubes.responses.codes.GeneralResponseCode;
+import com.coralclubes.utils.database.SqlUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -24,6 +28,20 @@ public class GlobalExceptionHandler extends RestApiExceptionHandler {
 
     // Aqui se agregan manejadores de excepciones
     // especificos para el sistema FACIL.
+
+    @Order(1)
+    @ExceptionHandler(UncategorizedSQLException.class)
+    public ResponseEntity<ApiResponse<?>> handleSqlException(UncategorizedSQLException ex) {
+
+        String realMessage = SqlUtils.getSqlErrorMessage(ex);
+
+        ApiResponse<?> apiResponse = ApiResponse.error(
+                DbResponseCode.QUERY_ERROR,
+                realMessage
+        );
+
+        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+    }
 
     /**
      * Manejador para IllegalStateException.

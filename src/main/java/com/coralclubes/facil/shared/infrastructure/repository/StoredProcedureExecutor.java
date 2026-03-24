@@ -78,7 +78,7 @@ public class StoredProcedureExecutor {
             return (List<T>) result.getOrDefault("result", Collections.emptyList());
         } catch (DataAccessException ex) {
             handleError(spName, ex);
-            return Collections.emptyList();
+            throw ex;
         }
     }
 
@@ -103,7 +103,7 @@ public class StoredProcedureExecutor {
             return (List<T>) result.getOrDefault("result", Collections.emptyList());
         } catch (DataAccessException ex) {
             handleError(spName, ex);
-            return Collections.emptyList();
+            throw ex;
         }
     }
 
@@ -157,25 +157,25 @@ public class StoredProcedureExecutor {
     // =========================================================================
 
     // Sobrecarga Básica
-    public boolean executeLog(
+    public void executeLog(
             String spName,
             Map<String, Object> params
     ) {
-        return executeLog(spName, params, DEFAULT_USER, true, false);
+        executeLog(spName, params, DEFAULT_USER, true, false);
     }
 
     // Sobrecarga para Ocultar Parámetros y opcionalmente mostrar Success
-    public boolean executeLog(
+    public void executeLog(
             String spName,
             Map<String, Object> params,
             boolean logParams,
             boolean logSuccess
     ) {
-        return executeLog(spName, params, DEFAULT_USER, logParams, logSuccess);
+        executeLog(spName, params, DEFAULT_USER, logParams, logSuccess);
     }
 
     // Sobrecarga Completa
-    public boolean executeLog(
+    public void executeLog(
             String spName,
             Map<String, Object> params,
             String user,
@@ -193,15 +193,14 @@ public class StoredProcedureExecutor {
             if (logSuccess) {
                 sqlLogger.logSuccess(spName);
             }
-            return true;
 
         } catch (DataAccessException ex) {
             handleError(spName, ex);
-            return false;
+            throw ex;
         }
     }
 
-    public boolean execute(
+    public void execute(
             String spName,
             Map<String, Object> params
     ) {
@@ -211,11 +210,9 @@ public class StoredProcedureExecutor {
 
             simpleJdbcCall.execute(new MapSqlParameterSource(params));
 
-            return true;
-
         } catch (DataAccessException ex) {
             handleError(spName, ex);
-            return false;
+            throw ex;
         }
     }
 
