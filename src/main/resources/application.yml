@@ -12,7 +12,7 @@ spring:
         enabled: true # Permitir que los eventos salgan a RabbitMQ
       republish-outstanding-events-on-restart: true # Re-publicar eventos no enviados al reiniciar
 
-  # CONFIGURACIÓN SQL SERVER (Conexión a SPs)
+  # CONFIGURACIÓN SQL SERVER (Conexión principal)
   datasource:
     url: ${DB_URL}
     username: ${DB_USER}
@@ -23,6 +23,19 @@ spring:
       minimum-idle: 5
       connection-timeout: 30000
       idle-timeout: 600000
+
+  # DATASOURCE RÉPLICA (Lectura de reportes pesados)
+  datasource-replica:
+    url: ${DB_REPLICA_URL:${DB_URL}}
+    username: ${DB_REPLICA_USER:${DB_USER}}
+    password: ${DB_REPLICA_PASS:${DB_PASS}}
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      pool-name: replica-pool
 
   # JPA
   jpa:
@@ -96,6 +109,11 @@ spring:
       on-profile: dev
 
   datasource:
+    url: jdbc:sqlserver://10.10.3.154:1433;databaseName=Facil;trustServerCertificate=true;encrypt=false
+    username: sa
+    password: CoralClubes1234#
+
+  datasource-replica:
     url: jdbc:sqlserver://10.10.3.154:1433;databaseName=Facil;trustServerCertificate=true;encrypt=false
     username: sa
     password: CoralClubes1234#
