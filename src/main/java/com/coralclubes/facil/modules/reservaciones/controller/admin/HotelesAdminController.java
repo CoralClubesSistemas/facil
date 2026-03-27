@@ -1,7 +1,11 @@
 package com.coralclubes.facil.modules.reservaciones.controller.admin;
 
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
+import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
+import com.coralclubes.facil.modules.reservaciones.dto.response.HotelCardUI;
+import com.coralclubes.facil.modules.reservaciones.dto.response.HotelDetalleDto;
 import com.coralclubes.facil.modules.reservaciones.service.HotelesService;
+import com.coralclubes.facil.shared.infrastructure.domain.dto.ImagenResponse;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlImagenRequest;
 import com.coralclubes.responses.ApiResponse;
@@ -10,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * Controlador REST Administrativo para el Submódulo de Hoteles.
@@ -21,6 +27,35 @@ import org.springframework.web.bind.annotation.*;
 public class HotelesAdminController {
 
     private final HotelesService service;
+
+    // =========================================================================
+    // ENDPOINTS DE LECTURA (admin, equivalente a public)
+    // =========================================================================
+
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<List<HotelCardUI>>> obtenerHotelesCard(
+            @RequestParam(required = false) Integer idDesarrollo) {
+        return ResponseEntity.ok(service.obtenerHotelesCard(idDesarrollo));
+    }
+
+    @GetMapping("/info")
+    public ResponseEntity<ApiResponse<HotelDetalleDto>> obtenerHotelDetalles(
+            @RequestParam Integer idDesarrollo) {
+        ApiResponse<HotelDetalleDto> response = service.obtenerHotelDetalles(idDesarrollo);
+        return ResponseEntity.status(response.status()).body(response);
+    }
+
+    @GetMapping("/imagenes")
+    public ResponseEntity<ApiResponse<List<ImagenResponse>>> obtenerHotelImagenes(
+            @RequestParam Integer idDesarrollo) {
+        return ResponseEntity.ok(service.obtenerHotelImagenes(idDesarrollo));
+    }
+
+    @GetMapping("/caracteristicas")
+    public ResponseEntity<ApiResponse<List<CaracteristicaDto>>> obtenerCaracteristicasXHotel(
+            @RequestParam Integer idDesarrollo) {
+        return ResponseEntity.ok(service.obtenerCaracteristicasXHotel(idDesarrollo));
+    }
 
     // =========================================================================
     // ENDPOINTS DE ESCRITURA (POST / PUT / DELETE)

@@ -1,44 +1,30 @@
 package com.coralclubes.facil.shared.infrastructure.security.service;
 
-import com.coralclubes.facil.shared.infrastructure.security.dto.response.AuthResponse;
-import com.coralclubes.facil.shared.infrastructure.security.model.CustomUserDetails;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.Optional;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * Servicio de utilidad para acceder a la información del usuario autenticado
- * almacenada en el contexto de seguridad de Spring (ThreadLocal).
+ * Servicio de utilidad para acceder a la información del usuario autenticado.
+ *
+ * El API Gateway valida el JWT y envía los headers X-Auth-*.
+ * GatewayHeaderFilter lee esos headers y establece el SecurityContext.
+ * Este servicio expone la identidad de forma limpia a los Services.
  */
 @Service
 @RequiredArgsConstructor
 public class UserContext {
 
     /**
-     * Obtiene el objeto CustomUserDetails completo del contexto de seguridad.
-     *
-     * @return Un Optional que contiene los detalles del usuario si está autenticado.
-     */
-    public Optional<CustomUserDetails> getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        // Pattern Matching: verifica tipo y asigna variable en un solo paso
-        if (authentication != null
-                && authentication.isAuthenticated()
-                && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
-            return Optional.of(userDetails);
-        }
-
-        return Optional.empty();
-    }
-
-    /**
-     * Obtiene solo el username (subject).
-     * Maneja tanto CustomUserDetails como strings simples (ej. "anonymousUser").
+     * Obtiene el username del usuario autenticado.
+     * El principal es un String (username) establecido por GatewayHeaderFilter.
      */
     public String getUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -48,36 +34,66 @@ public class UserContext {
         }
 
         Object principal = authentication.getPrincipal();
-
-        return switch (principal) {
-            case UserDetails u -> u.getUsername();
-            case String s -> s; // Caso para usuarios anónimos o tokens simples
-            default -> "UNKNOWN";
-        };
+        return principal instanceof String s ? s : "UNKNOWN";
     }
 
     /**
-     * Obtiene el ID del desarrollo actual del usuario.
-     * Útil para filtrar consultas de base de datos automáticamente.
+     * Obtiene el ID del desarrollo/sucursal del usuario.
+     * El gateway lo pasa como header X-Auth-LegacyId.
      */
     public Integer getIdDesarrollo() {
-        return getCurrentUser()
-                .map(CustomUserDetails::getIdDesarrollo)
-                .orElse(null); // O lanzar una excepción si el contexto es obligatorio
+        String legacyId = getRequestAttribute("X-Auth-LegacyId");
+        if (legacyId != null && !legacyId.isBlank()) {
+            try {
+                return Integer.parseInt(legacyId);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return null;
     }
 
     /**
-     * Construye un AuthResponse basado en el usuario actual.
-     * NOTA: El token y refresh token no suelen estar en el UserDetails,
-     * por lo que se devolverán nulos o vacíos aquí.
+     * Obtiene el rol del usuario.
      */
-    public Optional<AuthResponse> getAuthResponseActual() {
-        return getCurrentUser().map(user -> AuthResponse.builder()
-                .usuario(user.getUsername())
-                .idDesarrollo(user.getIdDesarrollo())
-                .email(user.getEmail())
-                .rolId(user.getRolId())
-                .rolDescripcion(user.getRolDescripcion())
-                .build());
+    public String getRole() {
+        return getRequestAttribute("X-Auth-Role");
+    }
+
+    /**
+     * Obtiene el tipo de fuente del usuario (INTERNAL, EXTERNAL, SYSTEM).
+     */
+    public String getSource() {
+        return getRequestAttribute("X-Auth-Source");
+    }
+
+    /**
+     * Obtiene los permisos del usuario como lista de strings.
+     */
+    @SuppressWarnings("unchecked")
+    public List<String> getPermissions() {
+        Object attr = getRequestAttributeObject("X-Auth-Permissions");
+        if (attr instanceof List<?> list) {
+            return (List<String>) list;
+        }
+        return Collections.emptyList();
+    }
+
+    private String getRequestAttribute(String name) {
+        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attrs != null) {
+            HttpServletRequest request = attrs.getRequest();
+            Object value = request.getAttribute(name);
+            return value != null ? value.toString() : null;
+        }
+        return null;
+    }
+
+    private Object getRequestAttributeObject(String name) {
+        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attrs != null) {
+            return attrs.getRequest().getAttribute(name);
+        }
+        return null;
     }
 }

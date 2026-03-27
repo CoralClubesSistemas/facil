@@ -4,9 +4,14 @@ import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
 import com.coralclubes.facil.modules.reservaciones.dto.response.ArticuloAmenidadDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.ReglaAmenidadActualDto;
+import com.coralclubes.facil.modules.reservaciones.dto.response.TipoUnidadDetalleDto;
+import com.coralclubes.facil.modules.reservaciones.dto.response.TipoUnidadUI;
+import com.coralclubes.facil.modules.reservaciones.dto.response.TipoUnidadUIDetalles;
+import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.UnidadBloqueadaDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.UnidadFisicaDto;
 import com.coralclubes.facil.modules.reservaciones.service.UnidadesService;
+import com.coralclubes.facil.shared.infrastructure.domain.dto.ImagenResponse;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlImagenRequest;
 import com.coralclubes.responses.ApiResponse;
@@ -86,6 +91,41 @@ public class UnidadesAdminController {
     public ResponseEntity<ApiResponse<RespuestaCargaDto>> solicitarUrlCarga(
             @Valid @RequestBody SolicitarUrlImagenRequest request) {
         ApiResponse<RespuestaCargaDto> response = service.obtenerUrlCargaImagen(request);
+        return ResponseEntity.status(response.status()).body(response);
+    }
+
+    // =========================================================================
+    // TIPOS LÓGICOS DE UNIDAD - LECTURA (admin, equivalente a public)
+    // =========================================================================
+
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<List<TipoUnidadUI>>> obtenerTiposUnidadCard() {
+        return ResponseEntity.ok(service.obtenerTiposUnidadCard());
+    }
+
+    @GetMapping("/info")
+    public ResponseEntity<ApiResponse<TipoUnidadDetalleDto>> obtenerTipoUnidadDetalles(
+            @RequestParam Integer idTipoUnidad) {
+        ApiResponse<TipoUnidadDetalleDto> response = service.obtenerTipoUnidadDetalles(idTipoUnidad);
+        return ResponseEntity.status(response.status()).body(response);
+    }
+
+    @GetMapping("/imagenes")
+    public ResponseEntity<ApiResponse<List<ImagenResponse>>> obtenerTipoUnidadImagenes(
+            @RequestParam Integer idTipoUnidad) {
+        return ResponseEntity.ok(service.obtenerTipoUnidadImagenes(idTipoUnidad));
+    }
+
+    @GetMapping("/caracteristicas")
+    public ResponseEntity<ApiResponse<List<CaracteristicaDto>>> obtenerCaracteristicasXTipoUnidad(
+            @RequestParam Integer idTipoUnidad) {
+        return ResponseEntity.ok(service.obtenerCaracteristicasXTipoUnidad(idTipoUnidad));
+    }
+
+    @GetMapping("/ui-detalles")
+    public ResponseEntity<ApiResponse<TipoUnidadUIDetalles>> obtenerTipoUnidadUIDetalles(
+            @RequestParam Integer idTipoUnidad) {
+        ApiResponse<TipoUnidadUIDetalles> response = service.obtenerTipoUnidadUIDetalles(idTipoUnidad);
         return ResponseEntity.status(response.status()).body(response);
     }
 

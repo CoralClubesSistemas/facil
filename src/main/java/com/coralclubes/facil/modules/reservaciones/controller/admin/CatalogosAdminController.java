@@ -2,6 +2,7 @@ package com.coralclubes.facil.modules.reservaciones.controller.admin;
 
 import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.reservaciones.dto.projection.CatalogoCargosHabitacion;
+import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
 import com.coralclubes.facil.modules.reservaciones.service.CatalogosService;
 import com.coralclubes.facil.shared.infrastructure.domain.dto.CatalogoListasValores;
 import com.coralclubes.responses.ApiResponse;
@@ -21,6 +22,39 @@ import java.util.List;
 public class CatalogosAdminController {
 
     private final CatalogosService service;
+
+    // =========================================================================
+    // CATÁLOGOS COMERCIALES (admin, equivalente a public)
+    // =========================================================================
+
+    @GetMapping("/hoteles")
+    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerHoteles() {
+        return ResponseEntity.ok(service.obtenerHoteles());
+    }
+
+    @GetMapping("/tipos-habitacion")
+    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerTiposHabitaciones() {
+        return ResponseEntity.ok(service.obtenerTiposHabitaciones());
+    }
+
+    @GetMapping("/destinos")
+    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerDestinos() {
+        return ResponseEntity.ok(service.obtenerDestinos());
+    }
+
+    @GetMapping("/temporadas")
+    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerTemporadas() {
+        return ResponseEntity.ok(service.obtenerTemporadas());
+    }
+
+    @GetMapping("/caracteristicas")
+    public ResponseEntity<ApiResponse<List<CaracteristicaDto>>> obtenerCaracteristicas() {
+        return ResponseEntity.ok(service.obtenerCaracteristicas());
+    }
+
+    // =========================================================================
+    // CATÁLOGOS TÉCNICOS Y OPERATIVOS
+    // =========================================================================
 
     @GetMapping("/tipos-accesos")
     public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerTiposAccesos() {

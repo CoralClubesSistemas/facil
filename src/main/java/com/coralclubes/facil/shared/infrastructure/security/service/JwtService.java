@@ -7,146 +7,104 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 
 /**
- * Utilidad para manejar la generación y validación de JWTs en el Sistema FACIL.
+ * Utilidad para VALIDAR tokens JWT generados por el API Gateway.
+ *
+ * Este servicio NO genera tokens — eso lo hace el gateway.
+ * Solo se usa para:
+ * - Validar tokens en conexiones WebSocket (STOMP)
+ * - Extraer claims del JWT cuando es necesario
+ *
+ * La clave secreta DEBE ser idéntica a la del gateway.
  */
 @Service
 public class JwtService {
 
     private final SecretKey secretKey;
-    private final long expiration;
-    private final long refreshExpiration;
 
-    public JwtService(@Value("${jwt.secret}") String secret, @Value("${jwt.expiration}") Long expiration, @Value("${jwt.refresh-expiration}") Long refreshExpiration) {
-
-        // Decodifica la clave Base64 y crea la llave HMAC (HS256)
+    public JwtService(@Value("${jwt.secret}") String secret) {
         byte[] keyBytes = Decoders.BASE64.decode(secret);
         this.secretKey = Keys.hmacShaKeyFor(keyBytes);
-        this.expiration = expiration;
-        this.refreshExpiration = refreshExpiration;
     }
 
     /**
-     * Genera un token JWT firmado.
-     *
-     * @param username El nombre de usuario para el cual se genera el token.
-     *                 Se valida que no sea nulo o vacío para evitar tokens inválidos.
-     * @param claims   Un mapa de reclamaciones adicionales que se incluirán en el token.
-     * @return El token JWT generado.
+     * Extrae el username (subject) del token.
+     * Retorna null si el token es inválido o expirado.
      */
-    public String generateToken(String username, Map<String, Object> claims) {
-        if (username == null || username.isBlank()) {
-            throw new IllegalArgumentException("Username no puede ser nulo o vacío");
+    public String extractUsername(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            if (isExpired(claims)) return null;
+            return claims.getSubject();
+        } catch (Exception e) {
+            return null;
         }
-
-        return Jwts.builder().claims(claims).subject(username).issuer("facil-core") // Identificador del emisor
-                .issuedAt(new Date(System.currentTimeMillis())).expiration(new Date(System.currentTimeMillis() + expiration)).signWith(secretKey, Jwts.SIG.HS256) // Firma explícita con algoritmo
-                .compact();
     }
 
     /**
-     * Genera un token de refresco (Refresh Token).
-     *
-     * @param username El nombre de usuario para el cual se genera el refresh token.
-     * @return El refresh token JWT generado.
+     * Crea un objeto Authentication a partir del token JWT.
+     * Usado por el WebSocketConfig para autenticar conexiones STOMP.
      */
-    public String generateRefreshToken(String username) {
-        return Jwts.builder().subject(username).issuer("facil-refresh").issuedAt(new Date(System.currentTimeMillis())).expiration(new Date(System.currentTimeMillis() + refreshExpiration)).signWith(secretKey, Jwts.SIG.HS256).compact();
-    }
-
-    /**
-     * Extrae el nombre de usuario (Subject).
-     *
-     * @param token El token JWT del cual se extraerá el nombre de usuario.
-     * @return El nombre de usuario extraído del token.
-     */
-    public String getUsernameFromToken(String token) {
-        return getClaimFromToken(token, Claims::getSubject);
-    }
-
     public Authentication getAuthentication(String token) {
-        String username = getUsernameFromToken(token);
-
-        // Usamos el constructor de 3 parámetros (aunque las autoridades estén vacías)
-        // para que Spring marque la sesión como Autenticada = TRUE.
+        String username = extractUsername(token);
         return new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
     }
 
     /**
-     * Extrae una reclamación específica utilizando un resolver funcional.
-     *
-     * @param token          El token JWT del cual se extraerá la reclamación.
-     * @param claimsResolver Una función que toma las reclamaciones y devuelve el valor deseado.
-     * @return El valor de la reclamación extraída del token.
+     * Extrae los permisos del JWT.
+     * El gateway los pone como claim "permissions" separado por comas.
      */
-    public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = getAllClaimsFromToken(token);
-        return claimsResolver.apply(claims);
-    }
-
-    /**
-     * Extrae todas las reclamaciones (Payload) del token.
-     *
-     * @param token El token JWT del cual se extraerán las reclamaciones.
-     * @return Un objeto Claims que contiene todas las reclamaciones del token.
-     */
-    private Claims getAllClaimsFromToken(String token) {
-        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
-    }
-
-    /**
-     * Valida el token contra los detalles del usuario.
-     * Verifica que el nombre de usuario en el token coincida con el del UserDetails
-     * y que el token no haya expirado.
-     *
-     * @param token       El token JWT a validar.
-     * @param userDetails Los detalles del usuario para comparar con el token.
-     * @return true si el token es válido, false en caso contrario.
-     */
-    public boolean validateToken(String token, UserDetails userDetails) {
-        final String username = getUsernameFromToken(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
-    }
-
-    /**
-     * Verifica si el token ha expirado.
-     * Extrae la fecha de expiración del token y la compara con la fecha actual.
-     *
-     * @param token El token JWT a verificar.
-     * @return true si el token ha expirado, false en caso contrario.
-     */
-    private boolean isTokenExpired(String token) {
-        final Date expirationDate = getClaimFromToken(token, Claims::getExpiration);
-        return expirationDate.before(new Date());
-    }
-
-    /**
-     * Verifica si un Refresh Token es válido (formato y expiración).
-     *
-     * @param refreshToken El refresh token JWT a validar.
-     * @return true si el refresh token es válido, false en caso contrario.
-     */
-    public boolean isRefreshTokenValid(String refreshToken) {
+    public List<String> extractPermissions(String token) {
         try {
-            // Validar expiración
-            if (isTokenExpired(refreshToken)) {
-                return false;
+            Claims claims = extractAllClaims(token);
+            String permissions = claims.get("permissions", String.class);
+            if (permissions == null || permissions.isBlank()) {
+                return Collections.emptyList();
             }
-            // Validar issuer específico
-            final String issuer = getClaimFromToken(refreshToken, Claims::getIssuer);
-            return "facil-refresh".equals(issuer);
+            return List.of(permissions.split(","));
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * Valida si un token es válido (no expirado, firma correcta).
+     */
+    public boolean isTokenValid(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            return !isExpired(claims);
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /**
+     * Extrae un claim genérico del token.
+     */
+    public <T> T extractClaim(String token, Function<Claims, T> resolver) {
+        Claims claims = extractAllClaims(token);
+        return resolver.apply(claims);
+    }
+
+    private Claims extractAllClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    private boolean isExpired(Claims claims) {
+        Date expiration = claims.getExpiration();
+        return expiration != null && expiration.before(new Date());
     }
 }

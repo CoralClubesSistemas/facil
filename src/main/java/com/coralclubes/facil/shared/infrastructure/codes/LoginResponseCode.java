@@ -3,15 +3,9 @@ package com.coralclubes.facil.shared.infrastructure.codes;
 import com.coralclubes.responses.BaseResponseCode;
 
 public enum LoginResponseCode implements BaseResponseCode {
-    LOGIN_SUCCESS("LOGIN_SUCCESS", "Login successful", 200),
-    INVALID_CREDENTIALS("INVALID_CREDENTIALS", "Invalid username or password", 401),
-    ACCOUNT_LOCKED("ACCOUNT_LOCKED", "Account is locked", 403),
-    INTERNAL_ERROR("INTERNAL_ERROR", "An internal error occurred", 500),
-
-    LOGIN_MODULES_CONSTRAINT("LOGIN_MODULES_CONSTRAINT", "El usuario no tiene modulos asignados", 400),
-
     LOGIN_AUTHORIZATION_SUCCESS("LOGIN_AUTHORIZATION_SUCCESS", "Authorization successful", 200),
-    LOGIN_NOT_PERMITIONS("LOGIN_NOT_PERMITIONS", "The user does not have permissions for this action", 403);
+    LOGIN_NOT_PERMITIONS("LOGIN_NOT_PERMITIONS", "The user does not have permissions for this action", 403),
+    LOGIN_MODULES_CONSTRAINT("LOGIN_MODULES_CONSTRAINT", "El usuario no tiene modulos asignados", 400);
 
     private final String code;
     private final String message;

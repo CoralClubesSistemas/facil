@@ -1,16 +1,9 @@
 package com.coralclubes.facil.shared.config;
 
-import com.coralclubes.facil.shared.infrastructure.exceptions.CustomAuthenticationEntryPoint;
-import com.coralclubes.facil.shared.infrastructure.exceptions.FilterExceptionHandler;
-import com.coralclubes.facil.shared.infrastructure.security.filter.JwtAuthenticationFilter;
-import com.coralclubes.facil.shared.infrastructure.security.service.UserDetailsServiceImpl;
+import com.coralclubes.facil.shared.infrastructure.gateway.filter.GatewayHeaderFilter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -20,78 +13,39 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
 
 /**
- * Configuración principal de seguridad para la aplicación.
- * Define reglas de acceso, CORS, autenticación Stateless y filtros JWT.
+ * Configuración de seguridad simplificada.
+ *
+ * En modo gateway:
+ * - El gateway valida JWT y envía X-Auth-* headers.
+ * - GatewayHeaderFilter lee esos headers y establece el SecurityContext.
+ *
+ * En modo legacy (compatibilidad transición):
+ * - Los filtros de JWT fueron eliminados.
+ * - Solo se mantiene GatewayHeaderFilter + @PreAuthorize.
  */
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true) // Habilita @PreAuthorize
+@EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final UserDetailsServiceImpl userDetailsService;
-    private final JwtAuthenticationFilter jwtAuthenticationFilter; // filtro para procesar el token JWT en cada solicitud
-    private final FilterExceptionHandler filterExceptionHandler; // filtro para atrapar errores de JWT
-    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint; // manejador de errores dentro de los filtros de seguridad (401 Unauthorized)
+    private final GatewayHeaderFilter gatewayHeaderFilter;
 
-    @Value("${app.url.frontend}")
-    private String frontendUrl;
-
-    /**
-     * Bean del AuthenticationManager.
-     * Simplemente delega a la configuración de autenticación de Spring Security, que usará el DaoAuthenticationProvider que definimos.
-     */
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
-
-    /**
-     * Bean para encriptar contraseñas (BCrypt).
-     * Por defecto usa un strength de 10
-     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    /**
-     * Configura el proveedor de autenticación con el UserDetailsServiceImpl y el PasswordEncoder.
-     */
-    @Bean
-    public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        authProvider.setHideUserNotFoundExceptions(false);
-        return authProvider;
-    }
-
-    /**
-     * Cadena de filtros de seguridad
-     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable) // Deshabilitamos CSRF porque usamos JWT (Stateless)
+                .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // 3. Manejo de Excepciones de Seguridad (401 Unauthorized)
-                // Se dispara cuando un usuario ANÓNIMO intenta entrar a una ruta protegida.
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(customAuthenticationEntryPoint)
-                )
-
-                // 4. Autorización de Rutas
                 .authorizeHttpRequests(auth -> auth
-                        // Autenticación
+                        // Autenticación (legacy, se eliminará cuando el gateway asuma 100%)
                         .requestMatchers("/api/auth/login", "/api/auth/login/simple").permitAll()
                         .requestMatchers("/api/auth/password-reset/**").permitAll()
                         .requestMatchers("/api/auth/refresh-token").permitAll()
@@ -105,25 +59,21 @@ public class SecurityConfig {
                         // Endpoints de prueba
                         .requestMatchers("/api/test/**").permitAll()
 
-                        // endpoints especificos dque consumen los portales web y que no requieren autenticación
+                        // Endpoint interno del gateway
+                        .requestMatchers("/internal/**").permitAll()
+
+                        // Endpoints públicos (portales web)
                         .requestMatchers("/api/v1/public/**").permitAll()
 
-                        // endpoints de WebSocket
+                        // WebSocket
                         .requestMatchers("/ws-api/**").permitAll()
 
                         // TODO LO DEMÁS requiere estar autenticado
                         .anyRequest().authenticated()
                 )
 
-                // 5. Inserción de Filtros
-                // El orden es CRÍTICO:
-                // a) Primero el FilterExceptionHandler para que envuelva a los demás y atrape sus errores.
-                .addFilterBefore(filterExceptionHandler, UsernamePasswordAuthenticationFilter.class)
-                // b) Luego el JwtAuthenticationFilter para procesar el token.
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
-        // Asignamos el proveedor de autenticación
-        http.authenticationProvider(authenticationProvider());
+                // GatewayHeaderFilter: lee X-Auth-* headers del gateway
+                .addFilterBefore(gatewayHeaderFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

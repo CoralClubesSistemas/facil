@@ -1,5 +1,6 @@
 package com.coralclubes.facil.modules.reservaciones.controller.admin;
 
+import com.coralclubes.facil.modules.reservaciones.dto.request.ConsumoOfertaRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.request.EnlazarImagenRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.request.PromocionIntegralRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.response.Promocion;
@@ -72,6 +73,14 @@ public class PromocionesAdminController {
     @PreAuthorize("hasAuthority('MOD_SMNUPROMOCIONESRESERVACIONES')")
     public ResponseEntity<ApiResponse<Promocion>> validarCodigo(@PathVariable String codigo) {
         ApiResponse<Promocion> response = service.validarPromocionPorCodigo(codigo);
+        return ResponseEntity.status(response.status()).body(response);
+    }
+
+    @PostMapping("/aplicar-consumo")
+    @PreAuthorize("hasAuthority('MOD_SMNUPROMOCIONESRESERVACIONES')")
+    public ResponseEntity<ApiResponse<Integer>> aplicarConsumo(
+            @Valid @RequestBody ConsumoOfertaRequest request) {
+        ApiResponse<Integer> response = service.aplicarConsumoOferta(request);
         return ResponseEntity.status(response.status()).body(response);
     }
 }
