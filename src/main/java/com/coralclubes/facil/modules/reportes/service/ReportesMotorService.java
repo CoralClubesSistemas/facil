@@ -110,8 +110,6 @@ public class ReportesMotorService {
     }
 
     public List<Map<String, Object>> ejecutarYpersistir(EjecutarReporteRequest request) {
-        System.out.println("Ejecutar reporte: " + request);
-
         // 1. Validaciones iniciales
         ProcedimientoEjecucionDto proc = repository.obtenerProcedimientoEjecucion(request.idTipoReporte());
         if (proc == null) {
@@ -136,6 +134,10 @@ public class ReportesMotorService {
 
         // 4. Filtrar columnas solicitadas
         List<Map<String, Object>> datosFiltrados = filtrarColumnas(datosCrudos, request.columnas());
+
+        for (Map<String, Object> datosFiltrado : datosFiltrados) {
+            log.debug("Fila resultado: {}", datosFiltrado);
+        }
 
         // 5. Persistir preferencias en BD
         persistirConfiguracion(request.idTipoReporte(), mapeo, parametrosJava, request.columnas());
@@ -181,9 +183,6 @@ public class ReportesMotorService {
 
     private void persistirConfiguracion(Integer idTipoReporte, List<ParametroMapeoDto> mapeo,
                                         Map<String, Object> parametrosJava, List<String> columnasSeleccionadas) {
-        System.out.println("Persistiendo configuración para reporte " + idTipoReporte + ": columnas=" + columnasSeleccionadas);
-        System.out.println("Persistiendo configuración para reporte " + idTipoReporte + ": parámetros=" + parametrosJava);
-
         String usuario = userContext.getUsername();
         guardarFavoritosAutomatico(idTipoReporte, mapeo, parametrosJava, usuario);
         guardarColumnasAutomatico(idTipoReporte, columnasSeleccionadas, usuario);
@@ -244,5 +243,45 @@ public class ReportesMotorService {
                 .map(ParametroReporteDto::idParametro)
                 .findFirst()
                 .orElse(null);
+    }
+
+    // =========================================================================
+    // HISTORIAL Y GENERACIÓN ASÍNCRONA (NUEVO FLUJO)
+    // =========================================================================
+
+    /**
+     * Obtiene el historial de reportes generados por el usuario actual (Últimos 50)
+     */
+    public ApiResponse<List<HistorialReporteDto>> obtenerHistorialUsuario(
+            ClavesModulosReportes clave
+    ) {
+        String usuario = userContext.getUsername();
+        List<HistorialReporteDto> historial = repository.obtenerHistorialUsuario(usuario, 50, clave.getClave());
+        return ApiResponse.success("Historial de reportes obtenido", historial);
+    }
+
+    /**
+     * Solo registra la solicitud en la bitácora y devuelve el ID generado.
+     */
+    public Integer registrarInicioReporteAsync(EjecutarReporteRequest request, String nombreReporteBase) {
+        try {
+            String parametrosJson = mapper.writeValueAsString(request.parametros());
+            String nombreTemporal = nombreReporteBase + "_Procesando.xlsx";
+            String usuario = userContext.getUsername();
+
+            Integer idBitacora = repository.registrarInicioReporte(usuario, request.idTipoReporte(), nombreTemporal, parametrosJson);
+
+            if (idBitacora == null) {
+                throw new IllegalStateException("No se pudo obtener el ID de la bitácora.");
+            }
+
+            // guardamos las preferencias del usario para este reporte
+            persistirConfiguracion(request.idTipoReporte(), repository.obtenerParametrosMapeo(request.idTipoReporte()), request.parametros(), request.columnas());
+
+            return idBitacora;
+        } catch (Exception e) {
+            log.error("Error al registrar inicio de bitácora: {}", e.getMessage());
+            throw new RuntimeException("No se pudo registrar el reporte en el historial.");
+        }
     }
 }

@@ -1,7 +1,5 @@
-package com.coralclubes.facil.modules.reportes.service;
+package com.coralclubes.facil.shared.infrastructure.utils;
 
-import com.coralclubes.facil.modules.reportes.dto.request.EjecutarReporteRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -16,21 +14,12 @@ import java.util.Map;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ExcelExportService {
 
-    private final ReportesMotorService motorService;
-
     /**
-     * Ejecuta el reporte (con persistencia automática) y genera un archivo Excel.
-     * Devuelve el byte[] del archivo .xlsx generado.
+     * Genera un archivo Excel a partir de una lista de datos en bruto.
      */
-    public byte[] generarExcel(EjecutarReporteRequest request, String nombreReporte) throws IOException {
-        List<Map<String, Object>> datos = motorService.ejecutarYpersistir(request);
-        return construirExcel(datos, nombreReporte);
-    }
-
-    private byte[] construirExcel(List<Map<String, Object>> datos, String nombreHoja) throws IOException {
+    public byte[] generarExcelBytes(List<Map<String, Object>> datos, String nombreHoja) throws IOException {
         try (Workbook workbook = new XSSFWorkbook();
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 

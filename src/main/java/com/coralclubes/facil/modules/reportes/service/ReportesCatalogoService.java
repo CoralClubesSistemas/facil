@@ -31,6 +31,7 @@ public class ReportesCatalogoService {
             case "TIPOSMOVIMIENTOS" -> repository.catalogoTiposMovimientos();
             case "TIPOSPRODUCTOS" -> repository.catalogoTiposProductos();
             case "USUARIOS" -> repository.catalogoUsuarios();
+            case "ESTATUSRESERVACIONES" -> repository.catalogoEstatusReservaciones();
             default -> throw new IllegalArgumentException("Catálogo no encontrado: " + nombreCatalogo);
         };
 

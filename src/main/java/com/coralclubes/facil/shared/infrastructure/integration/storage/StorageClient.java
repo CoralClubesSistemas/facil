@@ -1,5 +1,6 @@
 package com.coralclubes.facil.shared.infrastructure.integration.storage;
 
+import com.coralclubes.facil.shared.infrastructure.domain.dto.ArchivoDescarga;
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.ServiceUnavailableException;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.InfoArchivoDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
@@ -16,6 +17,7 @@ import org.springframework.web.client.RestClient;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.UUID;
 
 @Component
@@ -72,6 +74,31 @@ public class StorageClient {
 
             if (response != null && response.data() != null) {
                 return response.data().urlDescarga();
+            }
+
+            throw new IllegalStateException("El microservicio de storage devolvió una respuesta vacía.");
+
+        } catch (Exception e) {
+            logger.error("STORAGE_CLIENT", "Error al negociar URL de descarga: " + e.getMessage(), e);
+            throw new ServiceUnavailableException("El servicio de almacenamiento no está disponible en este momento.");
+        }
+    }
+
+    /**
+     * Obtiene la URL de descarga de un archivo mas el nombre original del archivo para mostrarlo en el frontend (Ej: Historial de Descargas).
+     */
+    public ArchivoDescarga obtenerUrlDescargaYNombre(UUID uuid) {
+        try {
+
+            ApiResponse<InfoArchivoDto> response = restClient.get()
+                    .uri(serviceUrl + "/api/v1/storage/files/" + uuid)
+                    .header("X-API-KEY", apiKey)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<>() {});
+
+            if (response != null && response.data() != null) {
+                ArchivoDescarga resultado = new ArchivoDescarga(response.data().nombreOriginal(), response.data().urlDescarga());
+                return resultado;
             }
 
             throw new IllegalStateException("El microservicio de storage devolvió una respuesta vacía.");

@@ -20,12 +20,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Repository
@@ -83,6 +78,21 @@ public class ReportesMotorRepository {
             .tipoDato(rs.getString("TipoDato"))
             .longitud(rs.getInt("Longitud"))
             .esObligatorio(rs.getBoolean("EsObligatorio"))
+            .build();
+
+    // 1. Agrega este Mapper en la sección de MAPPERS
+    private final RowMapper<HistorialReporteDto> historialMapper = (rs, rowNum) -> HistorialReporteDto.builder()
+            .idBitacora(rs.getInt("IdBitacora"))
+            .idTipoReporte(rs.getInt("IdTipoReporte"))
+            .nombreReporte(rs.getString("NombreReporte"))
+            .nombreArchivo(rs.getString("NombreArchivo"))
+            .fechaSolicitud(rs.getTimestamp("FechaSolicitud") != null ? rs.getTimestamp("FechaSolicitud").toLocalDateTime() : null)
+            .fechaCompletado(rs.getTimestamp("FechaCompletado") != null ? rs.getTimestamp("FechaCompletado").toLocalDateTime() : null)
+            .estatus(rs.getString("Estatus"))
+            .uuidArchivo(rs.getString("UuidArchivo") != null ? UUID.fromString(rs.getString("UuidArchivo")) : null)
+            .tiempoEjecucionMs(rs.getObject("TiempoEjecucionMs") != null ? rs.getInt("TiempoEjecucionMs") : null)
+            .parametrosJson(rs.getString("ParametrosJson"))
+            .mensajeError(rs.getString("MensajeError"))
             .build();
 
     // =========================================================================
@@ -252,6 +262,8 @@ public class ReportesMotorRepository {
                 row.put(columnNames[j], leerColumnaSegura(rs, j + 1, sqlTypes[j]));
             }
             rows.add(row);
+
+            System.out.println("Fila procesada: " + row);
         }
         return rows;
     }
@@ -350,5 +362,52 @@ public class ReportesMotorRepository {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName(spName);
         jdbcCall.execute(new MapSqlParameterSource(params));
+    }
+
+    // =========================================================================
+    // BITÁCORA E HISTORIAL (Integración Async y Storage)
+    // =========================================================================
+
+    /**
+     * Registra el inicio y devuelve el ID de la bitácora generada (SCOPE_IDENTITY)
+     */
+    public Integer registrarInicioReporte(String usuario, Integer idTipoReporte, String nombreArchivo, String parametrosJson) {
+        SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("spRepoRegistrarInicioReporte")
+                .returningResultSet("result", (rs, rowNum) -> rs.getInt("IdBitacora"));
+
+        Map<String, Object> result = jdbcCall.execute(new MapSqlParameterSource(
+                Map.of("Usuario", usuario,
+                        "IdTipoReporte", idTipoReporte,
+                        "NombreArchivo", nombreArchivo,
+                        "ParametrosJSON", parametrosJson)
+        ));
+
+        @SuppressWarnings("unchecked")
+        List<Integer> ids = (List<Integer>) result.get("result");
+        return (ids != null && !ids.isEmpty()) ? ids.getFirst() : null;
+    }
+
+    /**
+     * Marca el reporte como completado o fallido
+     */
+    public void actualizarFinReporte(Integer idBitacora, String estatus, UUID uuidArchivo, String mensajeError) {
+        executeSP("spRepoActualizarFinReporte",
+                new HashMap<>() {{
+                    put("IdBitacora", idBitacora);
+                    put("Estatus", estatus);
+                    put("UuidArchivo", uuidArchivo != null ? uuidArchivo.toString() : null);
+                    put("MensajeError", mensajeError);
+                }}
+        );
+    }
+
+    /**
+     * Obtiene los últimos N reportes del usuario
+     */
+    public List<HistorialReporteDto> obtenerHistorialUsuario(String usuario, Integer limite, String claveModulo) {
+        return querySP("spRepoObtenerHistorialUsuario",
+                Map.of("Usuario", usuario, "Limite", limite, "Modulo", claveModulo),
+                historialMapper);
     }
 }

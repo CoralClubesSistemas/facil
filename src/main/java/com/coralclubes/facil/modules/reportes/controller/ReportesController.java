@@ -4,19 +4,19 @@ import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.reportes.dto.request.EjecutarReporteRequest;
 import com.coralclubes.facil.modules.reportes.dto.response.*;
 import com.coralclubes.facil.modules.reportes.enums.ClavesModulosReportes;
-import com.coralclubes.facil.modules.reportes.service.ExcelExportService;
+import com.coralclubes.facil.modules.reportes.service.ReportesAsyncService;
 import com.coralclubes.facil.modules.reportes.service.ReportesCatalogoService;
 import com.coralclubes.facil.modules.reportes.service.ReportesMotorService;
+import com.coralclubes.facil.shared.infrastructure.domain.dto.ArchivoDescarga;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
+import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,7 +27,9 @@ public class ReportesController {
 
     private final ReportesMotorService motorService;
     private final ReportesCatalogoService catalogoService;
-    private final ExcelExportService excelExportService;
+    private final UserContext userContext;
+    private final ReportesAsyncService asyncService;
+    private final StorageClient storageClient;
 
     // =========================================================================
     // REPORTES DISPONIBLES
@@ -57,7 +59,7 @@ public class ReportesController {
     }
 
     // =========================================================================
-    // EJECUCIÓN (Persiste favoritos y columnas automáticamente)
+    // EJECUCIÓN SÍNCRONA (Para vista en pantalla - UI)
     // =========================================================================
 
     @PostMapping("/ejecutar")
@@ -66,22 +68,27 @@ public class ReportesController {
         return ResponseEntity.ok(motorService.ejecutarReporte(request));
     }
 
+    // =========================================================================
+    // EJECUCIÓN ASÍNCRONA (Para Exportación a Excel)
+    // =========================================================================
+
+    // 2. Modifica el endpoint:
     @PostMapping("/ejecutar/excel")
-    public ResponseEntity<byte[]> ejecutarYExportarExcel(
+    public ResponseEntity<ApiResponse<Boolean>> solicitarExcelAsincrono(
             @Valid @RequestBody EjecutarReporteRequest request,
             @RequestParam(required = false, defaultValue = "Reporte") String nombreReporte) {
-        try {
-            byte[] excel = excelExportService.generarExcel(request, nombreReporte);
-            String nombreArchivo = excelExportService.generarNombreArchivo(nombreReporte);
-            String encoded = URLEncoder.encode(nombreArchivo, StandardCharsets.UTF_8);
 
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encoded)
-                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
-                    .body(excel);
-        } catch (Exception e) {
-            throw new RuntimeException("Error al generar el Excel: " + e.getMessage(), e);
-        }
+        // A. Motor Service hace su trabajo síncrono: Guarda la bitácora
+        Integer idBitacora = motorService.registrarInicioReporteAsync(request, nombreReporte);
+        String usuario = userContext.getUsername();
+
+        // B. dispara el servicio asíncrono
+        asyncService.procesarReporteYSubirAsincrono(request, nombreReporte, idBitacora, usuario);
+
+        // C. Responde inmediatamente al Frontend
+        return ResponseEntity.accepted().body(
+                ApiResponse.success("Tu reporte se está generando en segundo plano. Te notificaremos cuando esté listo.", true)
+        );
     }
 
     // =========================================================================
@@ -108,5 +115,26 @@ public class ReportesController {
     public ResponseEntity<ApiResponse<List<ColumnaReporteDto>>> obtenerColumnas(
             @PathVariable Integer idTipoReporte) {
         return ResponseEntity.ok(motorService.obtenerColumnasReporte(idTipoReporte));
+    }
+
+    // =========================================================================
+    // HISTORIAL Y BANDEJA DE DESCARGAS
+    // =========================================================================
+
+    @GetMapping("/historial")
+    public ResponseEntity<ApiResponse<List<HistorialReporteDto>>> obtenerHistorial(
+            @RequestParam ClavesModulosReportes clave
+    ) {
+        return ResponseEntity.ok(motorService.obtenerHistorialUsuario(clave));
+    }
+
+    @GetMapping("/descargar/{uuid}")
+    public ResponseEntity<ApiResponse<ArchivoDescarga>> obtenerUrlDescarga(@PathVariable java.util.UUID uuid) {
+        try {
+            ArchivoDescarga urlDescarga = storageClient.obtenerUrlDescargaYNombre(uuid);
+            return ResponseEntity.ok(ApiResponse.success("URL obtenida exitosamente", urlDescarga));
+        } catch (Exception e) {
+            throw new RuntimeException("No se pudo obtener la URL de descarga del archivo.");
+        }
     }
 }
