@@ -37,6 +37,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-api")
                 .setAllowedOriginPatterns("*");
+
+        System.out.println("WebSocket endpoint registrado en /ws-api con RabbitMQ en " + rabbitHost);
     }
 
     @Override
@@ -68,14 +70,18 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
                         try {
                             Authentication authentication = jwtService.getAuthentication(token);
+                            if (authentication.getName() == null) {
+                                throw new IllegalArgumentException("El token no contiene una identidad valida");
+                            }
                             accessor.setUser(authentication);
                         } catch (Exception e) {
-                            throw new IllegalArgumentException("Token de WebSocket inválido o expirado");
+                            throw new IllegalArgumentException("Token de WebSocket invalido o expirado");
                         }
                     } else {
                         throw new IllegalArgumentException("Falta cabecera Authorization en STOMP CONNECT");
                     }
                 }
+                
                 return message;
             }
         });

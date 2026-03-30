@@ -135,10 +135,6 @@ public class ReportesMotorService {
         // 4. Filtrar columnas solicitadas
         List<Map<String, Object>> datosFiltrados = filtrarColumnas(datosCrudos, request.columnas());
 
-        for (Map<String, Object> datosFiltrado : datosFiltrados) {
-            log.debug("Fila resultado: {}", datosFiltrado);
-        }
-
         // 5. Persistir preferencias en BD
         persistirConfiguracion(request.idTipoReporte(), mapeo, parametrosJava, request.columnas());
 

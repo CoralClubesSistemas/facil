@@ -150,4 +150,4 @@ app:
       expiration-minutes: 60 # 1 hora para tokens de reseteo
 
 jwt:
-  secret: EtxeaKWTYyRKw7iWYx7itysvDFpfJEhRWUaYGWmntKH2lD3MVE5cLiACudKo8bMaH0oHgsi/oagLQdGuZATntg==
+  secret: nTUtfGTwSCZlj4WC00mzXKTLAZbgFZST7MFpivsizOwCzzfP5eiEhuMBFOyHyJC2kiCqjvwctSgk9KCtAUjVGA==

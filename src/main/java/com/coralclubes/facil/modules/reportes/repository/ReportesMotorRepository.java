@@ -262,8 +262,6 @@ public class ReportesMotorRepository {
                 row.put(columnNames[j], leerColumnaSegura(rs, j + 1, sqlTypes[j]));
             }
             rows.add(row);
-
-            System.out.println("Fila procesada: " + row);
         }
         return rows;
     }
