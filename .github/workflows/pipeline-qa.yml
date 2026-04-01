@@ -2,8 +2,8 @@ name: CI/CD QA - FACIL Core
 
 on:
   push:
-    branches: [ "qa" ] # Se activa cuando hay push en rama qa
-  workflow_dispatch: # Permite ejecución manual desde GitHub
+    branches: [ "qa" ]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,12 +15,15 @@ jobs:
     environment: QA
 
     steps:
+      # ================================================================
+      # CHECKOUT
+      # ================================================================
       - name: Checkout Código
         uses: actions/checkout@v4
 
-      # =================================================================
-      # FASE 1: CONSTRUCCIÓN (DOCKER BUILD)
-      # =================================================================
+      # ================================================================
+      # BUILD DOCKER IMAGE
+      # ================================================================
       - name: Construir Imagen Docker (QA)
         uses: docker/build-push-action@v5
         with:
@@ -28,25 +31,22 @@ jobs:
           tags: facil:qa
           push: false
           load: true
-
-          # Pasamos credenciales para descargar las librerías privadas (Utils/Exceptions)
           build-args: |
             GITHUB_ACTOR=${{ github.actor }}
             GITHUB_TOKEN=${{ secrets.PAQUETES_PAT_TOKEN }}
 
-      # =================================================================
-      # FASE 2: DESPLIEGUE (DOCKER RUN)
-      # =================================================================
+      # ================================================================
+      # DEPLOY
+      # ================================================================
       - name: Desplegar en QA
         run: |
           echo "--- Iniciando Despliegue en QA ---"
 
-          # 1. Limpieza de contenedores anteriores
+          # 1. Stop + remove contenedor anterior
           docker stop facil-qa || true
           docker rm facil-qa || true
 
-          # 2. Ejecución del nuevo contenedor
-          # Puerto: 8082
+          # 2. Run nuevo contenedor
           docker run -d --name facil-qa \
             --network coral-net \
             --restart unless-stopped \
@@ -54,6 +54,7 @@ jobs:
             \
             -e SPRING_PROFILES_ACTIVE=qa \
             -e SERVER_PORT=8080 \
+            -e SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
             \
             -e DB_URL="${{ secrets.DB_URL_QA }}" \
             -e DB_USER="${{ secrets.DB_USER_QA }}" \
@@ -77,14 +78,36 @@ jobs:
             -e NOTIFICATIONS_SERVICE_URL="${{ secrets.NOTIFICATIONS_URL_QA }}" \
             -e NOTIFICATIONS_API_KEY="${{ secrets.API_KEY_FACIL_NOTIFICACIONES }}" \
             \
+            -e APP_CLIENTS_STORAGE_ALIASES_DEFAULT=MINIO_MAIN \
+            -e APP_CLIENTS_NOTIFICATIONS_ALIASES_DEFAULT=SMTP_GENERAL \
+            \
             -e FRONTEND_URL="http://10.10.3.154:4200" \
             -e PASSWORD_RESET_URL="http://10.10.3.154:4200/auth/confirm-reset" \
             \
+            -e CORS_ALLOWED_ORIGINS="http://10.10.3.154:4200" \
+            \
             -e JWT_SECRET="${{ secrets.JWT_SECRET_QA }}" \
+            -e APP_PASSPHRASE="${{ secrets.APP_PASSPHRASE_QA }}" \
             \
             facil:qa
 
-          echo "Despliegue exitoso en el puerto 8082."
+          echo "--- Contenedor iniciado, validando health ---"
 
+          # ============================================================
+          # HEALTHCHECK
+          # ============================================================
+          sleep 15
+
+          if curl -f http://localhost:8082/actuator/health; then
+            echo "Aplicación levantó correctamente"
+          else
+            echo "Error: la aplicación no levantó correctamente"
+            docker logs facil-qa --tail 100
+            exit 1
+          fi
+
+      # ================================================================
+      # CLEANUP
+      # ================================================================
       - name: Limpieza de imágenes huérfanas
         run: docker image prune -f

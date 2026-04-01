@@ -3,16 +3,14 @@ spring:
     name: facil
 
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev} # Default a dev
+    active: ${SPRING_PROFILES_ACTIVE:dev}
 
-  # CONFIGURACIÓN MODULITH (Para observabilidad de módulos)
   modulith:
     events:
       externalization:
-        enabled: true # Permitir que los eventos salgan a RabbitMQ
-      republish-outstanding-events-on-restart: true # Re-publicar eventos no enviados al reiniciar
+        enabled: true
+      republish-outstanding-events-on-restart: true
 
-  # CONFIGURACIÓN SQL SERVER (Conexión principal)
   datasource:
     url: ${DB_URL}
     username: ${DB_USER}
@@ -24,7 +22,6 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
 
-  # DATASOURCE RÉPLICA (Lectura de reportes pesados)
   datasource-replica:
     url: ${DB_REPLICA_URL:${DB_URL}}
     username: ${DB_REPLICA_USER:${DB_USER}}
@@ -37,7 +34,6 @@ spring:
       idle-timeout: 600000
       pool-name: replica-pool
 
-  # JPA
   jpa:
     show-sql: false
     open-in-view: false
@@ -47,60 +43,93 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.SQLServerDialect
 
-  # REDIS (Caché y sesiones distribuidas)
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASS}
+      password: ${REDIS_PASS:}
 
-  # RABBITMQ (Para eventos de dominio asíncronos entre módulos)
   rabbitmq:
     host: ${RABBIT_HOST:localhost}
     port: ${RABBIT_PORT:5672}
     username: ${RABBIT_USER:guest}
     password: ${RABBIT_PASS:guest}
 
-# CONFIGURACIÓN PROPIA DE CORAL CLUBES
+# ==============================
+# CONFIGURACIÓN APP
+# ==============================
 app:
-  # Clientes HTTP a los microservicios de infraestructura
   clients:
     storage:
       url: ${STORAGE_SERVICE_URL}
-      api-key: ${STORAGE_API_KEY} # Key de sistema "FACIL"
+      api-key: ${STORAGE_API_KEY}
+      aliases:
+        default: ${APP_CLIENTS_STORAGE_ALIASES_DEFAULT:MINIO_MAIN}
+
     notifications:
       url: ${NOTIFICATIONS_SERVICE_URL}
-      api-key: ${NOTIFICATIONS_API_KEY} # Key de sistema "FACIL"
+      api-key: ${NOTIFICATIONS_API_KEY}
       system-code: FACIL
       aliases:
-          default: SMTP_GENERAL
-          aws-ses: AWS_SES
+        default: ${APP_CLIENTS_NOTIFICATIONS_ALIASES_DEFAULT:SMTP_GENERAL}
+        aws-ses: ${APP_CLIENTS_NOTIFICATIONS_ALIASES_AWS_SES:AWS_SES}
       templates:
-          reset-password: reset-pass-v1
-          reserva-creada: reserva-creada-v1
-          reserva-cancelada: reserva-cancelada-v1
-
+        reset-password: ${APP_CLIENTS_NOTIFICATIONS_TEMPLATES_RESET_PASSWORD:reset-pass-v1}
+        reserva-creada: ${APP_CLIENTS_NOTIFICATIONS_TEMPLATES_RESERVA_CREADA:reserva-creada-v1}
+        reserva-cancelada: ${APP_CLIENTS_NOTIFICATIONS_TEMPLATES_RESERVA_CANCELADA:reserva-cancelada-v1}
 
   security:
     cors:
-      allowed-origins: "${CORS_ALLOWED_ORIGINS}" # Orígenes permitidos para CORS (separados por comas)
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
 
+  url:
+    frontend: ${FRONTEND_URL}
+    password-reset: ${PASSWORD_RESET_URL}
+
+# ==============================
+# JWT
+# ==============================
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 3600000
+  refresh-expiration: 86400000
+
+# ==============================
+# LOGGING
+# ==============================
 logging:
   pattern:
     level: "%5p [${spring.application.name:}]"
     console: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"
 
-  url:
-    frontend: ${FRONTEND_URL} # URL del frontend autorizado
-    password-reset: ${PASSWORD_RESET_URL} # URL para reseteo de contraseña
+# ==================================================================
+# PERFIL QA
+# ==================================================================
+---
+spring:
+  config:
+    activate:
+      on-profile: qa
 
-jwt:
-  secret: ${JWT_SECRET}
-  expiration: 3600000        # 1 hora (en ms)
-  refresh-expiration: 86400000 # 24 horas (en ms)
+# QA usa 100% variables de entorno → no hardcode
+app:
+  clients:
+    storage:
+      url: ${STORAGE_SERVICE_URL}
+      api-key: ${STORAGE_API_KEY}
+      aliases:
+        default: ${APP_CLIENTS_STORAGE_ALIASES_DEFAULT:MINIO_MAIN}
+
+    notifications:
+      url: ${NOTIFICATIONS_SERVICE_URL}
+      api-key: ${NOTIFICATIONS_API_KEY}
+      system-code: FACIL
+      aliases:
+        default: ${APP_CLIENTS_NOTIFICATIONS_ALIASES_DEFAULT:SMTP_GENERAL}
+        aws-ses: ${APP_CLIENTS_NOTIFICATIONS_ALIASES_AWS_SES:AWS_SES}
 
 # ==================================================================
-# CONFIGURACION PARA PERFIL DEV
+# PERFIL DEV
 # ==================================================================
 ---
 spring:
@@ -129,25 +158,20 @@ app:
     frontend: http://localhost:4200
     password-reset: http://localhost:4200/auth/confirm-reset
 
-  # Clientes HTTP a los microservicios de infraestructura
   clients:
     storage:
       url: http://10.10.3.154:8085
       api-key: FACIL_PRjS7QZ9J7APlgez6wXuA04Qsv0esjJu
       aliases:
-          default: MINIO_MAIN
+        default: MINIO_MAIN
 
     notifications:
       url: http://10.10.3.154:8081
       api-key: FACIL_PRjS7QZ9J7APlgez6wXuA04Qsv0esjJu
       system-code: FACIL
       aliases:
-          default: SMTP_GENERAL
-          aws-ses: AWS_SES
-
-  security:
-    password-reset:
-      expiration-minutes: 60 # 1 hora para tokens de reseteo
+        default: SMTP_GENERAL
+        aws-ses: AWS_SES
 
 jwt:
   secret: nTUtfGTwSCZlj4WC00mzXKTLAZbgFZST7MFpivsizOwCzzfP5eiEhuMBFOyHyJC2kiCqjvwctSgk9KCtAUjVGA==
