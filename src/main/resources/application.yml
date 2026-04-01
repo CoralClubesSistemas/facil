@@ -12,24 +12,37 @@ spring:
         enabled: true # Permitir que los eventos salgan a RabbitMQ
       republish-outstanding-events-on-restart: true # Re-publicar eventos no enviados al reiniciar
 
-  # CONFIGURACIÓN SQL SERVER (Conexión a SPs)
+  # CONFIGURACIÓN SQL SERVER (Conexión principal)
   datasource:
-    url: ${DB_URL} # Inyectado por ENV o perfil específico
+    url: ${DB_URL}
     username: ${DB_USER}
     password: ${DB_PASS}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
     hikari:
-      maximum-pool-size: 20 # Pool de conexiones a la BD
-      minimum-idle: 5 # Conexiones mínimas inactivas
-      connection-timeout: 30000 # 30 segundos de espera para obtener conexión
-      idle-timeout: 600000 # 10 minutos antes de cerrar conexiones inactivas
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
 
-  # JPA (Manejo híbrido: Entidades + Native Queries para SPs)
+  # DATASOURCE RÉPLICA (Lectura de reportes pesados)
+  datasource-replica:
+    url: ${DB_REPLICA_URL:${DB_URL}}
+    username: ${DB_REPLICA_USER:${DB_USER}}
+    password: ${DB_REPLICA_PASS:${DB_PASS}}
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      pool-name: replica-pool
+
+  # JPA
   jpa:
     show-sql: false
     open-in-view: false
     hibernate:
-      ddl-auto: none # PROHIBIDO modificar esquema desde Java en este proyecto
+      ddl-auto: none
     properties:
       hibernate:
         dialect: org.hibernate.dialect.SQLServerDialect
@@ -58,10 +71,33 @@ app:
     notifications:
       url: ${NOTIFICATIONS_SERVICE_URL}
       api-key: ${NOTIFICATIONS_API_KEY} # Key de sistema "FACIL"
+      system-code: FACIL
+      aliases:
+          default: SMTP_GENERAL
+          aws-ses: AWS_SES
+      templates:
+          reset-password: reset-pass-v1
+          reserva-creada: reserva-creada-v1
+          reserva-cancelada: reserva-cancelada-v1
+
 
   security:
     cors:
-      allowed-origins: "*" # Ajustar en Prod
+      allowed-origins: "${CORS_ALLOWED_ORIGINS}" # Orígenes permitidos para CORS (separados por comas)
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:}]"
+    console: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"
+
+  url:
+    frontend: ${FRONTEND_URL} # URL del frontend autorizado
+    password-reset: ${PASSWORD_RESET_URL} # URL para reseteo de contraseña
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 3600000        # 1 hora (en ms)
+  refresh-expiration: 86400000 # 24 horas (en ms)
 
 # ==================================================================
 # CONFIGURACION PARA PERFIL DEV
@@ -73,12 +109,45 @@ spring:
       on-profile: dev
 
   datasource:
-    url: jdbc:sqlserver://10.10.3.154:1433;databaseName=Facil;trustServerCertificate=true;encrypt=false
+    url: jdbc:sqlserver://localhost:1433;databaseName=Facil_Prueba3;trustServerCertificate=true;encrypt=false
     username: sa
-    password: CoralClubes1234#
+    password: 1122334455667788
+
+  datasource-replica:
+    url: jdbc:sqlserver://localhost:1433;databaseName=Facil_Prueba3;trustServerCertificate=true;encrypt=false
+    username: sa
+    password: 1122334455667788
 
   rabbitmq:
     host: 10.10.3.154
     port: 5672
     username: guest
     password: guest
+
+app:
+  url:
+    frontend: http://localhost:4200
+    password-reset: http://localhost:4200/auth/confirm-reset
+
+  # Clientes HTTP a los microservicios de infraestructura
+  clients:
+    storage:
+      url: http://10.10.3.154:8085
+      api-key: FACIL_PRjS7QZ9J7APlgez6wXuA04Qsv0esjJu
+      aliases:
+          default: MINIO_MAIN
+
+    notifications:
+      url: http://10.10.3.154:8081
+      api-key: FACIL_PRjS7QZ9J7APlgez6wXuA04Qsv0esjJu
+      system-code: FACIL
+      aliases:
+          default: SMTP_GENERAL
+          aws-ses: AWS_SES
+
+  security:
+    password-reset:
+      expiration-minutes: 60 # 1 hora para tokens de reseteo
+
+jwt:
+  secret: nTUtfGTwSCZlj4WC00mzXKTLAZbgFZST7MFpivsizOwCzzfP5eiEhuMBFOyHyJC2kiCqjvwctSgk9KCtAUjVGA==

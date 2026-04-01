@@ -1,0 +1,299 @@
+package com.coralclubes.facil.modules.reservaciones.repository;
+
+import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleDto;
+import com.coralclubes.facil.modules.reservaciones.dto.projection.DisponibilidadUnidadProjection;
+import com.coralclubes.facil.modules.reservaciones.dto.request.ConfirmarReservaRequest;
+import com.coralclubes.facil.modules.reservaciones.dto.response.*;
+import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
+import com.coralclubes.utils.json.JsonUtils;
+import com.fasterxml.jackson.core.type.TypeReference;
+import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+@Repository
+@RequiredArgsConstructor
+public class ReservacionesRepository {
+
+    private final StoredProcedureExecutor spExecutor;
+
+    private final RowMapper<DisponibilidadUnidadProjection> disponibilidadMapper = (rs, rowNum) -> {
+        String uuidStr = rs.getString("uuidImagen");
+
+        return new DisponibilidadUnidadProjection(
+                rs.getInt("idTipoUnidad"),
+                rs.getString("nombreUnidad"),
+                rs.getString("descripcionCorta"),
+                rs.getInt("capacidad"),
+                rs.getInt("stockDisponible"),
+                rs.getBigDecimal("costoEstancia"),
+                uuidStr != null ? UUID.fromString(uuidStr) : null
+        );
+    };
+
+    RowMapper<UUID> uuidMapper = (rs, rowNum) -> {
+        String uuidStr = rs.getString("GROUP_ID_OUT");
+        return uuidStr != null ? UUID.fromString(uuidStr) : null;
+    };
+
+    RowMapper<CuponDisponibleDto> cuponMapper = (rs, rowNum) -> new CuponDisponibleDto(
+            rs.getString("tipoDescuento"),
+            rs.getInt("paqueteId"),
+            rs.getInt("consecutivo"),
+            rs.getBigDecimal("porcentajeDescuento")
+    );
+
+    RowMapper<DetalleReservacionDto> detalleReservacionMapper = (rs, rowNum) -> {
+
+        // Extraemos y parseamos el JSON de Cargos (puede venir NULL si la tabla de cargos estuviera vacía)
+        String cargosJsonStr = rs.getString("CargosJson");
+        List<CargoHabitacionDto> listadoCargos = (cargosJsonStr != null && !cargosJsonStr.isBlank())
+                ? JsonUtils.fromJson(cargosJsonStr, new TypeReference<>() {
+        }) : List.of();
+
+        // Extraemos y parseamos el JSON de transferencias (puede venir NULL si no hay transferencias)
+        String transferenciasJsonStr = rs.getString("TransferenciasJson");
+        List<TransferenciaHabitacionDto> listadoTransferencias = (transferenciasJsonStr != null && !transferenciasJsonStr.isBlank())
+                ? JsonUtils.fromJson(transferenciasJsonStr, new TypeReference<>() {
+        }) : List.of();
+
+        return DetalleReservacionDto.builder()
+                .membresia(rs.getString("Membresia"))
+                .consecutivo(rs.getInt("Consecutivo"))
+                .desarrolloId(rs.getInt("DesarrolloId"))
+                .nombreDesarrollo(rs.getString("NombreDesarrollo"))
+                .nombreHuesped(rs.getString("NombreHuesped"))
+                .esSocio(rs.getBoolean("EsSocio"))
+                .rhdtId(rs.getInt("RhdtId"))
+                .tipoUnidad(rs.getString("TipoUnidad"))
+                .idUnidad(rs.getInt("IdUnidad"))
+                .numeroHabitacion(rs.getString("NumeroHabitacion"))
+                .fechaEntrada(rs.getDate("FechaEntrada").toLocalDate())
+                .fechaSalida(rs.getDate("FechaSalida").toLocalDate())
+
+                // Extraemos las nuevas fechas (Pueden ser null si aún no hace checkin/out)
+                .fechaHoraCheckIn(rs.getTimestamp("FechaHoraCheckIn") != null ? rs.getTimestamp("FechaHoraCheckIn").toLocalDateTime() : null)
+                .fechaHoraCheckOut(rs.getTimestamp("FechaHoraCheckOut") != null ? rs.getTimestamp("FechaHoraCheckOut").toLocalDateTime() : null)
+
+                .estatusClave(rs.getString("EstatusClave"))
+                .estatusDescripcion(rs.getString("EstatusDescripcion"))
+                .importeTotal(rs.getBigDecimal("ImporteTotal"))
+                .importePendiente(rs.getBigDecimal("ImportePendiente"))
+                .ultimoReciboPagado(rs.getString("UltimoReciboPagado"))
+                .promocionAplicada(rs.getString("PromocionAplicada"))
+                .cuponPaqueteId(rs.getInt("CuponPaqueteId"))
+                .puntosConsumidos(rs.getInt("PuntosConsumidos"))
+                .peticionesEspeciales(rs.getString("PeticionesEspeciales"))
+                .numeroSocios(rs.getInt("NumeroSocios"))
+
+                // Inyectamos la lista de cargos ya parseada
+                .cargos(listadoCargos)
+
+                // Historial de transferencias de unidades
+                .cantidadTransferencias(rs.getInt("CantidadTransferencias"))
+                .haSidoTransferida(rs.getBoolean("HaSidoTransferida"))
+                .transferenciasHistorial(listadoTransferencias)
+
+                .build();
+    };
+
+    private final RowMapper<ResumenReservacionDto> resumenReservacionMapper = (rs, rowNum) -> new ResumenReservacionDto(
+            rs.getString("Membresia"),
+            rs.getInt("Consecutivo"),
+            rs.getString("NombreContacto"),
+            rs.getString("EmailContacto"),
+            rs.getString("TelefonoContacto"),
+            rs.getInt("DesarrolloId"),
+            rs.getString("NombreDesarrollo"),
+            rs.getInt("RhdtId"),
+            rs.getString("TipoUnidad"),
+            rs.getString("NumeroUnidad"),
+            rs.getInt("IdUnidadFisica"),
+            rs.getDate("FechaEntrada") != null ? rs.getDate("FechaEntrada").toLocalDate() : null,
+            rs.getDate("FechaSalida") != null ? rs.getDate("FechaSalida").toLocalDate() : null,
+            rs.getInt("Noches"),
+            rs.getString("EstatusClave"),
+            rs.getString("EstatusDescripcion"),
+            rs.getBigDecimal("ImporteTotal"),
+            rs.getBigDecimal("ImportePendiente"),
+            rs.getString("UltimoReciboPagado")
+    );
+
+    private final RowMapper<CargoHabitacionDto> cargoHabitacionMapper = (rs, rowNum) -> new CargoHabitacionDto(
+            rs.getInt("IdMovimiento"),
+            rs.getString("Descripcion"),
+            rs.getBigDecimal("ImporteCargo"),
+            rs.getBigDecimal("ImportePendiente"),
+            rs.getTimestamp("FechaRegistro") != null ? rs.getTimestamp("FechaRegistro").toLocalDateTime() : null
+    );
+
+    public List<DisponibilidadUnidadProjection> buscarDisponibilidad(
+            Integer destinoId,
+            LocalDate fechaEntrada,
+            LocalDate fechaSalida,
+            Integer personas,
+            String membresia
+    ) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("DestinoId", destinoId);
+        params.put("FechaEntrada", fechaEntrada);
+        params.put("FechaSalida", fechaSalida);
+        params.put("Personas", personas);
+        params.put("Membresia", membresia);
+
+        return spExecutor.queryList("spResvBuscarDisponibilidadTiposUnidades", params, disponibilidadMapper);
+    }
+
+    public UUID spResvCrearReservaTemporal(
+            String jsonCarrito,
+            LocalDate fechaEntrada,
+            LocalDate fechaSalida,
+            String cliente,
+            String ipAddress
+    ) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("JSON_CARRITO", jsonCarrito);
+        params.put("FECHA_ENTRADA", fechaEntrada);
+        params.put("FECHA_SALIDA", fechaSalida);
+        params.put("CLIENTE", cliente);
+        params.put("IP_ADDRESS", ipAddress);
+
+        return spExecutor.querySingle("spResvCrearReservaTemporal", params, uuidMapper)
+                .orElseThrow(() -> new RuntimeException("Error en base de datos: No se generó el UUID del carrito."));
+    }
+
+    public void eliminarReservaTemporal(UUID groupId) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("GROUP_ID", groupId.toString());
+
+        RowMapper<Integer> mapper = (rs, rowNum) -> rs.getInt("Exito");
+
+        spExecutor.querySingle("spResvEliminarReservaTemporal", params, mapper);
+    }
+
+    public String obtenerContextoReservaTemporalJson(UUID groupId) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("GROUP_ID", groupId.toString());
+
+        // Mapeamos la única columna que devuelve el SP (ContextoJson)
+        RowMapper<String> jsonMapper = (rs, rowNum) -> rs.getString("ContextoJson");
+
+        return spExecutor.querySingle("spResvObtenerContextoReservaTemporal", params, jsonMapper)
+                .orElse(null);
+    }
+
+    public String obtenerDesgloseFinancieroJson(UUID groupId) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("GROUP_ID", groupId.toString());
+
+        RowMapper<String> jsonMapper = (rs, rowNum) -> rs.getString("DesgloseJson");
+
+        return spExecutor.querySingle("spResvObtenerDesgloseFinanciero", params, jsonMapper).orElse(null);
+    }
+
+    public List<CuponDisponibleDto> obtenerCuponesCarrito(UUID groupId) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("GROUP_ID", groupId.toString());
+
+        return spExecutor.queryList("spResvObtenerCuponesCarrito", params, cuponMapper);
+    }
+
+    // 1. Guardar la reserva principal
+    public List<Integer> guardarReservacionFisica(ConfirmarReservaRequest request, String usuario, String detalleJson) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("GroupId", request.groupId().toString());
+        params.put("Email", request.email());
+        params.put("Email2", request.email2());
+        params.put("Telefono1", request.telefono1());
+        params.put("Telefono2", request.telefono2());
+        params.put("NombreReserva", request.nombreReserva());
+        params.put("PeticionEspecial", request.peticionEspecial());
+        params.put("Usuario", usuario);
+        params.put("ReservacionPortal", 0); // 0 = Panel Interno, 1 = Web
+        params.put("DetalleJson", detalleJson);
+
+        // El SP devuelve una tabla con MovimientoId y ReservacionConsecutivo
+        RowMapper<Integer> mapper = (rs, rowNum) -> rs.getInt("ReservacionConsecutivo");
+
+        return spExecutor.queryListLog("spResvGuardarReservacion", params, mapper, usuario, true, false);
+    }
+
+    // 2. Quemar Promoción
+    public void registrarConsumoPromocion(String membresia, Integer consecutivo, String codigoPromocion, String usuario) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("Membresia", membresia);
+        params.put("ConsecutivoReservacion", consecutivo);
+        params.put("CodigoPromocion", codigoPromocion);
+        params.put("Usuario", usuario);
+
+        spExecutor.execute("spResvDetallarConsumoOferta", params);
+    }
+
+    // 3. Quemar Cupón
+    public void consumirCuponReservacion(String membresia, Integer paqueteId, Integer consecutivoCupon, String usuario) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("Membresia", membresia);
+        params.put("PaqueteId", paqueteId);
+        params.put("Consecutivo", consecutivoCupon);
+        params.put("Usuario", usuario);
+
+        spExecutor.execute("spResvConsumirCuponReservacion", params);
+    }
+
+    public DetalleReservacionDto obtenerDetalleReservacion(String membresia, Integer consecutivo) {
+        Map<String, Object> params = Map.of(
+                "Membresia", membresia,
+                "Consecutivo", consecutivo
+        );
+        return spExecutor.querySingle("spResvObtenerDetalleReservacion", params, detalleReservacionMapper)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró la reservación solicitada."));
+    }
+
+    /**
+     * Obtiene el listado desglosado de todos los cargos financieros de una reservación.
+     * Ideal para el módulo de Caja / Cobranza.
+     */
+    public List<CargoHabitacionDto> obtenerCargosReservacion(String membresia, Integer consecutivo) {
+        Map<String, Object> params = Map.of(
+                "Membresia", membresia,
+                "Consecutivo", consecutivo
+        );
+
+        return spExecutor.queryList(
+                "spResvObtenerCargosReservacion",
+                params,
+                cargoHabitacionMapper
+        );
+    }
+
+    public DisponibilidadUnidadProjection obtenerDisponibilidadUnidadEspecifica(
+            Integer tipoUnidadId,
+            LocalDate fechaEntrada,
+            LocalDate fechaSalida,
+            String membresia) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("RhdtId", tipoUnidadId);
+        params.put("FechaEntrada", fechaEntrada);
+        params.put("FechaSalida", fechaSalida);
+        params.put("Membresia", membresia);
+
+        return spExecutor.querySingle("spResvCotizarTipoUnidadEspecifica", params, disponibilidadMapper)
+                .orElse(null);
+    }
+
+    public ResumenReservacionDto obtenerResumenReservacion(String membresia, Integer consecutivo) {
+        Map<String, Object> params = Map.of(
+                "Membresia", membresia,
+                "Consecutivo", consecutivo
+        );
+
+        return spExecutor.querySingle("spResvObtenerResumenReservacion", params, resumenReservacionMapper)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró el resumen de la reservación solicitada."));
+    }
+}

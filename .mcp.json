@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "engram": {
+      "command": "engram",
+      "args": ["mcp"]
+    },
+    "coral-sql-server": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-mssql",
+        "mssql://sa:CoralClubes1234#@10.10.3.154:1433?database=Facil&encrypt=true&trustServerCertificate=true"
+      ]
+    }
+  }
+}

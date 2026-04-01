@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Recibo de Cobranza</title>
+    <style>
+        @page {
+            size: letter portrait;
+            margin: 1.3cm;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 10px;
+            color: #334155;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        td {
+            vertical-align: top;
+        }
+
+        .spacer {
+            height: 12px;
+        }
+
+        /* HEADER */
+
+        .header {
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .empresa {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .tag {
+            background: #f1f5f9;
+            padding: 4px 8px;
+            font-size: 9px;
+            border-radius: 3px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        .folio {
+            font-size: 30px;
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .folio-label {
+            text-align: right;
+            font-size: 9px;
+            color: #64748b;
+        }
+
+
+        /* SECCIONES INFO */
+
+        .section {
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+        }
+
+        .section-header {
+            background: #f8fafc;
+            font-size: 9px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #475569;
+            padding: 6px 8px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .section-body {
+            padding: 8px;
+        }
+
+        .info-row {
+            margin-bottom: 4px;
+        }
+
+        .label {
+            color: #64748b;
+        }
+
+        .value {
+            font-weight: bold;
+            color: #0f172a;
+        }
+
+
+        /* TABLA MOVIMIENTOS */
+
+        .mov-table {
+            margin-top: 14px;
+        }
+
+        .mov-table th {
+            background: #f1f5f9;
+            font-size: 9px;
+            text-transform: uppercase;
+            padding: 7px;
+            border-bottom: 2px solid #cbd5e1;
+            color: #475569;
+        }
+
+        .mov-table td {
+            padding: 9px 7px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .mov-desc {
+            font-weight: bold;
+        }
+
+        .mov-ref {
+            font-size: 8px;
+            color: #64748b;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+
+        /* TOTALES */
+
+        .totals {
+            margin-top: 15px;
+        }
+
+        .totals td {
+            padding: 3px 0;
+        }
+
+        .total-final {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+
+        /* FOOTER */
+
+        .footer {
+            margin-top: 30px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
+        }
+
+        .security-tag {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 6px;
+            font-size: 8px;
+            color: #64748b;
+        }
+
+        .signature {
+            text-align: right;
+        }
+
+        .sign-line {
+            border-top: 1px solid #94a3b8;
+            width: 220px;
+            margin-left: auto;
+            margin-top: 35px;
+        }
+
+        .sign-text {
+            font-size: 9px;
+            margin-top: 3px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+
+<!-- HEADER -->
+
+<table class="header">
+    <tr>
+        <td style="width:65%; padding-bottom: 5px">
+            <div class="empresa" th:text="${empresa}">
+                EMPRESAS FIMEX S.A. DE C.V.
+            </div>
+
+            <div class="tag">
+                RECIBO OFICIAL DE PAGO
+            </div>
+        </td>
+
+        <td style="width:35%; padding-bottom: 5px">
+            <div class="folio" th:text="${folio}">
+                5055-1
+            </div>
+
+            <div class="folio-label">
+                FOLIO ÚNICO
+            </div>
+        </td>
+    </tr>
+</table>
+
+<div class="spacer"></div>
+
+
+<!-- BLOQUES INFO -->
+
+<table>
+    <tr>
+        <td style="width:33%; padding-right:8px;">
+            <div class="section">
+                <div class="section-header">
+                    DE (EMISOR)
+                </div>
+
+                <div class="section-body">
+                    <div class="info-row">
+                        <span class="label">RFC:</span>
+                        <span class="value" th:text="${rfcEmpresa}">EFI-841030-7A5</span>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="label">Dirección:</span><br>
+                        <span th:text="${direccionEmpresa}">Av. Constituyentes 561</span>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="label">Tel:</span>
+                        <span th:text="${telefonoEmpresa}">91494044</span>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="label">Web:</span>
+                        <span th:text="${webEmpresa}">www.coralclubes.com</span>
+                    </div>
+                </div>
+            </div>
+        </td>
+
+        <td style="width:33%; padding-right:8px;">
+            <div class="section">
+                <div class="section-header">
+                    PARA (CLIENTE)
+                </div>
+                <div class="section-body">
+                    <div class="info-row">
+                        <span class="label">Cliente:</span><br>
+                        <span class="value" th:text="${clienteNombre}">MANILLA FLORES ROGELIO</span>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="label">Membresía:</span>
+                        <span th:text="${membresia}">0-906760-1</span>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="label">Dirección:</span><br>
+                        <span th:text="${direccionCliente}">Ixtapaluca Edo Mex</span>
+                    </div>
+
+                </div>
+            </div>
+        </td>
+
+        <td style="width:34%">
+            <div class="section">
+                <div class="section-header">
+                    DETALLES
+                </div>
+
+                <div class="section-body">
+                    <div class="info-row">
+                        <span class="label">Fecha:</span>
+                        <span class="value" th:text="${fecha}">11/11/2024</span>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="label">Tipo:</span>
+                        <span th:text="${tipoDocumento}">REIMPRESIÓN</span>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="label">Moneda:</span>
+                        <span th:text="${moneda}">MXN</span>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="label">Página:</span>
+                        <span th:text="${pagina}">1 de 1</span>
+                    </div>
+                </div>
+            </div>
+        </td>
+    </tr>
+</table>
+
+
+<!-- TABLA MOVIMIENTOS -->
+
+<table class="mov-table">
+    <thead>
+    <tr>
+        <th style="width:45%">DESCRIPCIÓN DEL CONCEPTO</th>
+        <th style="width:15%">IMPORTE</th>
+        <th style="width:15%">INTERÉS</th>
+        <th style="width:10%">DESC.</th>
+        <th style="width:15%">TOTAL NETO</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr th:each="mov : ${movimientos}">
+        <td>
+            <div class="mov-desc"
+                 th:text="${mov.descripcion}">
+                MANTENIMIENTO ANUAL 2024
+            </div>
+
+            <div class="mov-ref"
+                 th:if="${mov.referencia}"
+                 th:text="${mov.referencia}">
+                CUOTA FIJA NOVIEMBRE
+            </div>
+        </td>
+
+        <td class="right"
+            th:text="'$ ' + ${#numbers.formatDecimal(mov.importe,1,'COMMA',2,'POINT')}">
+            $1500.00
+        </td>
+
+        <td class="right"
+            th:text="'$ ' + ${#numbers.formatDecimal(mov.interes,1,'COMMA',2,'POINT')}">
+            $0.00
+        </td>
+
+        <td class="right">
+            <span th:if="${mov.descuento > 0}"
+                  th:text="'-$ ' + ${#numbers.formatDecimal(mov.descuento,1,'COMMA',2,'POINT')}">-$150.00</span>
+            <span th:if="${mov.descuento == 0}">$0.00</span>
+        </td>
+
+        <td class="right"
+            th:text="'$ ' + ${#numbers.formatDecimal(mov.totalNeto,1,'COMMA',2,'POINT')}">
+            $1350.00
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+
+<!-- TOTALES -->
+
+<table class="totals">
+    <tr>
+        <td style="width:70%"></td>
+        <td style="width:30%">
+            <table>
+                <tr>
+                    <td>Subtotal</td>
+                    <td class="right"
+                        th:text="'$ ' + ${#numbers.formatDecimal(subtotal,1,'COMMA',2,'POINT')}">
+                        $1950.50
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>Descuento</td>
+                    <td class="right"
+                        style="color:#16a34a"
+                        th:text="'-$ ' + ${#numbers.formatDecimal(descuentoTotal,1,'COMMA',2,'POINT')}">
+                        -$150.00
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="total-final">
+                        MONTO TOTAL
+                    </td>
+
+                    <td class="right total-final"
+                        th:text="'$ ' + ${#numbers.formatDecimal(total,1,'COMMA',2,'POINT')}">
+                        $1800.50
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+
+
+<!-- FOOTER -->
+
+<div class="footer">
+    <table>
+        <tr>
+            <td style="width:65%">
+                <div class="security-tag">
+                    <strong>CADENA DIGITAL DE SEGURIDAD</strong><br>
+                    <span th:text="${cadenaSeguridad}">I/77/331262:88...</span>
+                </div>
+            </td>
+
+            <td style="width:35%" class="signature">
+                <div class="sign-line"></div>
+                <div class="sign-text">FIRMA DE CONFORMIDAD</div>
+            </td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>
