@@ -64,12 +64,6 @@ public class ReportesMotorRepository {
             .visible(true) // Si está en la tabla de memoria, por definición es visible
             .build();
 
-    private final RowMapper<ColumnaMetadataDto> metadataMapper = (rs, rowNum) -> ColumnaMetadataDto.builder()
-            .nombreColumnaDB(rs.getString("NombreColumnaDB"))
-            .ordenOriginal(rs.getInt("OrdenOriginal"))
-            .tipoDato(rs.getString("TipoDato"))
-            .build();
-
     private final RowMapper<ParametroMapeoDto> mapeoMapper = (rs, rowNum) -> ParametroMapeoDto.builder()
             .posicion(rs.getInt("Posicion"))
             .rol(rs.getString("Rol"))
@@ -167,11 +161,18 @@ public class ReportesMotorRepository {
     public List<ColumnaMetadataDto> obtenerMetadataColumnas(String nombreSP, List<ParametroMapeoDto> mapeo) {
         mapeo.sort(Comparator.comparing(ParametroMapeoDto::posicion));
         String callString = construirCallString(nombreSP, mapeo.size());
+
         return jdbcTemplate.execute(
                 (Connection con) -> {
                     try (CallableStatement cs = con.prepareCall(callString)) {
                         for (int i = 1; i <= mapeo.size(); i++) {
-                            cs.setNull(i, Types.VARCHAR);
+                            for (ParametroMapeoDto param : mapeo) {
+                                if ("datetime".equalsIgnoreCase(param.tipoDato())) {
+                                    cs.setNull(param.posicion(), Types.TIMESTAMP);
+                                } else {
+                                    cs.setNull(param.posicion(), Types.VARCHAR);
+                                }
+                            }
                         }
                         boolean hasResult = cs.execute();
                         if (hasResult) {

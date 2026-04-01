@@ -3,7 +3,6 @@ package com.coralclubes.facil.modules.reservaciones.repository;
 import com.coralclubes.facil.modules.reservaciones.dto.projection.PromocionListProjection;
 import com.coralclubes.facil.modules.reservaciones.dto.request.ConsumoOfertaRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.request.PromocionIntegralRequest;
-import com.coralclubes.facil.modules.reservaciones.dto.response.OpcionPagoPuntosDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.Promocion;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import com.coralclubes.utils.json.JsonUtils;

@@ -2,11 +2,9 @@ package com.coralclubes.facil.modules.reservaciones.repository;
 
 import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleDto;
 import com.coralclubes.facil.modules.reservaciones.dto.projection.DisponibilidadUnidadProjection;
-import com.coralclubes.facil.modules.reservaciones.dto.request.AplicarPromocionRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.request.ConfirmarReservaRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.response.*;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
-import com.coralclubes.responses.ApiResponse;
 import com.coralclubes.utils.json.JsonUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;

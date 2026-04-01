@@ -4,7 +4,6 @@ import com.coralclubes.facil.modules.reservaciones.dto.projection.PromocionListP
 import com.coralclubes.facil.modules.reservaciones.dto.request.ConsumoOfertaRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.request.EnlazarImagenRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.request.PromocionIntegralRequest;
-import com.coralclubes.facil.modules.reservaciones.dto.response.OpcionPagoPuntosDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.Promocion;
 import com.coralclubes.facil.modules.reservaciones.dto.response.PromocionListResponse;
 import com.coralclubes.facil.modules.reservaciones.repository.PromocionesRepository;

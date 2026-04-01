@@ -11,7 +11,6 @@ import com.coralclubes.facil.shared.infrastructure.security.repository.LoginRepo
 import com.coralclubes.facil.shared.infrastructure.security.repository.PasswordResetRepository;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
-import com.coralclubes.responses.codes.GeneralResponseCode;
 import com.coralclubes.responses.codes.AuthResponseCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

@@ -4,9 +4,7 @@ import com.coralclubes.facil.modules.sistema.dto.projection.ModuloDtoResult;
 import com.coralclubes.facil.modules.sistema.dto.response.ModuloApiResponse;
 import com.coralclubes.facil.modules.sistema.repository.ModulosRepository;
 import com.coralclubes.responses.ApiResponse;
-import com.coralclubes.responses.BaseResponseCode;
 import com.coralclubes.responses.codes.GeneralResponseCode;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

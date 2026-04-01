@@ -1,6 +1,7 @@
 package com.coralclubes.facil.shared.infrastructure.gateway.service;
 
 import com.coralclubes.facil.modules.sistema.dto.projection.ModuloDtoResult;
+import com.coralclubes.facil.shared.infrastructure.exceptions.custom.NoWebRegistrationException;
 import com.coralclubes.facil.shared.infrastructure.gateway.dto.UserInfo;
 import com.coralclubes.facil.shared.infrastructure.security.dto.projection.UserAutorizacionesResult;
 import com.coralclubes.facil.shared.infrastructure.security.dto.projection.UserLoginResult;
@@ -34,7 +35,7 @@ public class InternalAuthService {
 
         // 2. Validar que tenga password web activo
         if (userData.password() == null || userData.password().isBlank()) {
-            throw new BadCredentialsException("El usuario no tiene registro web activo");
+            throw new NoWebRegistrationException("El usuario no tiene registro web activo");
         }
 
         // 3. Validar contraseña (BCrypt)

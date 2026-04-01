@@ -26,5 +26,7 @@ public class ModuloApiResponse {
     private String icono;
     private String nivel;
     private Integer menuFacil;
+
+    @Builder.Default
     private List<ModuloApiResponse> hijos = new ArrayList<>();
 }

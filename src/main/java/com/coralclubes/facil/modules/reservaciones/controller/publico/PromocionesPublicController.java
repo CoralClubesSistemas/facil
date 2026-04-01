@@ -1,13 +1,11 @@
 package com.coralclubes.facil.modules.reservaciones.controller.publico;
 
 import com.coralclubes.facil.modules.reservaciones.dto.request.ConsumoOfertaRequest;
-import com.coralclubes.facil.modules.reservaciones.dto.response.Promocion;
 import com.coralclubes.facil.modules.reservaciones.service.PromocionesService;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**

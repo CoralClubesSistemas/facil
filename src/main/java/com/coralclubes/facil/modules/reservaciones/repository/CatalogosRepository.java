@@ -1,9 +1,7 @@
 package com.coralclubes.facil.modules.reservaciones.repository;
 
 import com.coralclubes.dto.SelectGenerico;
-import com.coralclubes.facil.modules.reservaciones.dto.projection.CatalogoCargosHabitacion;
 import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
-import com.coralclubes.facil.shared.infrastructure.domain.dto.CatalogoListasValores;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
@@ -34,13 +32,6 @@ public class CatalogosRepository {
                     .descripcion(rs.getString("DESCRIPCION"))
                     .nombre(rs.getString("NOMBRE"))
                     .icono(rs.getString("ICONO"))
-                    .build();
-
-    private final RowMapper<CatalogoCargosHabitacion> catalogoCargosHabitacionMapper = (rs, rowNum) ->
-            CatalogoCargosHabitacion.builder()
-                    .tipoMovimientoId(rs.getInt("TipoMovimientoId"))
-                    .descripcion(rs.getString("Descripcion"))
-                    .cuota(rs.getBigDecimal("Cuota"))
                     .build();
 
     // =========================================================================

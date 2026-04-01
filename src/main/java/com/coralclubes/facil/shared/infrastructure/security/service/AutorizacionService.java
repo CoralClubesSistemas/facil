@@ -11,8 +11,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 /**
  * Servicio para validar autorizaciones fuera de política.
  *

@@ -5,7 +5,6 @@ import com.coralclubes.facil.modules.reservaciones.model.promociones.dto.Reserva
 import com.coralclubes.facil.modules.reservaciones.model.promociones.interfaces.PromocionBeneficio;
 import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 @Component
 public class DescuentoPorcentaje implements PromocionBeneficio {

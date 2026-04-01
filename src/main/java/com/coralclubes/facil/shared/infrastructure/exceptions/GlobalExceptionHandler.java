@@ -1,6 +1,8 @@
 package com.coralclubes.facil.shared.infrastructure.exceptions;
 
 import com.coralclubes.RestApiExceptionHandler;
+import com.coralclubes.facil.shared.infrastructure.codes.LoginResponseCode;
+import com.coralclubes.facil.shared.infrastructure.exceptions.custom.NoWebRegistrationException;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
 import com.coralclubes.responses.codes.AuthResponseCode;
@@ -25,6 +27,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RequiredArgsConstructor
 public class GlobalExceptionHandler extends RestApiExceptionHandler {
     private final BusinessLogger businessLogger;
+
+    @ExceptionHandler(NoWebRegistrationException.class)
+    public ResponseEntity<ApiResponse<?>> handleNoWebRegistration(NoWebRegistrationException ex) {
+        String message = "El usuario no tiene un registro web asociado: " + ex.getMessage();
+        businessLogger.warn("SECURITY", message);
+        
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                ApiResponse.error(LoginResponseCode.NO_WEB_REGISTRATION, message)
+        );
+    }
 
     // Aqui se agregan manejadores de excepciones
     // especificos para el sistema FACIL.
@@ -63,12 +75,13 @@ public class GlobalExceptionHandler extends RestApiExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
 
+    @Order(1)
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse<?>> handleBadCredentials(BadCredentialsException ex) {
-        ApiResponse<?> apiResponse = ApiResponse.error(AuthResponseCode.BAD_CREDENTIALS, "Usuario o contraseña incorrectos");
+        ApiResponse<?> apiResponse = ApiResponse.error(AuthResponseCode.BAD_CREDENTIALS, ex.getMessage());
 
-        businessLogger.warn("SECURITY", "Intento de login fallido: Credenciales inválidas.");
+        businessLogger.warn("SECURITY", ex.getMessage());
 
-        return new ResponseEntity<>(apiResponse, HttpStatus.UNAUTHORIZED);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(apiResponse);
     }
 }

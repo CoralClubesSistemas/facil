@@ -16,8 +16,7 @@ import org.springframework.web.client.RestClient;
 
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.HashMap;
+import java.net.URI;
 import java.util.UUID;
 
 @Component
@@ -137,7 +136,7 @@ public class StorageClient {
 
         try {
 
-            HttpURLConnection connection = (HttpURLConnection) new URL(uploadUrl).openConnection();
+            HttpURLConnection connection = (HttpURLConnection) URI.create(uploadUrl).toURL().openConnection();
 
             connection.setRequestMethod("PUT");
             connection.setDoOutput(true);

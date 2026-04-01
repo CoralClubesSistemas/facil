@@ -1,10 +1,8 @@
 package com.coralclubes.facil.modules.reservaciones.controller.admin;
 
 import com.coralclubes.dto.SelectGenerico;
-import com.coralclubes.facil.modules.reservaciones.dto.projection.CatalogoCargosHabitacion;
 import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
 import com.coralclubes.facil.modules.reservaciones.service.CatalogosService;
-import com.coralclubes.facil.shared.infrastructure.domain.dto.CatalogoListasValores;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

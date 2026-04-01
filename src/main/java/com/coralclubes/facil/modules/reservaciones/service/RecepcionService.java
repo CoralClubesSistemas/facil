@@ -39,7 +39,7 @@ public class RecepcionService {
     private String templateReservaCancelada;
 
     public ApiResponse<List<OperacionDiaDto>> obtenerOperacionesDelDia() {
-        Integer desarrolloId = 2;//userContext.getIdDesarrollo();
+        Integer desarrolloId = userContext.getIdDesarrollo();
 
         if (desarrolloId == null || desarrolloId <= 0) {
             throw new IllegalArgumentException("El ID del desarrollo es obligatorio para consultar la recepción.");
@@ -50,7 +50,7 @@ public class RecepcionService {
     }
 
     public ApiResponse<List<EstadisticaDelDiaDto>> obtenerEstadisticasDelDia() {
-        Integer desarrolloId = 2;// userContext.getIdDesarrollo();
+        Integer desarrolloId = userContext.getIdDesarrollo();
 
         if (desarrolloId == null || desarrolloId <= 0) {
             throw new IllegalArgumentException("El ID del desarrollo es obligatorio.");
@@ -178,7 +178,7 @@ public class RecepcionService {
      */
     public ApiResponse<List<MapaUnidadDto>> obtenerMapaUnidades() {
         // Obtenemos el Desarrollo del usuario logueado
-        Integer desarrolloId = 2; //userContext.getIdDesarrollo();
+        Integer desarrolloId = userContext.getIdDesarrollo();
 
         List<MapaUnidadDto> mapa = repository.obtenerMapaUnidades(desarrolloId);
         return ApiResponse.success("Mapa de unidades obtenido con éxito.", mapa);
@@ -188,7 +188,7 @@ public class RecepcionService {
      * Obtiene el historial de actividad reciente del usuario/desarrollo para el dashboard.
      */
     public ApiResponse<List<String>> obtenerActividadReciente() {
-        Integer desarrolloId = 2; //userContext.getIdDesarrollo();
+        Integer desarrolloId = userContext.getIdDesarrollo();
 
         List<String> actividad = repository.obtenerActividadDiaria(desarrolloId);
         return ApiResponse.success("Actividad reciente obtenida.", actividad);

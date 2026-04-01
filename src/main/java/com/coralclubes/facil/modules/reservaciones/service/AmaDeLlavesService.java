@@ -15,7 +15,6 @@ import com.coralclubes.facil.shared.infrastructure.security.enums.ClavesModulos;
 import com.coralclubes.facil.shared.infrastructure.security.service.SeguridadService;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
-import com.coralclubes.responses.codes.GeneralResponseCode;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;

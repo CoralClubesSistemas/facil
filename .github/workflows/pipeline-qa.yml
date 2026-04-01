@@ -46,11 +46,11 @@ jobs:
           docker rm facil-qa || true
 
           # 2. Ejecución del nuevo contenedor
-          # Puerto: 8086
+          # Puerto: 8082
           docker run -d --name facil-qa \
             --network coral-net \
             --restart unless-stopped \
-            -p 8086:8080 \
+            -p 8082:8080 \
             \
             -e SPRING_PROFILES_ACTIVE=qa \
             -e SERVER_PORT=8080 \
@@ -58,6 +58,10 @@ jobs:
             -e DB_URL="${{ secrets.DB_URL_QA }}" \
             -e DB_USER="${{ secrets.DB_USER_QA }}" \
             -e DB_PASS="${{ secrets.DB_PASS_QA }}" \
+            \
+            -e DB_REPLICA_URL="${{ secrets.DB_REPLICA_URL_QA }}" \
+            -e DB_REPLICA_USER="${{ secrets.DB_REPLICA_USER_QA }}" \
+            -e DB_REPLICA_PASS="${{ secrets.DB_REPLICA_PASS_QA }}" \
             \
             -e RABBIT_HOST=rabbit \
             -e RABBIT_PORT=5672 \
@@ -73,9 +77,14 @@ jobs:
             -e NOTIFICATIONS_SERVICE_URL="${{ secrets.NOTIFICATIONS_URL_QA }}" \
             -e NOTIFICATIONS_API_KEY="${{ secrets.API_KEY_FACIL_NOTIFICACIONES }}" \
             \
+            -e FRONTEND_URL="http://10.10.3.154:4200" \
+            -e PASSWORD_RESET_URL="http://10.10.3.154:4200/auth/confirm-reset" \
+            \
+            -e JWT_SECRET="${{ secrets.JWT_SECRET_QA }}" \
+            \
             facil:qa
 
-          echo "Despliegue exitoso en el puerto 8086."
+          echo "Despliegue exitoso en el puerto 8082."
 
       - name: Limpieza de imágenes huérfanas
         run: docker image prune -f

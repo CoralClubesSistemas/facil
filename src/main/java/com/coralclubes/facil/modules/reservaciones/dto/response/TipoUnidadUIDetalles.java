@@ -1,7 +1,5 @@
 package com.coralclubes.facil.modules.reservaciones.dto.response;
 
-import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
-import com.coralclubes.facil.shared.infrastructure.domain.dto.ImagenDto;
 import com.coralclubes.facil.shared.infrastructure.domain.dto.ImagenResponse;
 import lombok.Builder;
 

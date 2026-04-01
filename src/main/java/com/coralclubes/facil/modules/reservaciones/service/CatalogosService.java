@@ -1,10 +1,8 @@
 package com.coralclubes.facil.modules.reservaciones.service;
 
 import com.coralclubes.dto.SelectGenerico;
-import com.coralclubes.facil.modules.reservaciones.dto.projection.CatalogoCargosHabitacion;
 import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
 import com.coralclubes.facil.modules.reservaciones.repository.CatalogosRepository;
-import com.coralclubes.facil.shared.infrastructure.domain.dto.CatalogoListasValores;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
