@@ -32,13 +32,13 @@
         <repository>
             <id>github-utils</id>
             <name>GitHub Packages - Utils</name>
-            <url>https://maven.pkg.github.com/coralclubessistemas/coralclubes-utils</url>
+            <url>https://maven.pkg.github.com/CoralClubesSistemas/coralclubes-utils</url>
         </repository>
 
         <repository>
             <id>github-exceptions</id>
             <name>GitHub Packages - Exceptions</name>
-            <url>https://maven.pkg.github.com/coralclubessistemas/coral-exceptions</url>
+            <url>https://maven.pkg.github.com/CoralClubesSistemas/coral-exceptions</url>
         </repository>
     </repositories>
 
@@ -237,6 +237,11 @@
         <finalName>facil</finalName>
 
         <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
