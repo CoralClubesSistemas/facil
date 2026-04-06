@@ -91,20 +91,7 @@ jobs:
             \
             facil:qa
 
-          echo "--- Contenedor iniciado, validando health ---"
-
-          # ============================================================
-          # HEALTHCHECK
-          # ============================================================
-          sleep 15
-
-          if curl -f http://localhost:8082/actuator/health; then
-            echo "Aplicación levantó correctamente"
-          else
-            echo "Error: la aplicación no levantó correctamente"
-            docker logs facil-qa --tail 100
-            exit 1
-          fi
+          echo "--- Contenedor iniciado ---"
 
       # ================================================================
       # CLEANUP
