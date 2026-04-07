@@ -10,7 +10,7 @@ import com.coralclubes.facil.modules.reservaciones.repository.HotelesRepository;
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.ServiceUnavailableException;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
-import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlImagenRequest;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaDto;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
@@ -189,7 +189,7 @@ public class HotelesService {
     /**
      * Genera una URL presignada para que el Frontend suba una imagen de hotel.
      */
-    public ApiResponse<RespuestaCargaDto> obtenerUrlCargaImagen(SolicitarUrlImagenRequest request) {
+    public ApiResponse<RespuestaCargaDto> obtenerUrlCargaImagen(SolicitarUrlRequest request) {
         String usuario = userContext.getUsername();
 
         // 2. Construir la ruta lógica inmutable

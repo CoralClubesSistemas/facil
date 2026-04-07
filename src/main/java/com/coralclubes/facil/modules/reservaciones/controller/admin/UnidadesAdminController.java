@@ -13,7 +13,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.response.UnidadFisicaDto;
 import com.coralclubes.facil.modules.reservaciones.service.UnidadesService;
 import com.coralclubes.facil.shared.infrastructure.domain.dto.ImagenResponse;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
-import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlImagenRequest;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -89,7 +89,7 @@ public class UnidadesAdminController {
     @PostMapping("/imagenes/upload-url")
     @PreAuthorize("hasAuthority('MOD_SMNUUNIDADESRESERVACIONES')")
     public ResponseEntity<ApiResponse<RespuestaCargaDto>> solicitarUrlCarga(
-            @Valid @RequestBody SolicitarUrlImagenRequest request) {
+            @Valid @RequestBody SolicitarUrlRequest request) {
         ApiResponse<RespuestaCargaDto> response = service.obtenerUrlCargaImagen(request);
         return ResponseEntity.status(response.status()).body(response);
     }

@@ -13,5 +13,6 @@ public record UserLoginResult(
         String desarrolloDescripcion,
         String email,
         Integer rolId,
-        String rolDescripcion
+        String rolDescripcion,
+        String nombreCompleto
 ) {}

@@ -4,7 +4,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.request.CampanaPuntosRequ
 import com.coralclubes.facil.modules.reservaciones.dto.response.CampanaPuntosResponse;
 import com.coralclubes.facil.modules.reservaciones.service.CampanasPuntosService;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
-import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlImagenRequest;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +44,7 @@ public class CampanasPuntosAdminController {
     @PostMapping("/url-carga")
     @PreAuthorize("hasAuthority('MOD_SMNURESERVACIONES')")
     public ResponseEntity<ApiResponse<RespuestaCargaDto>> solicitarUrlCarga(
-            @RequestBody SolicitarUrlImagenRequest request) {
+            @RequestBody SolicitarUrlRequest request) {
         return ResponseEntity.ok(service.solicitarUrlCarga(request));
     }
 }

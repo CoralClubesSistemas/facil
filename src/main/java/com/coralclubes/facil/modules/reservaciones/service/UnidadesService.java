@@ -10,7 +10,7 @@ import com.coralclubes.facil.shared.infrastructure.domain.dto.ImagenResponse;
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.ServiceUnavailableException;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
-import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlImagenRequest;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaDto;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
 import com.coralclubes.logging.BusinessLogger;
@@ -174,7 +174,7 @@ public class UnidadesService {
     /**
      * Negocia una URL presignada con Coral Almacenamiento para subir fotos de la habitación.
      */
-    public ApiResponse<RespuestaCargaDto> obtenerUrlCargaImagen(SolicitarUrlImagenRequest request) {
+    public ApiResponse<RespuestaCargaDto> obtenerUrlCargaImagen(SolicitarUrlRequest request) {
         String usuario = userContext.getUsername();
 
         // 1. Validar que el Tipo de Unidad exista

@@ -20,5 +20,6 @@ public record UserInfo(
         Integer idDesarrollo,
         String desarrolloDescripcion,
         Integer rolId,
-        List<String> permissions
+        List<String> permissions,
+        String nombreCompleto
 ) {}

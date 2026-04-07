@@ -4,7 +4,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-public record SolicitarUrlImagenRequest(
+public record SolicitarUrlRequest(
         Integer id,
 
         @NotBlank(message = "El nombre del archivo es obligatorio")
