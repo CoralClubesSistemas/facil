@@ -6,7 +6,7 @@
     import com.coralclubes.facil.modules.reservaciones.repository.CampanasPuntosRepository;
     import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
     import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
-    import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlImagenRequest;
+    import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
     import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaDto;
     import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
     import com.coralclubes.responses.ApiResponse;
@@ -67,7 +67,7 @@
          * Negocia con el microservicio de Storage una URL prefirmada para que
          * el Frontend suba la imagen de la promoción directamente al Bucket (S3/MinIO).
          */
-        public ApiResponse<RespuestaCargaDto> solicitarUrlCarga(SolicitarUrlImagenRequest request) {
+        public ApiResponse<RespuestaCargaDto> solicitarUrlCarga(SolicitarUrlRequest request) {
             String usuario = userContext.getUsername();
 
             Map<String, String> metadata = Map.of("modulo", "RESERVACIONES - PROMOCIONES - PUNTOS", "subidoPor", usuario);

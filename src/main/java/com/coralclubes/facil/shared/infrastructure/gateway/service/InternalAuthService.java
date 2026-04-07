@@ -76,6 +76,7 @@ public class InternalAuthService {
                 .desarrolloDescripcion(userData.desarrolloDescripcion())
                 .rolId(userData.rolId())
                 .permissions(permissions)
+                .nombreCompleto(userData.nombreCompleto())
                 .build();
     }
 

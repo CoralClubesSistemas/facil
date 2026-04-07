@@ -32,6 +32,7 @@ public class LoginRepository {
             .email(rs.getString("CORREO"))
             .rolId(rs.getObject("ROL_ID") != null ? rs.getInt("ROL_ID") : null)
             .rolDescripcion(rs.getString("ROL_DESCRIPCION"))
+            .nombreCompleto(rs.getString("NOMBRE_COMPLETO"))
             .build();
 
     private final RowMapper<ModuloDtoResult> moduloMapper = (rs, rowNum) -> ModuloDtoResult.builder()

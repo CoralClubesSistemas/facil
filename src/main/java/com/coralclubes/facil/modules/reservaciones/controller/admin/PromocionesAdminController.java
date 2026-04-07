@@ -7,7 +7,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.response.Promocion;
 import com.coralclubes.facil.modules.reservaciones.dto.response.PromocionListResponse;
 import com.coralclubes.facil.modules.reservaciones.service.PromocionesService;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
-import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlImagenRequest;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -53,7 +53,7 @@ public class PromocionesAdminController {
     @PostMapping("/imagenes/upload-url")
     @PreAuthorize("hasAuthority('MOD_SMNUPROMOCIONESRESERVACIONES')")
     public ResponseEntity<ApiResponse<RespuestaCargaDto>> solicitarUrlCarga(
-            @Valid @RequestBody SolicitarUrlImagenRequest request) {
+            @Valid @RequestBody SolicitarUrlRequest request) {
         ApiResponse<RespuestaCargaDto> response = service.solicitarUrlCarga(request);
         return ResponseEntity.status(response.status()).body(response);
     }

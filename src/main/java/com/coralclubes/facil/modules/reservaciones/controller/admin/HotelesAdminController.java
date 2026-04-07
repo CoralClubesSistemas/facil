@@ -7,7 +7,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.response.HotelDetalleDto;
 import com.coralclubes.facil.modules.reservaciones.service.HotelesService;
 import com.coralclubes.facil.shared.infrastructure.domain.dto.ImagenResponse;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
-import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlImagenRequest;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -112,7 +112,7 @@ public class HotelesAdminController {
     @PostMapping("/imagenes/upload-url")
     @PreAuthorize("hasAuthority('MOD_SMNUHOTELES')")
     public ResponseEntity<ApiResponse<RespuestaCargaDto>> solicitarUrlCarga(
-            @Valid @RequestBody SolicitarUrlImagenRequest request) {
+            @Valid @RequestBody SolicitarUrlRequest request) {
 
         return ResponseEntity.ok(service.obtenerUrlCargaImagen(request));
     }
