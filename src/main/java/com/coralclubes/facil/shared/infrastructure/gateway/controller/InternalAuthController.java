@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * Endpoint interno consumido EXCLUSIVAMENTE por el API Gateway.
  * NO es accesible desde el frontend.
@@ -36,6 +38,16 @@ public class InternalAuthController {
     public ResponseEntity<UserInfo> getUserByUsername(@PathVariable String username) {
         UserInfo userInfo = internalAuthService.obtenerPorUsername(username);
         return ResponseEntity.ok(userInfo);
+    }
+
+    /**
+     * Retorna solo la lista de permisos del usuario.
+     * Usado por UserContext cuando el gateway no envía permisos en headers.
+     */
+    @GetMapping("/permissions/{username}")
+    public ResponseEntity<List<String>> getPermissionsByUsername(@PathVariable String username) {
+        List<String> permissions = internalAuthService.obtenerPermisosPorUsername(username);
+        return ResponseEntity.ok(permissions);
     }
 
     public record InternalLoginRequest(

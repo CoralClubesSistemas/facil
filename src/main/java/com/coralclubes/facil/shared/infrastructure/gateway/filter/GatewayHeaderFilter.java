@@ -55,6 +55,7 @@ public class GatewayHeaderFilter extends OncePerRequestFilter {
         }
 
         // Leer permisos del header (JSON array como string)
+        // Si no viene del gateway, UserContext los obtendrá desde BD
         List<String> permissions = parsePermissions(request.getHeader("X-Auth-Permissions"));
 
         // Construir GrantedAuthorities para @PreAuthorize

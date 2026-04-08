@@ -124,4 +124,22 @@ public class InternalAuthService {
                 .permissions(permissions)
                 .build();
     }
+
+    /**
+     * Retorna solo la lista de permisos del usuario.
+     * Usado por UserContext cuando el gateway no envía permisos en headers.
+     */
+    public List<String> obtenerPermisosPorUsername(String username) {
+        List<ModuloDtoResult> modulos = loginRepository.spLoginModulosUsuarios(username);
+        List<UserAutorizacionesResult> autorizaciones = loginRepository.spLoginObtenerAutorizacionesUsuario(username);
+
+        return Stream.concat(
+                modulos.stream()
+                        .filter(m -> m.clave() != null)
+                        .map(m -> "MOD_" + m.clave().toUpperCase()),
+                autorizaciones.stream()
+                        .filter(a -> a.clave() != null)
+                        .map(a -> "AUTH_" + a.clave().toUpperCase())
+        ).distinct().toList();
+    }
 }
