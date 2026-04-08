@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,37 +28,22 @@ public class ManualesService {
     private final StorageClient storageClient;
     private final BusinessLogger logger;
     private final UserContext userContext;
+    private final BusinessLogger businessLogger;
 
     @Value("${app.clients.storage.aliases.default}")
     private String aliasStorageDefault;
 
-    public ApiResponse<List<ManualResponse>> listarManuales(Integer moduloId) {
-        List<ManualResponse> manuales = repository.obtenerManuales(moduloId);
-        
-        // Generamos URLs de descarga para los que tienen UUID
-        List<ManualResponse> manualesConUrl = manuales.stream()
-                .map(m -> {
-                    if (m.archivoUuid() != null) {
-                        String url = storageClient.obtenerUrlDescarga(m.archivoUuid());
-                        return ManualResponse.builder()
-                                .id(m.id())
-                                .nombre(m.nombre())
-                                .descripcion(m.descripcion())
-                                .moduloId(m.moduloId())
-                                .moduloNombre(m.moduloNombre())
-                                .versionId(m.versionId())
-                                .version(m.version())
-                                .archivoUuid(m.archivoUuid())
-                                .nombreArchivo(m.nombreArchivo())
-                                .tipo(m.tipo())
-                                .urlDescarga(url)
-                                .build();
-                    }
-                    return m;
-                })
-                .collect(Collectors.toList());
+    public ApiResponse<List<ManualResponse>> listarManuales(Integer moduloPadreId, Integer moduloId, Integer numeroPagina) {
+        List<ManualResponse> manuales = repository.obtenerManuales(moduloPadreId, moduloId, numeroPagina);
+        return ApiResponse.success("Manuales obtenidos correctamente", manuales);
+    }
 
-        return ApiResponse.success("Manuales obtenidos correctamente", manualesConUrl);
+    public ApiResponse<String> obtenerUrlDescarga(Integer manualId, Integer version) {
+        UUID uuid = repository.obtenerUuidArchivo(manualId, version)
+                .orElseThrow(() -> new RuntimeException("Archivo no encontrado para el manual y versión especificados"));
+
+        String url = storageClient.obtenerUrlDescarga(uuid);
+        return ApiResponse.success("URL de descarga generada", url);
     }
 
     public ApiResponse<Integer> guardarManual(ManualRequest request) {
@@ -67,18 +51,22 @@ public class ManualesService {
 
         Integer id = repository.guardarManual(request, usuario)
                 .orElseThrow(() -> new RuntimeException("Error al guardar el manual en BD"));
+
+        businessLogger.info(usuario, "Guardando/Actualizado el manual {} en BD", id);
+
         return ApiResponse.success("Manual guardado correctamente", id);
     }
 
     public ApiResponse<Boolean> eliminarManual(Integer id) {
-        // 1. Obtener los UUIDs de todos los archivos asociados a este manual antes de borrarlo lógicamente
-        List<UUID> uuids = repository.eliminarManual(id);
+        String usuario = userContext.getUsername();
+
+        // 1. Obtener los UUIDs y aplicar borrado lógico
+        List<UUID> uuids = repository.eliminarManual(id, usuario);
 
         // 2. Eliminar físicamente los archivos de MinIO/S3
         uuids.forEach(uuid -> {
             try {
                 storageClient.eliminarArchivo(uuid, true);
-                logger.info("MANUALES_SERVICE", "Archivo eliminado físicamente: " + uuid);
             } catch (Exception e) {
                 logger.error("MANUALES_SERVICE", "No se pudo eliminar el archivo físico: " + uuid, e);
             }
@@ -88,9 +76,9 @@ public class ManualesService {
     }
 
     public ApiResponse<Integer> publicarVersion(VersionRequest request) {
-        // la versión anterior NO se elimina de S3 para mantener el historial,
-        // a menos que el usuario lo pida explícitamente
-        Integer id = repository.publicarVersion(request)
+        String usuario = userContext.getUsername();
+
+        Integer id = repository.publicarVersion(request, usuario)
                 .orElseThrow(() -> new RuntimeException("Error al publicar la versión en BD"));
         return ApiResponse.success("Versión publicada correctamente", id);
     }
@@ -102,10 +90,10 @@ public class ManualesService {
     public ApiResponse<RespuestaCargaDto> solicitarUrlTemporal(SolicitarUrlRequest request) {
         String usuario = userContext.getUsername();
 
-        // 2. Construir la ruta lógica
-        String rutaLogica = "manuales/" + request.id() + "/" + request.nombreArchivo();
+        // Construir la ruta lógica
+        String rutaLogica = "manuales/" + request.id();
 
-        // 3. Crear payload para el StorageClient
+        // Crear payload para el StorageClient
         SolicitudCargaDto solicitudStorage = SolicitudCargaDto.builder()
                 .nombreArchivo(request.nombreArchivo())
                 .contentType(request.contentType())
@@ -120,7 +108,6 @@ public class ManualesService {
                 ))
                 .build();
 
-        // 4. Obtener URL del microservicio
         RespuestaCargaDto respuestaStorage = storageClient.solicitarUrlCarga(solicitudStorage);
 
         return ApiResponse.success("URL de carga generada exitosamente", respuestaStorage);

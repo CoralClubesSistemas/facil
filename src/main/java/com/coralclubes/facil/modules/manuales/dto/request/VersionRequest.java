@@ -4,15 +4,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
-import java.util.UUID;
-
 @Builder
 public record VersionRequest(
         @NotNull(message = "El ID del manual es obligatorio")
         Integer manualId,
-
-        @NotNull(message = "La versión es obligatoria")
-        Integer version,
 
         String cambios,
 
