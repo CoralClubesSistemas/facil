@@ -25,8 +25,11 @@ public class ManualesController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<ManualResponse>>> listar(
-            @RequestParam(required = false) Integer moduloId) {
-        return ResponseEntity.ok(service.listarManuales(moduloId));
+            @RequestParam(required = false) Integer moduloPadreId,
+            @RequestParam(required = false) Integer moduloId,
+            @RequestParam(required = false, defaultValue = "1") Integer numeroPagina) {
+
+        return ResponseEntity.ok(service.listarManuales(moduloPadreId, moduloId, numeroPagina));
     }
 
     @PostMapping
@@ -43,8 +46,8 @@ public class ManualesController {
 
     @PostMapping("/solicitar-url")
     @PreAuthorize("hasAuthority('MOD_MNUCONTROLDELSISTEMA')")
-    public ResponseEntity<ApiResponse<RespuestaCargaDto>> solicitarUrlTemporal
-            (@Valid @RequestBody SolicitarUrlRequest request) {
+    public ResponseEntity<ApiResponse<RespuestaCargaDto>> solicitarUrlTemporal(
+            @Valid @RequestBody SolicitarUrlRequest request) {
         return ResponseEntity.ok(service.solicitarUrlTemporal(request));
     }
 
@@ -57,5 +60,13 @@ public class ManualesController {
     @GetMapping("/{manualId}/versiones")
     public ResponseEntity<ApiResponse<List<VersionResponse>>> listarVersiones(@PathVariable Integer manualId) {
         return ResponseEntity.ok(service.listarVersiones(manualId));
+    }
+
+    // NUEVO: Endpoint para obtener la URL de descarga del archivo físico en AWS/MinIO
+    @GetMapping("/{manualId}/versiones/{version}/descargar")
+    public ResponseEntity<ApiResponse<String>> descargarArchivo(
+            @PathVariable Integer manualId,
+            @PathVariable Integer version) {
+        return ResponseEntity.ok(service.obtenerUrlDescarga(manualId, version));
     }
 }

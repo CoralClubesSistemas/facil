@@ -9,10 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Repository
 @RequiredArgsConstructor
@@ -21,15 +18,15 @@ public class ManualesRepository {
     private final StoredProcedureExecutor spExecutor;
 
     private final RowMapper<ManualResponse> manualMapper = (rs, rowNum) -> ManualResponse.builder()
+            .totalRegistros(rs.getInt("TotalRegistros"))
             .id(rs.getInt("Id"))
             .nombre(rs.getString("Nombre"))
             .descripcion(rs.getString("Descripcion"))
             .moduloId(rs.getInt("ModuloId"))
+            .moduloPadreId(rs.getObject("ModuloPadreId") != null ? rs.getInt("ModuloPadreId") : null)
+            .moduloPadreNombre(rs.getString("ModuloPadreNombre"))
             .moduloNombre(rs.getString("ModuloNombre"))
-            .versionId(rs.getObject("VersionId") != null ? rs.getInt("VersionId") : null)
             .version(rs.getObject("Version") != null ? rs.getInt("Version") : null)
-            .archivoUuid(rs.getString("ArchivoUuid") != null ? UUID.fromString(rs.getString("ArchivoUuid")) : null)
-            .nombreArchivo(rs.getString("NombreArchivo"))
             .tipo(rs.getString("Tipo"))
             .build();
 
@@ -47,8 +44,13 @@ public class ManualesRepository {
     private final RowMapper<Integer> scalarIntMapper = (rs, rowNum) -> rs.getInt(1);
     private final RowMapper<UUID> uuidMapper = (rs, rowNum) -> UUID.fromString(rs.getString(1));
 
-    public List<ManualResponse> obtenerManuales(Integer moduloId) {
-        return spExecutor.queryList("spMnlObtenerManuales", Map.of("MdlId", moduloId != null ? moduloId : 0), manualMapper);
+    public List<ManualResponse> obtenerManuales(Integer moduloPadreId, Integer moduloId, Integer numeroPagina) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("MdlPadreId", moduloPadreId);
+        params.put("MdlId", moduloId);
+        params.put("NumeroPagina", numeroPagina != null ? numeroPagina : 1);
+
+        return spExecutor.queryList("spMnlObtenerManuales", params, manualMapper);
     }
 
     public Optional<Integer> guardarManual(ManualRequest request, String usuario) {
@@ -62,23 +64,37 @@ public class ManualesRepository {
         return spExecutor.querySingle("spMnlGuardarManual", params, scalarIntMapper);
     }
 
-    public List<UUID> eliminarManual(Integer id) {
-        return spExecutor.queryList("spMnlEliminarManual", Map.of("Id", id), uuidMapper);
+    public List<UUID> eliminarManual(Integer id, String usuario) {
+        Map<String, Object> params = Map.of(
+                "Id", id,
+                "Usuario", usuario
+        );
+        return spExecutor.queryList("spMnlEliminarManual", params, uuidMapper);
     }
 
-    public Optional<Integer> publicarVersion(VersionRequest request) {
+    public Optional<Integer> publicarVersion(VersionRequest request, String usuario) {
         Map<String, Object> params = Map.of(
                 "ManualId", request.manualId(),
-                "Version", request.version(),
                 "Cambios", request.cambios() != null ? request.cambios() : "",
                 "Uuid", request.uuid(),
                 "NombreArchivo", request.nombreArchivo(),
-                "Tipo", request.tipo()
+                "Tipo", request.tipo(),
+                "Usuario", usuario
         );
         return spExecutor.querySingle("spMnlPublicarVersion", params, scalarIntMapper);
     }
 
     public List<VersionResponse> obtenerVersiones(Integer manualId) {
         return spExecutor.queryList("spMnlObtenerVersiones", Map.of("ManualId", manualId), versionMapper);
+    }
+
+    public Optional<UUID> obtenerUuidArchivo(Integer manualId, Integer version) {
+        Map<String, Object> params = Map.of(
+                "ManualId", manualId,
+                "Version", version
+        );
+        return spExecutor.queryList("spMnlObtenerUuidArchivo", params, uuidMapper)
+                .stream()
+                .findFirst();
     }
 }
