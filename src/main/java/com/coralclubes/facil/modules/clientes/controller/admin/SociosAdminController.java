@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,6 +24,32 @@ public class SociosAdminController {
             @PathVariable String busqueda
     ) {
         ApiResponse<List<InformacionSocio>> response = service.obtenerSocios(busqueda);
+        return ResponseEntity.status(response.status()).body(response);
+    }
+
+    @GetMapping("/busqueda/filtros")
+    public ResponseEntity<ApiResponse<List<InformacionSocio>>> obtenerSociosPorFiltros(
+            @RequestParam(required = false) String membresia,
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) Integer desarrolloId,
+            @RequestParam(required = false) Integer tipoMembresiaId,
+            @RequestParam(required = false) Integer clasificacionMembresiaId,
+            @RequestParam(required = false) Integer carteraCobranzaId,
+            @RequestParam(required = false) Integer estatusMembresiaId,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String telefono
+    ) {
+        ApiResponse<List<InformacionSocio>> response = service.obtenerSociosPorFiltros(
+                membresia,
+                nombre,
+                desarrolloId,
+                tipoMembresiaId,
+                clasificacionMembresiaId,
+                carteraCobranzaId,
+                estatusMembresiaId,
+                email,
+                telefono
+        );
         return ResponseEntity.status(response.status()).body(response);
     }
 }

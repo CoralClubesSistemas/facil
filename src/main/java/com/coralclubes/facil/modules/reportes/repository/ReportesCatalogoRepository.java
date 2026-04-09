@@ -76,4 +76,12 @@ public class ReportesCatalogoRepository {
     public List<SelectGenerico<Integer>> catalogoEstatusReservaciones() {
         return spExecutor.queryList("spRepoCatalogoEstatusReservaciones", java.util.Map.of(), selectIntMapper);
     }
+
+    public List<SelectGenerico<Integer>> catalogoEstatusMembresia() {
+        return spExecutor.queryList("spRepoCatalogoEstatusMembresias", java.util.Map.of(), selectIntMapper);
+    }
+
+    public List<SelectGenerico<Integer>> catalogoTiposMembresias() {
+        return spExecutor.queryList("spRepoCatalogoTiposMembresias", java.util.Map.of(), selectIntMapper);
+    }
 }

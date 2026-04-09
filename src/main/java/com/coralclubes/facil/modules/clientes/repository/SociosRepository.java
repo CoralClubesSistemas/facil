@@ -15,7 +15,7 @@ import java.util.Map;
 public class SociosRepository {
     private final StoredProcedureExecutor executor;
 
-    private RowMapper<InformacionSocio> informacionSocioRowMapper = (rs, rowNum) ->
+    private final RowMapper<InformacionSocio> informacionSocioRowMapper = (rs, rowNum) ->
             InformacionSocio.builder()
                     .membresia(rs.getString("membresia"))
                     .nombreCompleto(rs.getString("nombreCompleto"))
@@ -46,5 +46,30 @@ public class SociosRepository {
         Map<String, Object> params = new HashMap<>();
         params.put("Busqueda", busqueda);
         return executor.queryList("spFacilBusquedaInteligente", params, informacionSocioRowMapper);
+    }
+
+    public List<InformacionSocio> spFacilBusquedaPorFiltros(
+            String membresia,
+            String nombre,
+            Integer desarrolloId,
+            Integer tipoMembresiaId,
+            Integer clasificacionMembresiaId,
+            Integer carteraCobranzaId,
+            Integer estatusMembresiaId,
+            String email,
+            String telefono
+    ) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("Membresia", membresia);
+        params.put("Nombre", nombre);
+        params.put("DesarrolloId", desarrolloId);
+        params.put("TipoMembresiaId", tipoMembresiaId);
+        params.put("ClasificacionMembresiaId", clasificacionMembresiaId);
+        params.put("CarteraCobranzaId", carteraCobranzaId);
+        params.put("EstatusMembresiaId", estatusMembresiaId);
+        params.put("Email", email);
+        params.put("Telefono", telefono);
+
+        return executor.queryList("spFacilBusquedaPorFiltros", params, informacionSocioRowMapper);
     }
 }

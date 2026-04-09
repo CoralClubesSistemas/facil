@@ -19,4 +19,31 @@ public class SociosService {
                 repo.spFacilBusquedaInteligente(busqueda)
         );
     }
+
+    public ApiResponse<List<InformacionSocio>> obtenerSociosPorFiltros(
+            String membresia,
+            String nombre,
+            Integer desarrolloId,
+            Integer tipoMembresiaId,
+            Integer clasificacionMembresiaId,
+            Integer carteraCobranzaId,
+            Integer estatusMembresiaId,
+            String email,
+            String telefono
+    ) {
+        return ApiResponse.success(
+                "Socios obtenidos por filtros exitosamente",
+                repo.spFacilBusquedaPorFiltros(
+                        membresia,
+                        nombre,
+                        desarrolloId,
+                        tipoMembresiaId,
+                        clasificacionMembresiaId,
+                        carteraCobranzaId,
+                        estatusMembresiaId,
+                        email,
+                        telefono
+                )
+        );
+    }
 }
