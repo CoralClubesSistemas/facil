@@ -1,0 +1,15 @@
+package com.coralclubes.facil.modules.cobranza.model.pagos.interfaces;
+
+import com.coralclubes.facil.modules.cobranza.dto.request.ProcesarPagoRequest;
+import com.coralclubes.facil.modules.cobranza.dto.response.ProcesarPagoResponse;
+
+import java.util.UUID;
+
+public interface PaymentStrategy {
+
+    // Identifica qué tipo de pagos procesa esta estrategia
+    String getGatewayType();
+
+    // La lógica core de ejecución
+    ProcesarPagoResponse procesar(UUID ordenUuid, ProcesarPagoRequest request);
+}
