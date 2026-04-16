@@ -283,7 +283,7 @@ public class ReservacionesRepository {
         params.put("FechaSalida", fechaSalida);
         params.put("Membresia", membresia);
 
-        return spExecutor.querySingle("spResvCotizarTipoUnidadEspecifica", params, disponibilidadMapper)
+        return spExecutor.querySingleLog("spResvCotizarTipoUnidadEspecifica", params, disponibilidadMapper)
                 .orElse(null);
     }
 

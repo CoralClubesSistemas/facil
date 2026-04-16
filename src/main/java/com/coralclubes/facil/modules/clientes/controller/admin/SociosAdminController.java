@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.clientes.controller.admin;
 
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
+import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioTabla;
 import com.coralclubes.facil.modules.clientes.service.SociosService;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -28,28 +29,35 @@ public class SociosAdminController {
     }
 
     @GetMapping("/busqueda/filtros")
-    public ResponseEntity<ApiResponse<List<InformacionSocio>>> obtenerSociosPorFiltros(
+    public ResponseEntity<ApiResponse<List<InformacionSocioTabla>>> obtenerSociosPorFiltros(
             @RequestParam(required = false) String membresia,
             @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) String nombreBeneficiario,
             @RequestParam(required = false) Integer desarrolloId,
             @RequestParam(required = false) Integer tipoMembresiaId,
             @RequestParam(required = false) Integer clasificacionMembresiaId,
             @RequestParam(required = false) Integer carteraCobranzaId,
             @RequestParam(required = false) Integer estatusMembresiaId,
             @RequestParam(required = false) String email,
-            @RequestParam(required = false) String telefono
+            @RequestParam(required = false) String telefono,
+            @RequestParam(defaultValue = "1") Integer pagina,
+            @RequestParam(defaultValue = "50") Integer tamanioPagina
     ) {
-        ApiResponse<List<InformacionSocio>> response = service.obtenerSociosPorFiltros(
+        ApiResponse<List<InformacionSocioTabla>> response = service.obtenerSociosPorFiltros(
                 membresia,
                 nombre,
+                nombreBeneficiario,
                 desarrolloId,
                 tipoMembresiaId,
                 clasificacionMembresiaId,
                 carteraCobranzaId,
                 estatusMembresiaId,
                 email,
-                telefono
+                telefono,
+                pagina,
+                tamanioPagina
         );
+
         return ResponseEntity.status(response.status()).body(response);
     }
 }

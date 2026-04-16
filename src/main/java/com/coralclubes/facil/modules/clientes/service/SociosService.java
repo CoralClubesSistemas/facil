@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.clientes.service;
 
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
+import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioTabla;
 import com.coralclubes.facil.modules.clientes.repository.SociosRepository;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -20,30 +21,35 @@ public class SociosService {
         );
     }
 
-    public ApiResponse<List<InformacionSocio>> obtenerSociosPorFiltros(
+    public ApiResponse<List<InformacionSocioTabla>> obtenerSociosPorFiltros(
             String membresia,
             String nombre,
+            String nombreBeneficiario,
             Integer desarrolloId,
             Integer tipoMembresiaId,
             Integer clasificacionMembresiaId,
             Integer carteraCobranzaId,
             Integer estatusMembresiaId,
             String email,
-            String telefono
+            String telefono,
+            Integer pagina,
+            Integer tamanioPagina
     ) {
-        return ApiResponse.success(
-                "Socios obtenidos por filtros exitosamente",
-                repo.spFacilBusquedaPorFiltros(
-                        membresia,
-                        nombre,
-                        desarrolloId,
-                        tipoMembresiaId,
-                        clasificacionMembresiaId,
-                        carteraCobranzaId,
-                        estatusMembresiaId,
-                        email,
-                        telefono
-                )
+        List<InformacionSocioTabla> socios = repo.spFacilBusquedaPorFiltros(
+                membresia,
+                nombre,
+                nombreBeneficiario,
+                desarrolloId,
+                tipoMembresiaId,
+                clasificacionMembresiaId,
+                carteraCobranzaId,
+                estatusMembresiaId,
+                email,
+                telefono,
+                pagina,
+                tamanioPagina
         );
+
+        return ApiResponse.success("Socios obtenidos por filtros exitosamente", socios);
     }
 }

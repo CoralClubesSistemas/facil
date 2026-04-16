@@ -11,12 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -51,5 +46,16 @@ public class CobranzaAdminController {
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
     public ResponseEntity<ApiResponse<List<FormaPagoDto>>> obtenerFormasDePago() {
         return ResponseEntity.ok(cobranzaService.obtenerFormasDePago());
+    }
+
+    @PostMapping("/ordenes/{uuid}/finalizar-recibo")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<String>> finalizarOrdenYGenerarRecibo(
+            @PathVariable UUID uuid,
+            @RequestParam Integer tipoSerieRecibo,
+            @RequestParam String correo
+    ) {
+        String username = userContext.getUsername();
+        return ResponseEntity.ok(cobranzaService.finalizarOrdenYGenerarRecibo(uuid.toString(), tipoSerieRecibo, username, correo));
     }
 }
