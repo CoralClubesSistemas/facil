@@ -3,12 +3,18 @@ package com.coralclubes.facil.modules.clientes.dto.response;
 import lombok.Builder;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Builder
 public record InformacionSocioTabla(
         // Identidad
         String membresia,
         String nombreCompleto,
+        String nombre,
+        String segundoNombre,
+        String apellidoPaterno,
+        String apellidoMaterno,
+        LocalDate fechaNacimiento,
 
         // Comunicación
         String correo,

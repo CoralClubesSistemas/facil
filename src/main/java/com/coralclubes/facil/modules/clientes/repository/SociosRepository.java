@@ -48,6 +48,11 @@ public class SociosRepository {
                     // Identidad
                     .membresia(rs.getString("membresia"))
                     .nombreCompleto(rs.getString("nombreCompleto"))
+                    .nombre(rs.getString("nombre"))
+                    .segundoNombre(rs.getString("segundoNombre"))
+                    .apellidoPaterno(rs.getString("apellidoPaterno"))
+                    .apellidoMaterno(rs.getString("apellidoMaterno"))
+                    .fechaNacimiento(rs.getDate("fechaNacimiento").toLocalDate())
 
                     // Comunicación
                     .correo(rs.getString("correo"))
