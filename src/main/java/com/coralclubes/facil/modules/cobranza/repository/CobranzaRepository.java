@@ -46,6 +46,9 @@ public class CobranzaRepository {
 
     private final RowMapper<String> jsonStringMapper = (rs, rowNum) -> rs.getString(1);
 
+    private final RowMapper<UUID> uuidMapper = (rs, rowNum) ->
+            UUID.fromString(rs.getString("RCD_UUID"));
+
     public Optional<GenerarOrdenCobranzaResponse> spCobranzaGenerarOrdenCobranza(
             String membresia,
             String usuario,
@@ -97,5 +100,33 @@ public class CobranzaRepository {
 
     public List<FormaPagoDto> spCobranzaCatalogoFormasDePago() {
         return spExecutor.queryList("spCobranzaCatalogoFormasDePago", Collections.emptyMap(), formaPagoMapper);
+    }
+
+    // Modificación en CobranzaRepository.java
+    public Optional<UUID> spCobranzaActualizarMetadatosDigitales(
+            Integer numeroRecibo,
+            Integer serieReciboId,
+            String fileId,
+            String cadenaSeguridad,
+            String usuario
+    ) {
+        return spExecutor.querySingle(
+                "spCobranzaActualizarMetadatosDigitales",
+                Map.of(
+                        "NumeroRecibo", numeroRecibo,
+                        "SerieReciboId", serieReciboId,
+                        "FileId", fileId,
+                        "CadenaSeguridad", cadenaSeguridad,
+                        "Usuario", usuario
+                ),
+                uuidMapper
+        );
+    }
+
+    public void spCobranzaCancelarOrdenCobranzaSinPago(String uuid) {
+        spExecutor.execute(
+                "spCobranzaCancelarOrdenCobranzaSinPago",
+                Map.of("OrdenUuid", uuid)
+        );
     }
 }

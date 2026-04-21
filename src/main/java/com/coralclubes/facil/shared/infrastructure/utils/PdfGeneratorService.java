@@ -44,15 +44,15 @@ public class PdfGeneratorService {
             PdfRendererBuilder builder = new PdfRendererBuilder();
             builder.useFastMode();
 
-            // Permite que la plantilla resuelva recursos locales
-            builder.withHtmlContent(htmlProcesado, Objects.requireNonNull(getClass().getResource("/templates/")).toExternalForm());
+            // Cambiamos la forma de obtener el baseUri
+            builder.withHtmlContent(htmlProcesado, "/");
 
             builder.toStream(os);
             builder.run();
-
-            return os.toByteArray(); // retornamos el PDF como arreglo de bytes
+            return os.toByteArray();
         } catch (Exception e) {
-            throw new RuntimeException("Error al convertir el HTML a PDF", e);
+            e.printStackTrace();
+            throw new RuntimeException("Error al convertir el HTML a PDF: " + e.getMessage(), e);
         }
     }
 }

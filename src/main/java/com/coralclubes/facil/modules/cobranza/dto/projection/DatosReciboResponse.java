@@ -15,25 +15,30 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DatosReciboResponse {
+    private String cadenaSeguridad;
+    private String estatus; // Recibido desde el SP: 'ORIGINAL', 'REIMPRESION' o 'CANCELADO'
+    private String reciboUuid;
+
     private String empresa;
     private String rfcEmpresa;
     private String direccionEmpresa;
     private String telefonoEmpresa;
     private String webEmpresa;
+    private String correoEmpresa;
+
     private String folio;
+    private String fecha;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
-    private LocalDateTime fecha;
-
-    private String moneda;
     private String membresia;
     private String clienteNombre;
-    private String direccionCliente;
+    private String direccionSocio;
     private BigDecimal subtotal;
     private BigDecimal descuentoTotal;
     private BigDecimal total;
-    private String cadenaSeguridad;
     private List<MovimientosHijos> movimientos;
+
+    private String desarrollo;
+    private String producto;
 
     @Data
     @NoArgsConstructor

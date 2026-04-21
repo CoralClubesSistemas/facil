@@ -4,8 +4,10 @@ import com.coralclubes.facil.modules.cobranza.dto.projection.DatosReciboResponse
 import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.*;
 import com.coralclubes.facil.modules.cobranza.repository.CobranzaRepository;
+import com.coralclubes.facil.modules.usuarios.service.UsuarioService;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.NotificationClient;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.dto.SolicitudNotificacionDto;
+import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
 import com.coralclubes.responses.codes.GeneralResponseCode;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -25,6 +27,8 @@ public class CobranzaService {
     private final ObjectMapper objectMapper;
     private final CobranzaGeneradorDocumentosService generador;
     private final NotificationClient notificationClient;
+    private final BusinessLogger log;
+    private final UsuarioService usuarioService;
 
     public ApiResponse<GenerarOrdenCobranzaResponse> generarOrdenCobranza(GenerarOrdenCobranzaRequest request, String usuario) {
         String movimientosJson = serializarMovimientos(request);
@@ -74,8 +78,6 @@ public class CobranzaService {
         String json = repository.spCobranzaObtenerDatosRecibo(numeroRecibo, serieReciboId)
                 .orElseThrow(() -> new IllegalArgumentException("No se encontraron datos para el recibo solicitado."));
 
-        System.out.println("JSON de datos del recibo: " + json); // Log para depuración
-
         try {
             return objectMapper.readValue(json, DatosReciboResponse.class);
         } catch (JsonProcessingException ex) {
@@ -83,31 +85,60 @@ public class CobranzaService {
         }
     }
 
-    public ApiResponse<String> finalizarOrdenYGenerarRecibo(String ordenUuid, Integer tipoSerieRecibo, String usuario, String correo) {
+    // Modificación en CobranzaService.java
+    public ApiResponse<String> finalizarOrdenYGenerarRecibo(
+            String ordenUuid,
+            Integer tipoSerieRecibo,
+            String usuario,
+            String correo
+    ) {
+        String correoAuditoria = usuarioService.obtenerCorreoUsuario(usuario).orElse("facil@coralclubes.com");
+
+        // 1. Ejecutar transacción en SQL
         FinalizarOrdenCobranzaResponse orden = finalizarOrdenDeCobranza(ordenUuid, tipoSerieRecibo, usuario);
+
+        // 2. Obtener datos procesados (Aquí el SP ya nos da el estatus inicial 'ORIGINAL')
         DatosReciboResponse recibo = datosRecibo(orden.numeroRecibo(), orden.serieReciboId());
 
-        // 3. GENERACIÓN DE PDF Y NOTIFICACIÓN
         try {
-            // Generamos el archivo
-            UUID url = generador.generarYGuardarRecibo(recibo);
+            // 3. Generar documentos (Original y Reimpresión para auditoría)
+            CobranzaGeneradorDocumentosService.ResultadoRecibos archivos = generador.generarAmbosRecibos(recibo);
 
-            // Preparamos y enviamos la notificación
-            SolicitudNotificacionDto solicitudNotificacion = SolicitudNotificacionDto.builder()
-                    .codigoSistema("FACIL")
-                    .aliasConfig("SMTP_GENERAL")
-                    .destinatarios(List.of(correo))
-                    .cuerpo("Gracias por su pago, aquí tiene su recibo.")
-                    .prioridad(10)
-                    .adjuntos(List.of(url.toString()))
-                    .build();
+            // 4. Actualizar metadatos digitales con el ID del original y la cadena generada
+            repository.spCobranzaActualizarMetadatosDigitales(
+                    orden.numeroRecibo(),
+                    orden.serieReciboId(),
+                    archivos.originalId().toString(),
+                    archivos.cadenaOriginal(),
+                    usuario // Usuario que finalizó la orden
+            );
 
-            notificationClient.enviarNotificacion(solicitudNotificacion);
+            // 5. Envío de Notificaciones
+            enviarEmail(correo, "Su Recibo de Pago (Original)", archivos.originalId());
+            enviarEmail(correoAuditoria, "Copia de Recibo - Folio: " + recibo.getFolio(), archivos.reimpresionId());
 
-            return ApiResponse.success("Orden finalizada con éxito.", url.toString());
+            return ApiResponse.success("Proceso completado exitosamente.", archivos.originalId().toString());
 
         } catch (Exception e) {
-            return ApiResponse.error(GeneralResponseCode.SERVICE_UNAVAILABLE, "El pago se procesó, pero hubo un problema al generar el PDF o enviar el correo. Puede descargarlo desde su historial.");
+            log.error(usuario, "Error en post-procesamiento de recibo: {}", e.getMessage());
+            return ApiResponse.error(GeneralResponseCode.SERVICE_UNAVAILABLE, "Pago aplicado, pero hubo un error con los documentos.");
         }
+    }
+
+    // Método auxiliar de envío
+    private void enviarEmail(String destinatario, String asunto, UUID fileId) {
+        SolicitudNotificacionDto solicitud = SolicitudNotificacionDto.builder()
+                .codigoSistema("FACIL")
+                .aliasConfig("SMTP_GENERAL")
+                .destinatarios(List.of(destinatario))
+                .cuerpo(asunto)
+                .prioridad(10)
+                .adjuntos(List.of(fileId.toString()))
+                .build();
+        notificationClient.enviarNotificacion(solicitud);
+    }
+
+    public void cancelarOrdenCobranzaSinPago(String uuid) {
+        repository.spCobranzaCancelarOrdenCobranzaSinPago(uuid);
     }
 }

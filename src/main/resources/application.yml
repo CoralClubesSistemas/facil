@@ -130,6 +130,12 @@ app:
         default: ${APP_CLIENTS_NOTIFICATIONS_ALIASES_DEFAULT:SMTP_GENERAL}
         aws-ses: ${APP_CLIENTS_NOTIFICATIONS_ALIASES_AWS_SES:AWS_SES}
 
+    pdf-generator:
+      url: ${PDF_GENERATOR_URL}
+      api-key: ${PDF_GENERATOR_API_KEY}
+      plantillas:
+        recibo: ${APP_CLIENTS_PDF_GENERATOR_PLANTILLAS_RECIBO:RECIBO-FACIL}
+
 # ==================================================================
 # PERFIL DEV
 # ==================================================================
@@ -174,6 +180,12 @@ app:
       aliases:
         default: SMTP_GENERAL
         aws-ses: AWS_SES
+
+    pdf-generator:
+      url: http://localhost:8081
+      api-key: FACIL_PRjS7QZ9J7APlgez6wXuA04Qsv0esjJu
+      plantillas:
+        recibo: RECIBO_FACIL
 
 jwt:
   secret: nTUtfGTwSCZlj4WC00mzXKTLAZbgFZST7MFpivsizOwCzzfP5eiEhuMBFOyHyJC2kiCqjvwctSgk9KCtAUjVGA==
