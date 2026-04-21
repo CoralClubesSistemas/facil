@@ -58,4 +58,12 @@ public class CobranzaAdminController {
         String username = userContext.getUsername();
         return ResponseEntity.ok(cobranzaService.finalizarOrdenYGenerarRecibo(uuid.toString(), tipoSerieRecibo, username, correo));
     }
+
+    @DeleteMapping("/ordenes/{uuid}")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<Void>> cancelarOrdenCobranza(
+            @PathVariable String uuid) {
+        cobranzaService.cancelarOrdenCobranzaSinPago(uuid);
+        return ResponseEntity.ok(ApiResponse.success("Orden de cobranza cancelada correctamente.", null));
+    }
 }
