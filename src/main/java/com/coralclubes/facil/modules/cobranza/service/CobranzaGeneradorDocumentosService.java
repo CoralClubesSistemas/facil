@@ -66,6 +66,7 @@ public class CobranzaGeneradorDocumentosService {
                 // Desglose Financiero y Tabla de Movimientos
                 Map.entry("movimientos", recibo.getMovimientos()),
                 Map.entry("subtotal", recibo.getSubtotal()),
+                Map.entry("totalIva", recibo.getTotalIva()),
                 Map.entry("descuentoTotal", recibo.getDescuentoTotal()),
                 Map.entry("total", recibo.getTotal()),
 

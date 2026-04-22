@@ -15,18 +15,14 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class EfectivoPaymentStrategy implements PaymentStrategy {
-
+public class DepositoPaymentStrategy implements PaymentStrategy {
     private final IntentoPagoRepository intentoPagoRepository;
 
     @Override
-    public String getGatewayType() {
-        return "EFECTIVO";
-    }
+    public String getGatewayType() { return "DEPOSITO"; }
 
     @Override
     public ProcesarPagoResponse procesar(UUID ordenUuid, ProcesarPagoRequest request) {
-        // 1. Efectivo se aprueba inmediatamente porque el cajero tiene el dinero en mano
         String estatus = EstatusIntentoPago.APROBADO.toString();
 
         Integer intentoId = intentoPagoRepository.spCobranzaRegistrarIntentoPago(
@@ -36,17 +32,17 @@ public class EfectivoPaymentStrategy implements PaymentStrategy {
         // 2. Al ser aprobado directo, actualizamos fecha de aprobación
         intentoPagoRepository.spCobranzaActualizarEstatusIntentoPago(intentoId, estatus, LocalDateTime.now());
 
-        log.info("Intento de pago con EFECTIVO, orden {} registrado con ID {} y estatus APROBADO", ordenUuid, intentoId);
+        log.info("Intento de pago con DEPOSITO, orden {} registrado con ID {} y estatus APROBADO", ordenUuid, intentoId);
 
         return ProcesarPagoResponse.builder()
                 .intentoPagoId(intentoId)
                 .estatus(estatus)
-                .mensajeAccion("Pago en efectivo registrado correctamente.")
+                .mensajeAccion("Pago con depósito registrado correctamente")
                 .build();
     }
 
     @Override
     public void postProcesarFinalizacion(Integer idIntentoPago) {
-        intentoPagoRepository.spCobranzaRegistrarPagoEfectivo(idIntentoPago);
+        intentoPagoRepository.spCobranzaRegistrarPagoDeposito(idIntentoPago);
     }
 }

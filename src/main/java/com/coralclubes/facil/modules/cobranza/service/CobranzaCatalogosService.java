@@ -21,4 +21,12 @@ public class CobranzaCatalogosService {
     public ApiResponse<BigDecimal> obtenerPorcentajeAutorizado(Integer idDesarrollo, Integer clasificacionMembresia) {
         return ApiResponse.success(repository.spCobranzaObtenerPorcentajeLimite(idDesarrollo, clasificacionMembresia));
     }
+
+    public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogoTerminales() {
+        return ApiResponse.success(repository.spCobranzaCatalogoTerminales());
+    }
+
+    public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogoBancos() {
+        return ApiResponse.success("Bancos obtenidos correctamente.", repository.spCobranzaCatalogoBancos());
+    }
 }

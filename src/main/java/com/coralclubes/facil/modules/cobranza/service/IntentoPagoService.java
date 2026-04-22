@@ -35,7 +35,7 @@ public class IntentoPagoService {
         // 1. Obtenemos la estrategia dinámica basada en el ID (Efectivo, Tarjeta, Link...)
         PaymentStrategy strategy = factory.getStrategy(request.formaPagoClave());
 
-        // 2. Ejecutamos la lógica de cobro delegada
+        // 2. Ejecutamos la lógica del intento de pago
         ProcesarPagoResponse response = strategy.procesar(ordenUuid, request);
 
         return ApiResponse.success("Intento de pago procesado", response);

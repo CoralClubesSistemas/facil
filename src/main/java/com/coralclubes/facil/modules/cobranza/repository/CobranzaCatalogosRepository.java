@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -31,5 +32,13 @@ public class CobranzaCatalogosRepository {
                                 "ClasificacionMembresia", clasificacionMembresia),
                         porcentaje)
                 .orElse(BigDecimal.ZERO);
+    }
+
+    public List<SelectGenerico<Integer>> spCobranzaCatalogoTerminales() {
+        return spExecutor.queryList("spCobranzaCatalogoTerminales", Map.of(), selectGenericoMapper);
+    }
+
+    public List<SelectGenerico<Integer>> spCobranzaCatalogoBancos() {
+        return spExecutor.queryList("spCobranzaCatalogoBancos", Collections.emptyMap(), selectGenericoMapper);
     }
 }

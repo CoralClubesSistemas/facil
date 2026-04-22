@@ -8,7 +8,9 @@ import java.util.List;
 
 public record GenerarOrdenCobranzaRequest(
         @NotBlank String membresia,
-        @NotEmpty List<@Valid GenerarOrdenCobranzaMovimientoRequest> movimientos
+        @NotEmpty List<@Valid GenerarOrdenCobranzaMovimientoRequest> movimientos,
+        Boolean agregarIva,
+        Boolean ivaIncluido
 ) {
 }
 

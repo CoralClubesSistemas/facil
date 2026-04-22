@@ -5,6 +5,7 @@ import com.coralclubes.facil.modules.cobranza.service.CobranzaCatalogosService;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -33,5 +34,16 @@ public class CobranzaCatalogosController {
             @RequestParam("idDesarrollo") Integer idDesarrollo,
             @RequestParam("clasificacionMembresia") Integer clasificacionMembresia) {
         return ResponseEntity.ok(service.obtenerPorcentajeAutorizado(idDesarrollo, clasificacionMembresia));
+    }
+
+    @GetMapping("/terminales")
+    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerTerminales() {
+        return ResponseEntity.ok(service.obtenerCatalogoTerminales());
+    }
+
+    @GetMapping("/bancos")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerCatalogoBancos() {
+        return ResponseEntity.ok(service.obtenerCatalogoBancos());
     }
 }

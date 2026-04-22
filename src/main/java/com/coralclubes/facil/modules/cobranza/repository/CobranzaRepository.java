@@ -1,8 +1,7 @@
 package com.coralclubes.facil.modules.cobranza.repository;
 
-import com.coralclubes.facil.modules.cobranza.dto.response.FinalizarOrdenCobranzaResponse;
-import com.coralclubes.facil.modules.cobranza.dto.response.FormaPagoDto;
-import com.coralclubes.facil.modules.cobranza.dto.response.GenerarOrdenCobranzaResponse;
+import com.coralclubes.dto.SelectGenerico;
+import com.coralclubes.facil.modules.cobranza.dto.response.*;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
@@ -10,10 +9,12 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.time.LocalDate;
 
 @Repository
 @RequiredArgsConstructor
@@ -44,20 +45,48 @@ public class CobranzaRepository {
                     rs.getString("color")
             );
 
+    private final RowMapper<DepositoCobranzaDto> depositoCobranzaMapper = (rs, rowNum) ->
+            new DepositoCobranzaDto(
+                    rs.getInt("idDeposito"),
+                    rs.getDate("fechaOperacion") != null ? rs.getDate("fechaOperacion").toLocalDate() : null,
+                    rs.getString("concepto"),
+                    rs.getString("referencia"),
+                    rs.getString("referenciaAmpliada"),
+                    rs.getBigDecimal("importeDeposito"),
+                    rs.getBigDecimal("importeDisponible"),
+                    rs.getString("banco")
+            );
+
     private final RowMapper<String> jsonStringMapper = (rs, rowNum) -> rs.getString(1);
 
     private final RowMapper<UUID> uuidMapper = (rs, rowNum) ->
             UUID.fromString(rs.getString("RCD_UUID"));
 
+    private final RowMapper<RecibosCancelados> recibosCanceladosMapper = (rs, rowNum) ->
+            new RecibosCancelados(
+                    rs.getString("membresia"),
+                    rs.getInt("numeroRecibo"),
+                    rs.getInt("serieReciboId"),
+                    rs.getString("serieRecibo"),
+                    rs.getString("tipoRecibo"),
+                    rs.getDate("fechaPago") != null ? rs.getDate("fechaPago").toLocalDate() : null,
+                    rs.getBigDecimal("importe"),
+                    rs.getString("estatusRecibo")
+            );
+
     public Optional<GenerarOrdenCobranzaResponse> spCobranzaGenerarOrdenCobranza(
             String membresia,
             String usuario,
-            String movimientosJson
+            String movimientosJson,
+            Boolean agregarIVA,
+            Boolean ivaIncluido
     ) {
         Map<String, Object> params = Map.of(
                 "Membresia", membresia,
                 "Usuario", usuario,
-                "MovimientosJSON", movimientosJson
+                "MovimientosJSON", movimientosJson,
+                "AgregarIva", agregarIVA,
+                "IvaIncluido", ivaIncluido
         );
 
         return spExecutor.querySingle("spCobranzaGenerarOrdenCobranza", params, generarOrdenCobranzaMapper);
@@ -102,6 +131,19 @@ public class CobranzaRepository {
         return spExecutor.queryList("spCobranzaCatalogoFormasDePago", Collections.emptyMap(), formaPagoMapper);
     }
 
+    public List<DepositoCobranzaDto> spCobranzaObtenerDepositos(
+            Integer idBanco,
+            LocalDate fechaDeposito,
+            String busqueda
+    ) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("IdBanco", idBanco);
+        params.put("fechaDeposito", fechaDeposito);
+        params.put("Busqueda", busqueda);
+
+        return spExecutor.queryList("spCobranzaObtenerDepositos", params, depositoCobranzaMapper);
+    }
+
     // Modificación en CobranzaRepository.java
     public Optional<UUID> spCobranzaActualizarMetadatosDigitales(
             Integer numeroRecibo,
@@ -127,6 +169,18 @@ public class CobranzaRepository {
         spExecutor.execute(
                 "spCobranzaCancelarOrdenCobranzaSinPago",
                 Map.of("OrdenUuid", uuid)
+        );
+    }
+
+    public List<RecibosCancelados> spCobranzaObtenerRecibosCancelados(String membresia, String recibo) {
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("membresia", membresia);
+        params.put("recibo", recibo);
+
+        return spExecutor.queryList(
+                "spCobranzaObtenerRecibosCancelados",
+                params,
+                recibosCanceladosMapper
         );
     }
 }

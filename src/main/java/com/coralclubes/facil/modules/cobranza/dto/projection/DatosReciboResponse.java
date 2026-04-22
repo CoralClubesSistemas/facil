@@ -33,6 +33,7 @@ public class DatosReciboResponse {
     private String clienteNombre;
     private String direccionSocio;
     private BigDecimal subtotal;
+    private BigDecimal totalIva;
     private BigDecimal descuentoTotal;
     private BigDecimal total;
     private List<MovimientosHijos> movimientos;
@@ -48,6 +49,7 @@ public class DatosReciboResponse {
         private String referencia;
         private BigDecimal importe;
         private BigDecimal interes;
+        private BigDecimal iva;
         private BigDecimal descuento;
         private BigDecimal totalNeto;
     }

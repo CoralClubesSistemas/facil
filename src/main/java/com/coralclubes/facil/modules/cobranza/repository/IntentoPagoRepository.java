@@ -91,4 +91,16 @@ public class IntentoPagoRepository {
 
         spExecutor.execute("spCobranzaEliminarIntentoPago", params);
     }
+
+    public void spCobranzaRegistrarPagoEfectivo(Integer IdIntentoPago) {
+        spExecutor.execute("spCobranzaRegistrarPagoEfectivo", Map.of("IdIntentoPago", IdIntentoPago));
+    }
+
+    public void spCobranzaRegistrarPagoTarjeta(Integer IdIntentoPago) {
+        spExecutor.execute("spCobranzaRegistrarPagoTarjeta", Map.of("IdIntentoPago", IdIntentoPago));
+    }
+
+    public void spCobranzaRegistrarPagoDeposito(Integer IdIntentoPago) {
+        spExecutor.execute("spCobranzaRegistrarPagoDeposito", Map.of("IdIntentoPago", IdIntentoPago));
+    }
 }

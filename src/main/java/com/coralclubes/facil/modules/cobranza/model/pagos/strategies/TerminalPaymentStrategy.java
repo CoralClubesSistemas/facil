@@ -2,12 +2,14 @@ package com.coralclubes.facil.modules.cobranza.model.pagos.strategies;
 
 import com.coralclubes.facil.modules.cobranza.dto.request.ProcesarPagoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.ProcesarPagoResponse;
+import com.coralclubes.facil.modules.cobranza.model.pagos.enums.EstatusIntentoPago;
 import com.coralclubes.facil.modules.cobranza.model.pagos.interfaces.PaymentStrategy;
 import com.coralclubes.facil.modules.cobranza.repository.IntentoPagoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Slf4j
@@ -24,28 +26,26 @@ public class TerminalPaymentStrategy implements PaymentStrategy {
 
     @Override
     public ProcesarPagoResponse procesar(UUID ordenUuid, ProcesarPagoRequest request) {
+        String estatus = EstatusIntentoPago.APROBADO.toString();
 
-        // 1. Aquí simulamos una llamada a la API de la Terminal con timeout de 3 segundos
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("El procesamiento del pago fue interrumpido.", e);
-        }
-
-        String metadataInicial = "{\"esperandoTerminal\": true}";
-
-        // 2. Queda PENDIENTE hasta que el Webhook o el Polling confirmen
         Integer intentoId = intentoPagoRepository.spCobranzaRegistrarIntentoPago(
-                ordenUuid, request.formaPagoClave(), request.monto(), "PENDIENTE", metadataInicial
+                ordenUuid, request.formaPagoClave(), request.monto(), estatus, request.metadata()
         ).orElseThrow();
 
-        log.info("Intento de pago con TARJETA, orden {} registrado con ID {} y estatus PENDIENTE", ordenUuid, intentoId);
+        // 2. Al ser aprobado directo, actualizamos fecha de aprobación
+        intentoPagoRepository.spCobranzaActualizarEstatusIntentoPago(intentoId, estatus, LocalDateTime.now());
+
+        log.info("Intento de pago con TARJETA, orden {} registrado con ID {} y estatus APROBADO", ordenUuid, intentoId);
 
         return ProcesarPagoResponse.builder()
                 .intentoPagoId(intentoId)
-                .estatus("PENDIENTE")
-                .mensajeAccion("Deslice o inserte la tarjeta en la terminal física.")
+                .estatus(estatus)
+                .mensajeAccion("Pago con tarjeta registrado correctamente")
                 .build();
+    }
+
+    @Override
+    public void postProcesarFinalizacion(Integer idIntentoPago) {
+        intentoPagoRepository.spCobranzaRegistrarPagoTarjeta(idIntentoPago);
     }
 }

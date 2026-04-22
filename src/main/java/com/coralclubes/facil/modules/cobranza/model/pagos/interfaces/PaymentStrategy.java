@@ -12,4 +12,7 @@ public interface PaymentStrategy {
 
     // La lógica core de ejecución
     ProcesarPagoResponse procesar(UUID ordenUuid, ProcesarPagoRequest request);
+
+    // Lógica que se ejecuta SOLO cuando la orden ya se facturó/cerró exitosamente
+    void postProcesarFinalizacion(Integer idIntentoPago);
 }
