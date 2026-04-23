@@ -1,10 +1,14 @@
 package com.coralclubes.facil.modules.clientes.service;
 
+import com.coralclubes.facil.modules.clientes.dto.projection.InformacionSocioDb;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
+import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioBusqueda;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioTabla;
 import com.coralclubes.facil.modules.clientes.repository.SociosRepository;
+import com.coralclubes.facil.shared.infrastructure.integration.banco.service.BbvaService;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,12 +17,47 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SociosService {
     private final SociosRepository repo;
+    private final BbvaService bbvaService;
 
-    public ApiResponse<List<InformacionSocio>> obtenerSocios(String busqueda) {
-        return ApiResponse.success(
-                "Socios obtenidos exitosamente",
-                repo.spFacilBusquedaInteligente(busqueda)
-        );
+    @Value("${app.banco.cie.bbva}")
+    private String bankNumberCie;
+
+    public ApiResponse<InformacionSocio> obtenerSocios(String membresia) {
+        InformacionSocioDb socio = repo.spClientesObtenerDatosSocio(membresia)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró información para la membresía: " + membresia));
+
+        InformacionSocio socioFinal = InformacionSocio.builder()
+                .membresia(socio.membresia())
+                .nombreCompleto(socio.nombreCompleto())
+                .nombre(socio.nombre())
+                .segundoNombre(socio.segundoNombre())
+                .apellidoPaterno(socio.apellidoPaterno())
+                .apellidoMaterno(socio.apellidoMaterno())
+                .correo(socio.correo())
+                .correoAlternativo(socio.correoAlternativo())
+                .telefono(socio.telefono())
+                .telefonoAlternativo(socio.telefonoAlternativo())
+                .fechaNacimiento(socio.fechaNacimiento())
+                .tipoMembresiaId(socio.tipoMembresiaId())
+                .tipoMembresia(socio.tipoMembresia())
+                .clasificacionMembresiaId(socio.clasificacionMembresiaId())
+                .clasificacionMembresia(socio.clasificacionMembresia())
+                .desarrolloId(socio.desarrolloId())
+                .desarrollo(socio.desarrollo())
+                .estatusMembresiaId(socio.estatusMembresiaId())
+                .estatusMembresia(socio.estatusMembresia())
+                .carteraCobranzaId(socio.carteraCobranzaId())
+                .carteraCobranza(socio.carteraCobranza())
+                .vigenciaOriginal(socio.vigenciaOriginal())
+                .vigenciaRestante(socio.vigenciaRestante())
+                .convenioCie(obtenerConvenioCIECadena(socio.membresia()))
+                .build();
+
+        return ApiResponse.success("Socio obtenido exitosamente", socioFinal);
+    }
+
+    public ApiResponse<List<InformacionSocioBusqueda>> obtenerSociosBusquedaRapida(String busqueda) {
+        return ApiResponse.success("Socios obtenidos exitosamente", repo.spClientesBusquedaInteligente(busqueda));
     }
 
     public ApiResponse<List<InformacionSocioTabla>> obtenerSociosPorFiltros(
@@ -51,5 +90,51 @@ public class SociosService {
         );
 
         return ApiResponse.success("Socios obtenidos por filtros exitosamente", socios);
+    }
+
+    public String calcularCIE(String membresia) {
+        if (membresia == null || membresia.isBlank()) {
+            throw new IllegalArgumentException("La membresía no puede ser nula o vacía");
+        }
+
+        String[] partes = membresia.split("-");
+        if (partes.length != 3) {
+            throw new IllegalArgumentException("Formato inválido. Se espera: puntoVenta-membresia-desarrollo");
+        }
+
+        String puntoVenta = partes[0];
+        String membresiaId = partes[1];
+        String desarrollo = partes[2];
+
+        if (!esNumerico(puntoVenta) || !esNumerico(membresiaId) || !esNumerico(desarrollo)) {
+            throw new IllegalArgumentException("Todos los componentes deben ser numéricos");
+        }
+
+        String parcial = construirReferenciaParcial(puntoVenta, membresiaId, desarrollo);
+
+        if (parcial.length() != 10 && parcial.length() != 12) {
+            throw new IllegalStateException("Longitud inesperada para referencia CIE: " + parcial.length());
+        }
+
+        String digitoVerificador = bbvaService.calcularDigitoVerificador(parcial);
+
+        return parcial + digitoVerificador;
+    }
+
+    public String obtenerConvenioCIECadena(String membresia) {
+        String cie = calcularCIE(membresia);
+        return bankNumberCie + "  REF " + cie;
+    }
+
+    private String construirReferenciaParcial(String puntoVenta, String membresiaId, String desarrollo) {
+        String desarrolloFmt = String.format("%02d", Integer.parseInt(desarrollo));
+        String membresiaFmt = String.format("%06d", Integer.parseInt(membresiaId));
+        String puntoVentaFmt = String.format("%02d", Integer.parseInt(puntoVenta));
+
+        return desarrolloFmt + membresiaFmt + puntoVentaFmt;
+    }
+
+    private boolean esNumerico(String valor) {
+        return valor != null && valor.matches("\\d+");
     }
 }

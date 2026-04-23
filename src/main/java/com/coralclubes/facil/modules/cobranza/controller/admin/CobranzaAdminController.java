@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -60,11 +61,12 @@ public class CobranzaAdminController {
     @GetMapping("/depositos")
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
     public ResponseEntity<ApiResponse<List<DepositoCobranzaDto>>> obtenerDepositos(
-            @RequestParam(required = false) Integer idBanco,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDeposito,
-            @RequestParam(defaultValue = "") String busqueda
-    ) {
-        return ResponseEntity.ok(cobranzaService.obtenerDepositos(idBanco, fechaDeposito, busqueda));
+            @RequestParam Integer idBanco,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDeposito,
+            @RequestParam(defaultValue = "") String busqueda,
+            @RequestParam BigDecimal monto
+            ) {
+        return ResponseEntity.ok(cobranzaService.obtenerDepositos(idBanco, fechaDeposito, busqueda, monto));
     }
 
     @PostMapping("/ordenes/{uuid}/finalizar-recibo")

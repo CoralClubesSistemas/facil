@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.clientes.controller.admin;
 
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
+import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioBusqueda;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioTabla;
 import com.coralclubes.facil.modules.clientes.service.SociosService;
 import com.coralclubes.responses.ApiResponse;
@@ -20,11 +21,18 @@ import java.util.List;
 public class SociosAdminController {
     private final SociosService service;
 
+    @GetMapping("/busqueda/socio/{membresia}")
+    public ResponseEntity<ApiResponse<InformacionSocio>> obtenerSocio(
+            @PathVariable String membresia
+    ) {
+        return ResponseEntity.ok(service.obtenerSocios(membresia));
+    }
+
     @GetMapping("/busqueda/{busqueda}")
-    public ResponseEntity<ApiResponse<List<InformacionSocio>>> obtenerSocioPorMembresia(
+    public ResponseEntity<ApiResponse<List<InformacionSocioBusqueda>>> obtenerSociosBusquedaRapida(
             @PathVariable String busqueda
     ) {
-        ApiResponse<List<InformacionSocio>> response = service.obtenerSocios(busqueda);
+        ApiResponse<List<InformacionSocioBusqueda>> response = service.obtenerSociosBusquedaRapida(busqueda);
         return ResponseEntity.status(response.status()).body(response);
     }
 

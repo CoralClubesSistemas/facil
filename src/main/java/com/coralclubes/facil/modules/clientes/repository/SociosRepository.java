@@ -1,6 +1,8 @@
 package com.coralclubes.facil.modules.clientes.repository;
 
+import com.coralclubes.facil.modules.clientes.dto.projection.InformacionSocioDb;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
+import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioBusqueda;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioTabla;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import lombok.RequiredArgsConstructor;
@@ -10,14 +12,15 @@ import org.springframework.stereotype.Repository;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
 public class SociosRepository {
     private final StoredProcedureExecutor executor;
 
-    private final RowMapper<InformacionSocio> informacionSocioRowMapper = (rs, rowNum) ->
-            InformacionSocio.builder()
+    private final RowMapper<InformacionSocioDb> informacionSocioRowMapper = (rs, rowNum) ->
+            InformacionSocioDb.builder()
                     .membresia(rs.getString("membresia"))
                     .nombreCompleto(rs.getString("nombreCompleto"))
                     .nombre(rs.getString("nombre"))
@@ -41,6 +44,19 @@ public class SociosRepository {
                     .carteraCobranza(rs.getString("carteraCobranza"))
                     .vigenciaOriginal(rs.getInt("vigenciaOriginal"))
                     .vigenciaRestante(rs.getString("tiempoRestante"))
+                    .build();
+
+    private final RowMapper<InformacionSocioBusqueda> informacionSocioBusquedaRowMapper = (rs, rowNum) ->
+            InformacionSocioBusqueda.builder()
+                    .membresia(rs.getString("membresia"))
+                    .nombreCompleto(rs.getString("nombreCompleto"))
+                    .correo(rs.getString("correo"))
+                    .telefono(rs.getString("telefono"))
+                    .tipoMembresia(rs.getString("tipoMembresia"))
+                    .clasificacionMembresia(rs.getString("clasificacionMembresia"))
+                    .desarrollo(rs.getString("desarrollo"))
+                    .estatusMembresia(rs.getString("estatusMembresia"))
+                    .carteraCobranza(rs.getString("carteraCobranza"))
                     .build();
 
     private final RowMapper<InformacionSocioTabla> informacionSocioTablaRowMapper = (rs, rowNum) ->
@@ -96,10 +112,16 @@ public class SociosRepository {
                     .totalRegistros(rs.getObject("totalRegistros", Integer.class))
                     .build();
 
-    public List<InformacionSocio> spFacilBusquedaInteligente(String busqueda) {
+    public Optional<InformacionSocioDb> spClientesObtenerDatosSocio(String membresia) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("Membresia", membresia);
+        return executor.querySingle("spClientesObtenerDatosSocio", params, informacionSocioRowMapper);
+    }
+
+    public List<InformacionSocioBusqueda> spClientesBusquedaInteligente(String busqueda) {
         Map<String, Object> params = new HashMap<>();
         params.put("Busqueda", busqueda);
-        return executor.queryList("spFacilBusquedaInteligente", params, informacionSocioRowMapper);
+        return executor.queryList("spClientesBusquedaInteligente", params, informacionSocioBusquedaRowMapper);
     }
 
     public List<InformacionSocioTabla> spFacilBusquedaPorFiltros(

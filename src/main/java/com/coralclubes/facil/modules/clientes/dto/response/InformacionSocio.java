@@ -28,5 +28,6 @@ public record InformacionSocio (
     int carteraCobranzaId,
     String carteraCobranza,
     Integer vigenciaOriginal,
-    String vigenciaRestante
+    String vigenciaRestante,
+    String convenioCie
 ){}

@@ -144,14 +144,17 @@ public class CobranzaRepository {
     public List<DepositoCobranzaDto> spCobranzaObtenerDepositos(
             Integer idBanco,
             LocalDate fechaDeposito,
-            String busqueda
+            String busqueda,
+            BigDecimal monto
     ) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("IdBanco", idBanco);
-        params.put("fechaDeposito", fechaDeposito);
-        params.put("Busqueda", busqueda);
-
-        return spExecutor.queryList("spCobranzaObtenerDepositos", params, depositoCobranzaMapper);
+        return spExecutor.queryList("spCobranzaObtenerDepositos",
+                Map.of(
+                        "IdBanco", idBanco,
+                        "FechaDeposito", fechaDeposito,
+                        "Busqueda", busqueda,
+                        "Monto", monto
+                ),
+                depositoCobranzaMapper);
     }
 
     // Modificación en CobranzaRepository.java

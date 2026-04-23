@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -80,10 +81,10 @@ public class CobranzaService {
         return ApiResponse.success("Formas de pago obtenidas correctamente.", repository.spCobranzaCatalogoFormasDePago());
     }
 
-    public ApiResponse<List<DepositoCobranzaDto>> obtenerDepositos(Integer idBanco, LocalDate fechaDeposito, String busqueda) {
+    public ApiResponse<List<DepositoCobranzaDto>> obtenerDepositos(Integer idBanco, LocalDate fechaDeposito, String busqueda, BigDecimal monto) {
         return ApiResponse.success(
                 "Depositos obtenidos correctamente.",
-                repository.spCobranzaObtenerDepositos(idBanco, fechaDeposito, busqueda)
+                repository.spCobranzaObtenerDepositos(idBanco, fechaDeposito, busqueda, monto)
         );
     }
 

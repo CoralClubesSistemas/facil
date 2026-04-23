@@ -88,6 +88,10 @@ app:
     frontend: ${FRONTEND_URL}
     password-reset: ${PASSWORD_RESET_URL}
 
+  banco:
+    cie:
+      bbva: ${BANCO_CIE_BBVA}
+
 # ==============================
 # JWT
 # ==============================
@@ -186,6 +190,10 @@ app:
       api-key: FACIL_PRjS7QZ9J7APlgez6wXuA04Qsv0esjJu
       plantillas:
         recibo: RECIBO_FACIL
+
+  banco:
+    cie:
+      bbva: 2072866
 
 jwt:
   secret: nTUtfGTwSCZlj4WC00mzXKTLAZbgFZST7MFpivsizOwCzzfP5eiEhuMBFOyHyJC2kiCqjvwctSgk9KCtAUjVGA==
