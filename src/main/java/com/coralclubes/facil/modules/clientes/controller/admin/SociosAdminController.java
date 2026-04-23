@@ -68,4 +68,9 @@ public class SociosAdminController {
 
         return ResponseEntity.status(response.status()).body(response);
     }
+
+    @GetMapping("/convenio-cie")
+    public ResponseEntity<ApiResponse<String>> obtenerConvenioCie(@RequestParam(required = true) String membresia) {
+        return ResponseEntity.ok(ApiResponse.success(service.calcularCIE(membresia)));
+    }
 }
