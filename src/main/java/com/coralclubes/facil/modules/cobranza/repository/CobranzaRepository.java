@@ -1,6 +1,5 @@
 package com.coralclubes.facil.modules.cobranza.repository;
 
-import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.cobranza.dto.response.*;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +58,9 @@ public class CobranzaRepository {
 
     private final RowMapper<String> jsonStringMapper = (rs, rowNum) -> rs.getString(1);
 
+    private final RowMapper<UUID> ordenUuidMapper = (rs, rowNum) ->
+            rs.getObject("ordenUuid") != null ? UUID.fromString(rs.getString("ordenUuid")) : null;
+
     private final RowMapper<UUID> uuidMapper = (rs, rowNum) ->
             UUID.fromString(rs.getString("RCD_UUID"));
 
@@ -114,6 +116,14 @@ public class CobranzaRepository {
                 Map.of("OrdenUuid", ordenUuid),
                 jsonStringMapper
         );
+    }
+
+    public Optional<UUID> spCobranzaRecuperarOrdenCobranza(Integer movimientoId, String membresia) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("MovimientoId", movimientoId);
+        params.put("Membresia", membresia);
+
+        return spExecutor.querySingle("spCobranzaRecuperarOrdenCobranza", params, ordenUuidMapper);
     }
 
     public Optional<String> spCobranzaObtenerDatosRecibo(Integer numeroRecibo, Integer serieReciboId) {

@@ -1,6 +1,5 @@
 package com.coralclubes.facil.modules.cobranza.service;
 
-import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.cobranza.dto.projection.DatosReciboResponse;
 import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.*;
@@ -20,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -65,6 +63,17 @@ public class CobranzaService {
         } catch (JsonProcessingException ex) {
             throw new IllegalStateException("No se pudo interpretar el JSON de la orden de cobranza.");
         }
+    }
+
+    public ApiResponse<RecuperarOrdenCobranzaResponse> recuperarOrdenCobranza(Integer movimientoId, String membresia) {
+        UUID ordenUuid = repository
+                .spCobranzaRecuperarOrdenCobranza(movimientoId, membresia)
+                .orElseThrow(() -> new IllegalStateException("No se encontró una orden de cobranza para el movimiento y membresía proporcionados."));
+
+        return ApiResponse.success(
+                "Orden de cobranza recuperada correctamente.",
+                new RecuperarOrdenCobranzaResponse(ordenUuid)
+        );
     }
 
     public ApiResponse<List<FormaPagoDto>> obtenerFormasDePago() {

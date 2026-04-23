@@ -1,6 +1,5 @@
 package com.coralclubes.facil.modules.cobranza.controller.admin;
 
-import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.*;
 import com.coralclubes.facil.modules.cobranza.service.CobranzaService;
@@ -41,6 +40,15 @@ public class CobranzaAdminController {
             @PathVariable UUID uuid
     ) {
         return ResponseEntity.ok(cobranzaService.consultarOrdenCobranza(uuid));
+    }
+
+    @GetMapping("/ordenes/recuperar-uuid")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<RecuperarOrdenCobranzaResponse>> recuperarOrdenCobranza(
+            @RequestParam Integer movimientoId,
+            @RequestParam String membresia
+    ) {
+        return ResponseEntity.ok(cobranzaService.recuperarOrdenCobranza(movimientoId, membresia));
     }
 
     @GetMapping("/catalogos/formas-pago")
