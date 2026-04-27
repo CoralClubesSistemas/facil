@@ -7,6 +7,8 @@ import com.coralclubes.facil.shared.infrastructure.integration.notifications.Not
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.dto.SolicitudNotificacionDto;
 import com.coralclubes.logging.BusinessLogger;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -15,12 +17,13 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class CobranzaPostProcesoAsyncService {
 
     private final CobranzaRepository repository;
     private final CobranzaGeneradorDocumentosService generador;
     private final NotificationClient notificationClient;
-    private final BusinessLogger log;
+    private final BusinessLogger logger;
 
     @Async
     public void procesarDocumentosYNotificaciones(
@@ -33,6 +36,8 @@ public class CobranzaPostProcesoAsyncService {
         try {
             // 1. Generar documentos (Original y Reimpresión para auditoría)
             CobranzaGeneradorDocumentosService.ResultadoRecibos archivos = generador.generarAmbosRecibos(recibo);
+
+            log.debug("Archivos generados para recibo {}: Original ID = {}, Reimpresión ID = {}", recibo.getFolio(), archivos.originalId(), archivos.reimpresionId());
 
             // 2. Actualizar metadatos digitales en BD
             repository.spCobranzaActualizarMetadatosDigitales(
@@ -53,14 +58,20 @@ public class CobranzaPostProcesoAsyncService {
             // 4. Enviar a auditoría
             enviarEmail(correoAuditoria, "Copia de Recibo - Folio: " + recibo.getFolio(), archivos.reimpresionId());
 
-            log.info(usuario, "Generación de PDF y notificaciones completadas para folio: " + recibo.getFolio());
+            logger.info(usuario, "Generación de PDF y notificaciones completadas para folio: " + recibo.getFolio());
 
         } catch (Exception e) {
-            log.error(usuario, "Error en post-proceso asíncrono (PDF/Email) para recibo " + orden.numeroRecibo() + ": " + e.getMessage());
+            logger.error(
+                    usuario,
+                    "Error en post-proceso asíncrono (PDF/Email) para recibo " + orden.numeroRecibo(),
+                    e
+            );
         }
     }
 
     private void enviarEmail(String destinatario, String asunto, UUID fileId) {
+        log.debug("Enviando email a {} con asunto '{}' y adjunto ID: {}", destinatario, asunto, fileId);
+
         SolicitudNotificacionDto solicitud = SolicitudNotificacionDto.builder()
                 .codigoSistema("FACIL")
                 .aliasConfig("SMTP_GENERAL")

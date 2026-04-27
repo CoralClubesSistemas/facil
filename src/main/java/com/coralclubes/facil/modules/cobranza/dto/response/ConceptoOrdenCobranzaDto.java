@@ -7,11 +7,11 @@ public record ConceptoOrdenCobranzaDto(
         String concepto,
         String detalle,
         BigDecimal montoCapital,
-        BigDecimal montoInteres,
+        BigDecimal montoInteres,      // Cargo Total
+        BigDecimal pagoInteres,       // NUEVO: Pago neto de interés
         BigDecimal interesesBonificados,
         BigDecimal montoIva,
         BigDecimal totalDescuento,
         BigDecimal subtotal
 ) {
 }
-

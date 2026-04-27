@@ -32,6 +32,7 @@ public class CobranzaRepository {
             new FinalizarOrdenCobranzaResponse(
                     rs.getInt("numeroRecibo"),
                     rs.getInt("serieReciboId"),
+                    rs.getString("membresia"),
                     rs.getBigDecimal("totalPagado") != null ? rs.getBigDecimal("totalPagado") : BigDecimal.ZERO
             );
 
@@ -58,8 +59,10 @@ public class CobranzaRepository {
 
     private final RowMapper<String> jsonStringMapper = (rs, rowNum) -> rs.getString(1);
 
-    private final RowMapper<UUID> ordenUuidMapper = (rs, rowNum) ->
-            rs.getObject("ordenUuid") != null ? UUID.fromString(rs.getString("ordenUuid")) : null;
+    private final RowMapper<UUID> ordenUuidMapper = (rs, rowNum) -> {
+        String uuidStr = rs.getString("ordenUuid");
+        return uuidStr != null ? UUID.fromString(uuidStr) : null;
+    };
 
     private final RowMapper<UUID> uuidMapper = (rs, rowNum) ->
             UUID.fromString(rs.getString("RCD_UUID"));
@@ -126,12 +129,13 @@ public class CobranzaRepository {
         return spExecutor.querySingle("spCobranzaRecuperarOrdenCobranza", params, ordenUuidMapper);
     }
 
-    public Optional<String> spCobranzaObtenerDatosRecibo(Integer numeroRecibo, Integer serieReciboId) {
+    public Optional<String> spCobranzaObtenerDatosRecibo(Integer numeroRecibo, Integer serieReciboId, String membresia) {
         return spExecutor.querySingle(
                 "spCobranzaObtenerDatosRecibo",
                 Map.of(
                         "NumeroRecibo", numeroRecibo,
-                        "SerieReciboId", serieReciboId
+                        "SerieReciboId", serieReciboId,
+                        "Membresia", membresia
                 ),
                 jsonStringMapper
         );
@@ -178,10 +182,10 @@ public class CobranzaRepository {
         );
     }
 
-    public void spCobranzaCancelarOrdenCobranzaSinPago(String uuid) {
+    public void spCobranzaCancelarOrdenCobranzaSinPago(String uuid, String usuario) {
         spExecutor.execute(
                 "spCobranzaCancelarOrdenCobranzaSinPago",
-                Map.of("OrdenUuid", uuid)
+                Map.of("OrdenUuid", uuid, "Usuario", usuario)
         );
     }
 

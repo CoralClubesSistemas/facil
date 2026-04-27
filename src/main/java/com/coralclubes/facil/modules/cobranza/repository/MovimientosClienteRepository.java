@@ -40,10 +40,11 @@ public class MovimientosClienteRepository {
 			.usuarioCaptura(rs.getString("usuarioCaptura"))
 			.build();
 
-	public List<EstadoCuentaAdeudoDto> spFacilObtenerEstadoCuentaAdeudo(EstadoCuentaAdeudoRequest request) {
+	public List<EstadoCuentaAdeudoDto> spFacilObtenerEstadoCuentaAdeudo(EstadoCuentaAdeudoRequest request, Integer idDesarrolloUsuario) {
 		Map<String, Object> params = new HashMap<>();
 		params.put("Membresia", request.membresia());
 		params.put("FechaCorte", request.fechaCorte());
+		params.put("IdUsuarioDesarrollo", idDesarrolloUsuario);
 
 		return executor.queryList("spFacilObtenerEstadoCuentaAdeudo", params, estadoCuentaAdeudoRowMapper);
 	}

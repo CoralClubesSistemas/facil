@@ -10,6 +10,7 @@ import com.coralclubes.facil.modules.cobranza.repository.IntentoPagoRepository;
 import com.coralclubes.facil.modules.usuarios.service.UsuarioService;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.NotificationClient;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.dto.SolicitudNotificacionDto;
+import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
 import com.coralclubes.responses.codes.GeneralResponseCode;
@@ -36,6 +37,8 @@ public class CobranzaService {
 
     private final IntentoPagoRepository intentoPagoRepository;
     private final PaymentStrategyFactory strategyFactory;
+
+    private final UserContext userContext;
 
     private final CobranzaPostProcesoAsyncService postProcesoAsyncService;
 
@@ -101,8 +104,8 @@ public class CobranzaService {
                 .orElseThrow(() -> new IllegalArgumentException("Error en el cierre de la orden de cobranza, intente más tarde"));
     }
 
-    public DatosReciboResponse datosRecibo(Integer numeroRecibo, Integer serieReciboId) {
-        String json = repository.spCobranzaObtenerDatosRecibo(numeroRecibo, serieReciboId)
+    public DatosReciboResponse datosRecibo(Integer numeroRecibo, Integer serieReciboId, String membresia) {
+        String json = repository.spCobranzaObtenerDatosRecibo(numeroRecibo, serieReciboId, membresia)
                 .orElseThrow(() -> new IllegalArgumentException("No se encontraron datos para el recibo solicitado."));
 
         try {
@@ -144,7 +147,7 @@ public class CobranzaService {
             // =================================================================================
 
             // 3. Obtener datos procesados para los PDFs
-            DatosReciboResponse recibo = datosRecibo(orden.numeroRecibo(), orden.serieReciboId());
+            DatosReciboResponse recibo = datosRecibo(orden.numeroRecibo(), orden.serieReciboId(), orden.membresia());
 
             // 4. Delegar la generación del PDF, metadatos y correos al hilo en SEGUNDO PLANO
             postProcesoAsyncService.procesarDocumentosYNotificaciones(
@@ -176,7 +179,8 @@ public class CobranzaService {
     }
 
     public void cancelarOrdenCobranzaSinPago(String uuid) {
-        repository.spCobranzaCancelarOrdenCobranzaSinPago(uuid);
+        String usuario = userContext.getUsername();
+        repository.spCobranzaCancelarOrdenCobranzaSinPago(uuid, usuario);
     }
 
     public ApiResponse<List<RecibosCancelados>> obtenerRecibosCancelados(String membresia, String recibo) {
