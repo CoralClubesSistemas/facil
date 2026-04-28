@@ -1,7 +1,10 @@
 package com.coralclubes.facil.modules.reservaciones.listener;
 
+import com.coralclubes.facil.modules.reservaciones.dto.request.CancelarReservacionRequest;
+import com.coralclubes.facil.modules.reservaciones.dto.response.ResumenReservacionDto;
 import com.coralclubes.facil.modules.reservaciones.repository.RecepcionRepository;
 import com.coralclubes.facil.modules.reservaciones.service.RecepcionService;
+import com.coralclubes.facil.modules.reservaciones.service.ReservacionesService;
 import com.coralclubes.facil.shared.enums.MovimientosEnum;
 import com.coralclubes.facil.shared.events.dto.ReciboCanceladoEvent;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +19,7 @@ import java.util.Objects;
 @Slf4j
 public class ReservacionCancelacionListener {
 
+    private final ReservacionesService reservacionesService;
     private final RecepcionService recepcionService;
 
     /**
@@ -33,8 +37,16 @@ public class ReservacionCancelacionListener {
                     try {
                         log.info("Detectado movimiento de hotel cancelado (ID: {}). Revirtiendo reserva...", mov.idMovimiento());
 
+                        // Obtenemos los detalles de la reservacion
+                        ResumenReservacionDto reservacion = reservacionesService.obtenerResumenReservacionXMovimiento(event.membresia(), mov.idMovimiento());
 
-
+                        // ejecutamos la cancelacion
+                        recepcionService.cancelarReservacion(new CancelarReservacionRequest(
+                                reservacion.membresia(),
+                                reservacion.consecutivo(),
+                                event.motivoCancelacion(),
+                                false // no cobramos la cuota
+                        ), event.usuario());
                     } catch (Exception e) {
                         log.error("Error revirtiendo reserva para movimiento {}: {}", mov.idMovimiento(), e.getMessage());
                         // Modulith marcará el evento como fallido en la tabla EVENT_PUBLICATION para reintento

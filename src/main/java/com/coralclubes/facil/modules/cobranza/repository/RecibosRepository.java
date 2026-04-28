@@ -1,6 +1,5 @@
 package com.coralclubes.facil.modules.cobranza.repository;
 
-import com.coralclubes.facil.modules.cobranza.dto.projection.MovimientoAfectadoCancelacionDto;
 import com.coralclubes.facil.modules.cobranza.dto.response.BuscarRecibosResponse;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import lombok.RequiredArgsConstructor;
@@ -88,6 +87,23 @@ public class RecibosRepository {
         params.put("Membresia", membresia);
 
         return spExecutor.querySingle("spCobranzaObtenerDetallesRecibo", params, jsonStringMapper);
+    }
+
+    public void spCobranzaRegistarEvidenciaReciboCancelado(
+            String numeroMembresia,
+            Integer numeroRecibo,
+            Integer idSerieRecibo,
+            String usuario,
+            String jsonFiles
+    ) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("NumeroMembresia", numeroMembresia);
+        params.put("NumeroRecibo", numeroRecibo);
+        params.put("IdSerieRecibo", idSerieRecibo);
+        params.put("Usuario", usuario);
+        params.put("JsonFiles", jsonFiles);
+
+        spExecutor.execute("spCobranzaRegistarEvidenciaReciboCancelado", params);
     }
 
     /**

@@ -519,4 +519,9 @@ public class ReservacionesService {
 
         return ApiResponse.success("Disponibilidad de unidad obtenida exitosamente", dto);
     }
+
+    public ResumenReservacionDto obtenerResumenReservacionXMovimiento(String membresia, Integer movimiento) {
+        return repository.spResvObtenerReservacionXMovimiento(membresia, movimiento)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró información para la reservación solicitada."));
+    }
 }

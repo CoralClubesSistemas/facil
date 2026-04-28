@@ -1,9 +1,15 @@
 package com.coralclubes.facil.modules.cobranza.controller.admin;
 
 import com.coralclubes.facil.modules.cobranza.dto.response.BuscarRecibosResponse;
+import com.coralclubes.facil.modules.cobranza.dto.request.CancelarReciboRequest;
+import com.coralclubes.facil.modules.cobranza.dto.request.RegistarEvidenciaReciboCancelado;
 import com.coralclubes.facil.modules.cobranza.dto.response.ObtenerDetallesReciboResponse;
 import com.coralclubes.facil.modules.cobranza.service.RecibosService;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaDto;
 import com.coralclubes.responses.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -54,6 +60,30 @@ public class RecibosAdminController {
             @RequestParam String membresia
     ) {
         return ResponseEntity.ok(recibosService.obtenerDetallesRecibo(numeroRecibo, serieReciboId, membresia));
+    }
+
+    @PostMapping("/cancelados/recibo")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<Boolean>> cancelarRecibo(
+            @Valid @RequestBody CancelarReciboRequest request
+    ) {
+        return ResponseEntity.ok(recibosService.cancelarRecibo(request));
+    }
+
+    @PostMapping("/cancelados/evidencia/urls")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<List<RespuestaCargaDto>>> solicitarUrlsDeCarga(
+            @Valid @RequestBody List<SolicitarUrlRequest> solicitudes
+    ) {
+        return ResponseEntity.ok(recibosService.solicitarUrlsDeCarga(solicitudes));
+    }
+
+    @PostMapping("/cancelados/evidencia")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<Boolean>> registrarEvidenciaReciboCancelado(
+            @Valid @RequestBody RegistarEvidenciaReciboCancelado request
+    ) {
+        return ResponseEntity.ok(recibosService.registrarEvidenciaReciboCancelado(request));
     }
 }
 

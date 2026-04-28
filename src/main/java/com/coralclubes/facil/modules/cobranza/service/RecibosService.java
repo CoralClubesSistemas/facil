@@ -1,26 +1,29 @@
 package com.coralclubes.facil.modules.cobranza.service;
 
-import com.coralclubes.facil.modules.clientes.dto.projection.InformacionSocioDb;
-import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
-import com.coralclubes.facil.modules.cobranza.dto.projection.MovimientoAfectadoCancelacionDto;
 import com.coralclubes.facil.modules.cobranza.dto.request.CancelarReciboRequest;
+import com.coralclubes.facil.modules.cobranza.dto.request.RegistarEvidenciaReciboCancelado;
 import com.coralclubes.facil.modules.cobranza.dto.response.BuscarRecibosResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.ObtenerDetallesReciboResponse;
 import com.coralclubes.facil.modules.cobranza.repository.RecibosRepository;
 import com.coralclubes.facil.shared.events.dto.ReciboCanceladoEvent;
-import com.coralclubes.facil.shared.infrastructure.gateway.dto.UserInfo;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaDto;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -32,18 +35,23 @@ public class RecibosService {
     private final UserContext userContext;
     private final BusinessLogger businessLogger;
 
+    private final StorageClient storageClient;
+
+    @Value("${app.clients.storage.aliases.default}")
+    private String aliasStorageDefault;
+
     /**
      * Busca recibos de cobranza con múltiples filtros opcionales.
      *
-     * @param folioRecibo Formato: numero-serieDescripcion
-     * @param fechaGeneracionDe Fecha desde (ISO 8601)
-     * @param fechaGeneracionA Fecha hasta (ISO 8601)
-     * @param membresia Identificador de membresía
-     * @param desarrolloId ID del desarrollo
-     * @param usuario Código de usuario que generó el recibo
-     * @param nombreSocio Búsqueda en nombre completo del cliente
+     * @param folioRecibo        Formato: numero-serieDescripcion
+     * @param fechaGeneracionDe  Fecha desde (ISO 8601)
+     * @param fechaGeneracionA   Fecha hasta (ISO 8601)
+     * @param membresia          Identificador de membresía
+     * @param desarrolloId       ID del desarrollo
+     * @param usuario            Código de usuario que generó el recibo
+     * @param nombreSocio        Búsqueda en nombre completo del cliente
      * @param terminacionTarjeta Últimos dígitos de tarjeta (si aplica)
-     * @param filtrarPorEstatus 1 = solo Generado (684), 0 = múltiples estatus
+     * @param filtrarPorEstatus  1 = solo Generado (684), 0 = múltiples estatus
      * @return Respuesta con lista de recibos encontrados
      */
     public ApiResponse<List<BuscarRecibosResponse>> buscarRecibos(
@@ -92,6 +100,30 @@ public class RecibosService {
         }
     }
 
+    public ApiResponse<Boolean> registrarEvidenciaReciboCancelado(RegistarEvidenciaReciboCancelado request) {
+        String usuario = userContext.getUsername();
+
+        try {
+            String jsonFiles = objectMapper.writeValueAsString(request.jsonFiles());
+
+            recibosRepository.spCobranzaRegistarEvidenciaReciboCancelado(
+                    request.numeroMembresia(),
+                    request.numeroRecibo(),
+                    request.idSerieRecibo(),
+                    usuario,
+                    jsonFiles
+            );
+
+            businessLogger.info(usuario,
+                    "Evidencia de recibo cancelado registrada, membresia: {}, recibo: {}, serie: {}, archivos: {}",
+                    request.numeroMembresia(), request.numeroRecibo(), request.idSerieRecibo(), request.jsonFiles().size());
+
+            return ApiResponse.success("Evidencia registrada correctamente.", true);
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException("No se pudo serializar la lista de archivos de evidencia.");
+        }
+    }
+
     @Transactional
     public ApiResponse<Boolean> cancelarRecibo(CancelarReciboRequest request) {
         String usuario = userContext.getUsername();
@@ -121,6 +153,37 @@ public class RecibosService {
         eventPublisher.publishEvent(evento);
 
         return ApiResponse.success("Recibo cancelado exitosamente.", true);
+    }
+
+    public ApiResponse<List<RespuestaCargaDto>> solicitarUrlsDeCarga(List<SolicitarUrlRequest> solicitudes) {
+        String usuario = userContext.getUsername();
+
+        // 2. Construir la ruta lógica inmutable
+        String rutaLogica = "cobranza/evidencia-cancelacion-recibos/";
+
+        List<RespuestaCargaDto> respuestas = solicitudes.stream()
+                .map(solicitud -> {
+                    String ruta = rutaLogica + solicitud.id();
+
+                    SolicitudCargaDto solicitudStorage = SolicitudCargaDto.builder()
+                            .nombreArchivo(solicitud.nombreArchivo())
+                            .contentType(solicitud.contentType())
+                            .tamanoBytes(solicitud.tamanoBytes())
+                            .aliasConfiguracion(aliasStorageDefault)
+                            .esPublico(false)
+                            .rutaLogica(ruta)
+                            .metadatos(Map.of(
+                                    "modulo", "COBRANZA",
+                                    "recibo", String.valueOf(solicitud.id()),
+                                    "subidoPor", usuario
+                            ))
+                            .build();
+
+                    return storageClient.solicitarUrlCarga(solicitudStorage);
+                })
+                .toList();
+
+        return ApiResponse.success("URLs de carga solicitadas exitosamente.", respuestas);
     }
 }
 

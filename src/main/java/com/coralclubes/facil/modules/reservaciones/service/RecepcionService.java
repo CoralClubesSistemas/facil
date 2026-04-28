@@ -269,9 +269,7 @@ public class RecepcionService {
     /**
      * Procesa la cancelación de una reservación activa.
      */
-    public ApiResponse<Boolean> cancelarReservacion(CancelarReservacionRequest request) {
-        String usuario = userContext.getUsername();
-
+    public ApiResponse<Boolean> cancelarReservacion(CancelarReservacionRequest request, String usuario) {
         ResumenReservacionDto detalle = reservacionesService.obtenerResumenReservacion(request.membresia(), request.consecutivo()).data();
 
         repository.cancelarReservacion(request, usuario);

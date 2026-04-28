@@ -6,8 +6,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record ObtenerDetallesReciboResponse(
-        String reciboUuid,
-        String cadenaSeguridad,
+        Integer numeroRecibo,
+        Integer serieReciboId,
         String estatus,
         String empresa,
         String folio,

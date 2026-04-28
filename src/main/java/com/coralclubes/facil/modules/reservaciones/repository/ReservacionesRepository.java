@@ -12,10 +12,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Repository
 @RequiredArgsConstructor
@@ -295,5 +292,14 @@ public class ReservacionesRepository {
 
         return spExecutor.querySingle("spResvObtenerResumenReservacion", params, resumenReservacionMapper)
                 .orElseThrow(() -> new IllegalArgumentException("No se encontró el resumen de la reservación solicitada."));
+    }
+
+    public Optional<ResumenReservacionDto> spResvObtenerReservacionXMovimiento(String membresia, Integer movimiento) {
+        Map<String, Object> params = Map.of(
+                "Membresia", membresia,
+                "MvtId", movimiento
+        );
+
+        return spExecutor.querySingle("spResvObtenerReservacionXMovimiento", params, resumenReservacionMapper);
     }
 }

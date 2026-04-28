@@ -3,6 +3,7 @@ package com.coralclubes.facil.modules.reservaciones.controller.admin;
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
 import com.coralclubes.facil.modules.reservaciones.dto.response.*;
 import com.coralclubes.facil.modules.reservaciones.service.RecepcionService;
+import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import java.util.List;
 public class RecepcionController {
 
     private final RecepcionService recepcionService;
+    private final UserContext userContext;
 
     @GetMapping("/operaciones/hoy")
     public ResponseEntity<ApiResponse<List<OperacionDiaDto>>> obtenerOperacionesHoy() {
@@ -134,8 +136,9 @@ public class RecepcionController {
     @PostMapping("/cancelacion/ejecutar")
     public ResponseEntity<ApiResponse<Boolean>> cancelarReservacion(
             @Valid @RequestBody CancelarReservacionRequest request) {
+        String usuario = userContext.getUsername();
 
-        var response = recepcionService.cancelarReservacion(request);
+        var response = recepcionService.cancelarReservacion(request, usuario);
         return ResponseEntity.ok(response);
     }
 }
