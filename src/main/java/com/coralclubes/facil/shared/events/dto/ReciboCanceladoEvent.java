@@ -10,6 +10,9 @@ import java.util.List;
  */
 public record ReciboCanceladoEvent(
         String membresia,
+        Integer tipoMembresia,
+        Integer clasificacionMembresia,
         String usuario,
+        String motivoCancelacion,
         List<MovimientoAfectadoCancelacionDto> movimientosAfectados
 ) {}

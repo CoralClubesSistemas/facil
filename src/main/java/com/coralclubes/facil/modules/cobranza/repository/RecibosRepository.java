@@ -39,14 +39,6 @@ public class RecibosRepository {
                     rs.getString("TipoMembresia")
             );
 
-    private final RowMapper<MovimientoAfectadoCancelacionDto> movimientosAfectadosMapper = (rs, rowNum) ->
-            new MovimientoAfectadoCancelacionDto(
-                    rs.getInt("idMovimiento"),
-                    rs.getInt("tipoMovimiento"),
-                    rs.getInt("numeroPlan"),
-                    rs.getString("concepto")
-            );
-
     /**
      * Busca recibos de cobranza con múltiples filtros opcionales.
      * @param folioRecibo Formato: numero-serieDescripcion
@@ -102,7 +94,7 @@ public class RecibosRepository {
      * Cancela un recibo de cobranza, realiza el rollback contable y
      * devuelve los movimientos padre afectados para orquestación externa.
      */
-    public List<MovimientoAfectadoCancelacionDto> spCobranzaCancelarRecibo(
+    public Optional<String> spCobranzaCancelarRecibo(
             String membresia,
             Integer numeroRecibo,
             Integer serieReciboId,
@@ -117,6 +109,6 @@ public class RecibosRepository {
         params.put("RazonCancelacion", razonCancelacion);
 
         // Ejecutamos y retornamos la lista de movimientos para que el Service dispare los eventos
-        return spExecutor.queryList("spCobranzaCancelarRecibo", params, movimientosAfectadosMapper);
+        return spExecutor.querySingle("spCobranzaCancelarRecibo", params, jsonStringMapper);
     }
 }

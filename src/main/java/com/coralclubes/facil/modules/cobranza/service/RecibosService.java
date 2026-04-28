@@ -1,12 +1,16 @@
 package com.coralclubes.facil.modules.cobranza.service;
 
+import com.coralclubes.facil.modules.clientes.dto.projection.InformacionSocioDb;
+import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
 import com.coralclubes.facil.modules.cobranza.dto.projection.MovimientoAfectadoCancelacionDto;
 import com.coralclubes.facil.modules.cobranza.dto.request.CancelarReciboRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.BuscarRecibosResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.ObtenerDetallesReciboResponse;
 import com.coralclubes.facil.modules.cobranza.repository.RecibosRepository;
 import com.coralclubes.facil.shared.events.dto.ReciboCanceladoEvent;
+import com.coralclubes.facil.shared.infrastructure.gateway.dto.UserInfo;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
+import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,6 +30,7 @@ public class RecibosService {
     private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher eventPublisher;
     private final UserContext userContext;
+    private final BusinessLogger businessLogger;
 
     /**
      * Busca recibos de cobranza con múltiples filtros opcionales.
@@ -90,23 +95,30 @@ public class RecibosService {
     @Transactional
     public ApiResponse<Boolean> cancelarRecibo(CancelarReciboRequest request) {
         String usuario = userContext.getUsername();
+        ReciboCanceladoEvent evento;
 
         // 1. Ejecutar rollback contable en BD
-        List<MovimientoAfectadoCancelacionDto> afectados = recibosRepository.spCobranzaCancelarRecibo(
+        String response = recibosRepository.spCobranzaCancelarRecibo(
                 request.membresia(),
                 request.numeroRecibo(),
                 request.serieReciboId(),
                 usuario,
                 request.razonCancelacion()
-        );
+        ).orElseThrow(() -> new IllegalStateException("Error al cancelar el recibo, intente más tarde."));
+
+        // parseamos el json
+        try {
+            evento = objectMapper.readValue(response, ReciboCanceladoEvent.class);
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException("No se pudo interpretar el JSON de respuesta de cancelación del recibo.");
+        }
+
+        businessLogger.info(usuario, "Evento de cancelacion de recibo publicado, membresia: {}, recibo: {}, serie: {}",
+                request.membresia(), request.numeroRecibo(), request.serieReciboId());
 
         // 2. Disparar el evento de dominio (Orquestación desacoplada)
         // El resto de los módulos (Reservas, Puntos) estarán escuchando este record
-        eventPublisher.publishEvent(new ReciboCanceladoEvent(
-                request.membresia(),
-                usuario,
-                afectados
-        ));
+        eventPublisher.publishEvent(evento);
 
         return ApiResponse.success("Recibo cancelado exitosamente.", true);
     }
