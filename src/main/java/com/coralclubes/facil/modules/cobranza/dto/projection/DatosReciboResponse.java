@@ -19,6 +19,9 @@ public class DatosReciboResponse {
     private String estatus; // Recibido desde el SP: 'ORIGINAL', 'REIMPRESION' o 'CANCELADO'
     private String reciboUuid;
 
+    private Integer numeroRecibo;
+    private Integer idSerieRecibo;
+
     private String empresa;
     private String rfcEmpresa;
     private String direccionEmpresa;

@@ -1,9 +1,11 @@
 package com.coralclubes.facil.modules.cobranza.service;
 
+import com.coralclubes.facil.modules.cobranza.dto.projection.DatosReciboResponse;
 import com.coralclubes.facil.modules.cobranza.dto.request.CancelarReciboRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.RegistarEvidenciaReciboCancelado;
 import com.coralclubes.facil.modules.cobranza.dto.response.BuscarRecibosResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.ObtenerDetallesReciboResponse;
+import com.coralclubes.facil.modules.cobranza.repository.CobranzaRepository;
 import com.coralclubes.facil.modules.cobranza.repository.RecibosRepository;
 import com.coralclubes.facil.shared.events.dto.ReciboCanceladoEvent;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
@@ -30,10 +32,12 @@ import java.util.Map;
 public class RecibosService {
 
     private final RecibosRepository recibosRepository;
+    private final CobranzaRepository cobranzaRepository;
     private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher eventPublisher;
     private final UserContext userContext;
     private final BusinessLogger businessLogger;
+    private final CobranzaPostProcesoAsyncService postProceso;
 
     private final StorageClient storageClient;
 
@@ -128,6 +132,19 @@ public class RecibosService {
     public ApiResponse<Boolean> cancelarRecibo(CancelarReciboRequest request) {
         String usuario = userContext.getUsername();
         ReciboCanceladoEvent evento;
+        DatosReciboResponse datosRecibo;
+
+        String reciboJson = cobranzaRepository.spCobranzaObtenerDatosRecibo(
+                request.numeroRecibo(),
+                request.serieReciboId(),
+                request.membresia()
+        ).orElseThrow(() -> new IllegalStateException("No se encontraron datos para el recibo solicitado."));
+
+        try {
+            datosRecibo = objectMapper.readValue(reciboJson, DatosReciboResponse.class);
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException("No se pudo interpretar el JSON de datos del recibo.");
+        }
 
         // 1. Ejecutar rollback contable en BD
         String response = recibosRepository.spCobranzaCancelarRecibo(
@@ -151,6 +168,9 @@ public class RecibosService {
         // 2. Disparar el evento de dominio (Orquestación desacoplada)
         // El resto de los módulos (Reservas, Puntos) estarán escuchando este record
         eventPublisher.publishEvent(evento);
+
+        // Procesamos de forma asincrona la generacion y envio del pdf de cancelacion
+        postProceso.procesarReciboCanceladoYNotificar(datosRecibo, usuario, evento.correoCliente(), evento.correoUsuario());
 
         return ApiResponse.success("Recibo cancelado exitosamente.", true);
     }
@@ -185,5 +205,7 @@ public class RecibosService {
 
         return ApiResponse.success("URLs de carga solicitadas exitosamente.", respuestas);
     }
+
+
 }
 

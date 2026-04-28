@@ -3,6 +3,7 @@ package com.coralclubes.facil.modules.cobranza.service;
 import com.coralclubes.facil.modules.cobranza.dto.projection.DatosReciboResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.FinalizarOrdenCobranzaResponse;
 import com.coralclubes.facil.modules.cobranza.repository.CobranzaRepository;
+import com.coralclubes.facil.modules.cobranza.repository.RecibosRepository;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.NotificationClient;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.dto.SolicitudNotificacionDto;
 import com.coralclubes.logging.BusinessLogger;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class CobranzaPostProcesoAsyncService {
 
     private final CobranzaRepository repository;
+    private final RecibosRepository recibosRepository;
     private final CobranzaGeneradorDocumentosService generador;
     private final NotificationClient notificationClient;
     private final BusinessLogger logger;
@@ -69,8 +71,51 @@ public class CobranzaPostProcesoAsyncService {
         }
     }
 
+    @Async
+    public void procesarReciboCanceladoYNotificar(
+            DatosReciboResponse recibo,
+            String usuario,
+            String correoCliente,
+            String correoAuditoria) {
+
+        try {
+            // 1. Generar documentos (Original y Reimpresión para auditoría)
+            UUID archivo = generador.generarReciboCancelacion(recibo);
+
+            log.debug("Archivo generado para cancelación de recibo {}: ID = {}", recibo.getFolio(), archivo);
+
+            // 2. Actualizar metadatos digitales en BD
+            recibosRepository.spCobranzaActualizarCancelacionReciboDigital(
+                    recibo.getNumeroRecibo(),
+                    recibo.getIdSerieRecibo(),
+                    archivo.toString(),
+                    usuario
+            );
+
+            // 3. Esperar a que el archivo termine de cargarse antes de notificar
+            Thread.sleep(3000);
+
+            // 4. Enviar al correo del cliente
+            if (correoCliente != null && !correoCliente.isEmpty()) {
+                enviarEmail(correoCliente, "Recibo de Cancelación - Folio: " + recibo.getFolio(), archivo);
+            }
+
+            // 5. Enviar a auditoría
+            enviarEmail(correoAuditoria, "Copia de Recibo Cancelado - Folio: " + recibo.getFolio(), archivo);
+
+            logger.info(usuario, "Generación de PDF de cancelación y notificaciones completadas para folio: " + recibo.getFolio());
+
+        } catch (Exception e) {
+            logger.error(
+                    usuario,
+                    "Error en post-proceso asíncrono (PDF/Email) para cancelación de recibo " + recibo.getFolio(),
+                    e
+            );
+        }
+    }
+
     private void enviarEmail(String destinatario, String asunto, UUID fileId) {
-        log.debug("Enviando email a {} con asunto '{}' y adjunto ID: {}", destinatario, asunto, fileId);
+        log.info("Enviando email a {} con asunto '{}' y adjunto ID: {}", destinatario, asunto, fileId);
 
         SolicitudNotificacionDto solicitud = SolicitudNotificacionDto.builder()
                 .codigoSistema("FACIL")

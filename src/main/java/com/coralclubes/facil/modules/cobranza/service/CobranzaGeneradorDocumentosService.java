@@ -40,6 +40,11 @@ public class CobranzaGeneradorDocumentosService {
         return new ResultadoRecibos(originalId, reimpresionId, cadenaOriginal);
     }
 
+    public UUID generarReciboCancelacion(DatosReciboResponse recibo) {
+        String cadenaCancelacion = generarCadenaSeguridad(recibo, "CANCELADO");
+        return generarReciboEspecifico(recibo, "CANCELADO", cadenaCancelacion);
+    }
+
     // Modificación en CobranzaGeneradorDocumentosService.java
     private UUID generarReciboEspecifico(DatosReciboResponse recibo, String tipo, String cadenaSeguridad) {
         Map<String, Object> variables = Map.ofEntries(
@@ -80,7 +85,7 @@ public class CobranzaGeneradorDocumentosService {
                 .storageConfig(StorageConfig.builder()
                         .xApiKeyStorage(storageApiKey)
                         .aliasConfiguracion(aliasConfiguracion)
-                        .rutaLogica("cobranza/recibos/" + Year.now().getValue())
+                        .rutaLogica("cobranza/recibos/" + Year.now().getValue() + "/" + recibo.getDesarrollo() + "/" + recibo.getFolio())
                         // Nombre de archivo descriptivo
                         .nombreArchivo(tipo + "_RECIBO_" + recibo.getFolio() + "_" + System.currentTimeMillis() + ".pdf")
                         .build())

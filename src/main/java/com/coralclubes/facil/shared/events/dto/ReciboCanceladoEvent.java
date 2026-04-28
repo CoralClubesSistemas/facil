@@ -14,5 +14,7 @@ public record ReciboCanceladoEvent(
         Integer clasificacionMembresia,
         String usuario,
         String motivoCancelacion,
+        String correoCliente,
+        String correoUsuario,
         List<MovimientoAfectadoCancelacionDto> movimientosAfectados
 ) {}

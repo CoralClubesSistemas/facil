@@ -127,4 +127,18 @@ public class RecibosRepository {
         // Ejecutamos y retornamos la lista de movimientos para que el Service dispare los eventos
         return spExecutor.querySingle("spCobranzaCancelarRecibo", params, jsonStringMapper);
     }
+
+    public void spCobranzaActualizarCancelacionReciboDigital(
+            Integer numeroRecibo,
+            Integer serieReciboId,
+            String fileId,
+            String Usuario
+    ) {
+        spExecutor.execute("spCobranzaActualizarCancelacionReciboDigital", Map.of(
+                "NumeroRecibo", numeroRecibo,
+                "SerieReciboId", serieReciboId,
+                "FileId", fileId,
+                "Usuario", Usuario
+        ));
+    }
 }
