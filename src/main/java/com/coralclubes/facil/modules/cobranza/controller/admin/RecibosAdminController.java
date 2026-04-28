@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.cobranza.controller.admin;
 
 import com.coralclubes.facil.modules.cobranza.dto.response.BuscarRecibosResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.ObtenerDetallesReciboResponse;
 import com.coralclubes.facil.modules.cobranza.service.RecibosService;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +44,16 @@ public class RecibosAdminController {
                 terminacionTarjeta,
                 filtrarPorEstatus
         ));
+    }
+
+    @GetMapping("/detalles")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<ObtenerDetallesReciboResponse>> obtenerDetallesRecibo(
+            @RequestParam Integer numeroRecibo,
+            @RequestParam Integer serieReciboId,
+            @RequestParam String membresia
+    ) {
+        return ResponseEntity.ok(recibosService.obtenerDetallesRecibo(numeroRecibo, serieReciboId, membresia));
     }
 }
 

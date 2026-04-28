@@ -1,5 +1,6 @@
 package com.coralclubes.facil.modules.cobranza.repository;
 
+import com.coralclubes.facil.modules.cobranza.dto.projection.MovimientoAfectadoCancelacionDto;
 import com.coralclubes.facil.modules.cobranza.dto.response.BuscarRecibosResponse;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import lombok.RequiredArgsConstructor;
@@ -10,11 +11,14 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
 public class RecibosRepository {
     private final StoredProcedureExecutor spExecutor;
+
+    private final RowMapper<String> jsonStringMapper = (rs, rowNum) -> rs.getString(1);
 
     private final RowMapper<BuscarRecibosResponse> buscarRecibosRowMapper = (rs, rowNum) ->
             new BuscarRecibosResponse(
@@ -33,6 +37,14 @@ public class RecibosRepository {
                     rs.getInt("DesarrolloId"),
                     rs.getString("DesarrolloDescripcion"),
                     rs.getString("TipoMembresia")
+            );
+
+    private final RowMapper<MovimientoAfectadoCancelacionDto> movimientosAfectadosMapper = (rs, rowNum) ->
+            new MovimientoAfectadoCancelacionDto(
+                    rs.getInt("idMovimiento"),
+                    rs.getInt("tipoMovimiento"),
+                    rs.getInt("numeroPlan"),
+                    rs.getString("concepto")
             );
 
     /**
@@ -71,5 +83,40 @@ public class RecibosRepository {
         params.put("FiltrarPorEstatus", filtrarPorEstatus != null && filtrarPorEstatus ? 1 : 0);
 
         return spExecutor.queryList("spCobranzaBuscarRecibos", params, buscarRecibosRowMapper);
+    }
+
+    public Optional<String> spCobranzaObtenerDetallesRecibo(
+            Integer numeroRecibo,
+            Integer serieReciboId,
+            String membresia
+    ) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("NumeroRecibo", numeroRecibo);
+        params.put("SerieReciboId", serieReciboId);
+        params.put("Membresia", membresia);
+
+        return spExecutor.querySingle("spCobranzaObtenerDetallesRecibo", params, jsonStringMapper);
+    }
+
+    /**
+     * Cancela un recibo de cobranza, realiza el rollback contable y
+     * devuelve los movimientos padre afectados para orquestación externa.
+     */
+    public List<MovimientoAfectadoCancelacionDto> spCobranzaCancelarRecibo(
+            String membresia,
+            Integer numeroRecibo,
+            Integer serieReciboId,
+            String usuario,
+            String razonCancelacion
+    ) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("NumeroMembresia", membresia);
+        params.put("NumeroRecibo", numeroRecibo);
+        params.put("IdSerieRecibo", serieReciboId);
+        params.put("IdUsuario", usuario);
+        params.put("RazonCancelacion", razonCancelacion);
+
+        // Ejecutamos y retornamos la lista de movimientos para que el Service dispare los eventos
+        return spExecutor.queryList("spCobranzaCancelarRecibo", params, movimientosAfectadosMapper);
     }
 }
