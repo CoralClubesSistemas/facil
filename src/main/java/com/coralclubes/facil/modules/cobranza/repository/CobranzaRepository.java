@@ -28,14 +28,6 @@ public class CobranzaRepository {
                     rs.getObject("ordenUuid") != null ? UUID.fromString(rs.getString("ordenUuid")) : null
             );
 
-    private final RowMapper<FinalizarOrdenCobranzaResponse> finalizarOrdenCobranzaMapper = (rs, rowNum) ->
-            new FinalizarOrdenCobranzaResponse(
-                    rs.getInt("numeroRecibo"),
-                    rs.getInt("serieReciboId"),
-                    rs.getString("membresia"),
-                    rs.getBigDecimal("totalPagado") != null ? rs.getBigDecimal("totalPagado") : BigDecimal.ZERO
-            );
-
     private final RowMapper<FormaPagoDto> formaPagoMapper = (rs, rowNum) ->
             new FormaPagoDto(
                     rs.getInt("id"),
@@ -97,7 +89,7 @@ public class CobranzaRepository {
         return spExecutor.querySingle("spCobranzaGenerarOrdenCobranza", params, generarOrdenCobranzaMapper);
     }
 
-    public Optional<FinalizarOrdenCobranzaResponse> spCobranzaFinalizarOrdenYGenerarRecibo(
+    public Optional<String> spCobranzaFinalizarOrdenYGenerarRecibo(
             String ordenUuid,
             Integer tipoSerieRecibo,
             String usuario
@@ -109,7 +101,7 @@ public class CobranzaRepository {
                         "TipoSerieRecibo", tipoSerieRecibo,
                         "Usuario", usuario
                 ),
-                finalizarOrdenCobranzaMapper
+                jsonStringMapper
         );
     }
 

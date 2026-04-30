@@ -302,4 +302,16 @@ public class ReservacionesRepository {
 
         return spExecutor.querySingle("spResvObtenerReservacionXMovimiento", params, resumenReservacionMapper);
     }
+
+    public void spResvActualizarReservacionPagada(
+            String membresia,
+            Integer numeroReservacion
+    ) {
+        Map<String, Object> params = Map.of(
+                "Membresia", membresia,
+                "NumeroReservacion", numeroReservacion
+        );
+
+        spExecutor.execute("spResvActualizarReservacionPagada", params);
+    }
 }

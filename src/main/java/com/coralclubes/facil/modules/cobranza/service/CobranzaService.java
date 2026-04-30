@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.cobranza.service;
 
 import com.coralclubes.facil.modules.cobranza.dto.projection.DatosReciboResponse;
+import com.coralclubes.facil.modules.cobranza.dto.projection.ReciboPagado;
 import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.*;
 import com.coralclubes.facil.modules.cobranza.model.pagos.engine.PaymentStrategyFactory;
@@ -8,6 +9,7 @@ import com.coralclubes.facil.modules.cobranza.model.pagos.interfaces.PaymentStra
 import com.coralclubes.facil.modules.cobranza.repository.CobranzaRepository;
 import com.coralclubes.facil.modules.cobranza.repository.IntentoPagoRepository;
 import com.coralclubes.facil.modules.usuarios.service.UsuarioService;
+import com.coralclubes.facil.shared.events.dto.ReciboPagadoEvent;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.NotificationClient;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.dto.SolicitudNotificacionDto;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
@@ -17,7 +19,9 @@ import com.coralclubes.responses.codes.GeneralResponseCode;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -41,6 +45,8 @@ public class CobranzaService {
     private final UserContext userContext;
 
     private final CobranzaPostProcesoAsyncService postProcesoAsyncService;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     public ApiResponse<GenerarOrdenCobranzaResponse> generarOrdenCobranza(GenerarOrdenCobranzaRequest request, String usuario) {
         String movimientosJson = serializarMovimientos(request);
@@ -99,9 +105,15 @@ public class CobranzaService {
         }
     }
 
-    public FinalizarOrdenCobranzaResponse finalizarOrdenDeCobranza(String ordenUuid, Integer tipoSerieRecibo, String usuario) {
-        return repository.spCobranzaFinalizarOrdenYGenerarRecibo(ordenUuid, tipoSerieRecibo, usuario)
+    public ReciboPagado finalizarOrdenDeCobranza(String ordenUuid, Integer tipoSerieRecibo, String usuario) {
+        String response =  repository.spCobranzaFinalizarOrdenYGenerarRecibo(ordenUuid, tipoSerieRecibo, usuario)
                 .orElseThrow(() -> new IllegalArgumentException("Error en el cierre de la orden de cobranza, intente más tarde"));
+
+        try {
+            return objectMapper.readValue(response, ReciboPagado.class);
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException("No se pudo interpretar el JSON de la orden finalizada.");
+        }
     }
 
     public DatosReciboResponse datosRecibo(Integer numeroRecibo, Integer serieReciboId, String membresia) {
@@ -114,8 +126,8 @@ public class CobranzaService {
             throw new IllegalStateException("No se pudo interpretar el JSON de los datos del recibo.");
         }
     }
-
-    // Modificación en CobranzaService.java
+    
+    @Transactional
     public ApiResponse<FinalizarOrdenCobranzaResponse> finalizarOrdenYGenerarRecibo(
             String ordenUuid,
             Integer tipoSerieRecibo,
@@ -126,7 +138,8 @@ public class CobranzaService {
 
         try {
             // 1. Ejecutar transacción CORE en SQL (Genera Recibo y Movimientos)
-            FinalizarOrdenCobranzaResponse orden = finalizarOrdenDeCobranza(ordenUuid, tipoSerieRecibo, usuario);
+            ReciboPagado r = finalizarOrdenDeCobranza(ordenUuid, tipoSerieRecibo, usuario);
+            FinalizarOrdenCobranzaResponse orden = new FinalizarOrdenCobranzaResponse(r.numeroRecibo(), r.serieReciboId(), r.membresia(), r.totalPagado());
 
             // =================================================================================
             // 2. FASE DE POST-PROCESAMIENTO POR ESTRATEGIA (FORMAS DE PAGO)
@@ -157,6 +170,33 @@ public class CobranzaService {
                     correos,
                     correoAuditoria
             );
+
+            // publicacion de evento de recibo pagado
+            ReciboPagadoEvent reciboPagadoEvent = ReciboPagadoEvent.builder()
+                    .membresia(r.membresia())
+                    .numeroRecibo(r.numeroRecibo())
+                    .serieReciboId(r.serieReciboId())
+                    .tipoMembresia(r.tipoMembresia())
+                    .clasificacionMembresia(r.clasificacionMembresia())
+                    .usuario(r.usuario())
+                    .desarrolloId(r.desarrolloId())
+                    .totalPagado(r.totalPagado())
+                    .movimientosAfectados(
+                            r.movimientosAfectados().stream()
+                                    .map(m -> new ReciboPagadoEvent.MovimientosReciboPagado(
+                                            m.idMovimiento(),
+                                            m.tipoMovimiento(),
+                                            m.montoPagado(),
+                                            m.estatusId(),
+                                            m.estatus()
+                                    ))
+                                    .toList()
+                    )
+                    .build();
+
+            eventPublisher.publishEvent(reciboPagadoEvent);
+
+            log.info(usuario, "Orden de cobranza finalizada y evento de recibo pagado publicado para membresía: {}, recibo: {}-{}", orden.membresia(), orden.serieReciboId(), orden.numeroRecibo());
 
             return ApiResponse.success("El cobro se procesó correctamente. Los recibos se están generando y enviando en segundo plano.", orden);
         } catch (Exception e) {

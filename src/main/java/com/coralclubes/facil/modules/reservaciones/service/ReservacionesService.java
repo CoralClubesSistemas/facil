@@ -524,4 +524,8 @@ public class ReservacionesService {
         return repository.spResvObtenerReservacionXMovimiento(membresia, movimiento)
                 .orElseThrow(() -> new IllegalArgumentException("No se encontró información para la reservación solicitada."));
     }
+
+    public void actualizarReservacionPagada(String membresia, Integer consecutivo) {
+        repository.spResvActualizarReservacionPagada(membresia, consecutivo);
+    }
 }
