@@ -1,9 +1,11 @@
 package com.coralclubes.facil.modules.cobranza.controller.admin;
 
+import com.coralclubes.facil.application.usecases.ValidacionCancelacionReciboOrquestador;
 import com.coralclubes.facil.modules.cobranza.dto.response.BuscarRecibosResponse;
 import com.coralclubes.facil.modules.cobranza.dto.request.CancelarReciboRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.RegistarEvidenciaReciboCancelado;
 import com.coralclubes.facil.modules.cobranza.dto.response.ObtenerDetallesReciboResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.ValidacionCancelacionReciboResponse;
 import com.coralclubes.facil.modules.cobranza.service.RecibosService;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
@@ -25,6 +27,7 @@ import java.util.List;
 public class RecibosAdminController {
 
     private final RecibosService recibosService;
+    private final ValidacionCancelacionReciboOrquestador validacionCancelacionOrquestador;
 
     @GetMapping("/buscar")
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
@@ -60,6 +63,18 @@ public class RecibosAdminController {
             @RequestParam String membresia
     ) {
         return ResponseEntity.ok(recibosService.obtenerDetallesRecibo(numeroRecibo, serieReciboId, membresia));
+    }
+
+    // 2. Nuevo endpoint para la validación de reglas de negocio previas a la cancelación
+    @GetMapping("/cancelados/validar")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<ValidacionCancelacionReciboResponse>> validarCancelacionRecibo(
+            @RequestParam Integer numeroRecibo,
+            @RequestParam Integer serieReciboId,
+            @RequestParam String membresia
+    ) {
+        ValidacionCancelacionReciboResponse validacion = validacionCancelacionOrquestador.validar(numeroRecibo, serieReciboId, membresia);
+        return ResponseEntity.ok(ApiResponse.success("Validación de cancelación completada.", validacion));
     }
 
     @PostMapping("/cancelados/recibo")

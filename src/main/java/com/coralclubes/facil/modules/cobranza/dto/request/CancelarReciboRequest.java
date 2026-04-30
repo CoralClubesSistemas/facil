@@ -3,6 +3,8 @@ package com.coralclubes.facil.modules.cobranza.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Map;
+
 /**
  * Representa la solicitud de cancelación de un recibo desde el cliente.
  */
@@ -17,5 +19,8 @@ public record CancelarReciboRequest(
         Integer serieReciboId,
 
         @NotBlank(message = "Debe proporcionar una razón para la cancelación.")
-        String razonCancelacion
+        String razonCancelacion,
+
+        // Ej: { "CANCELAR_RESERVA": true, "REVERTIR_PUNTOS": false }
+        Map<String, Boolean> decisionesUsuario
 ) {}

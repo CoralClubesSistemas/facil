@@ -28,28 +28,35 @@ public class ReservacionListener {
      */
     @ApplicationModuleListener
     public void handleReciboCancelado(ReciboCanceladoEvent event) {
-        log.info("Analizando movimientos cancelados para la membresía: {}", event.membresia());
+        // 1. Leemos la decisión global una sola vez (si no viene, por defecto es false)
+        Boolean cancelarReservas = event.decisionesUsuario() != null &&
+                event.decisionesUsuario().getOrDefault("CANCELAR_RESERVAS", false);
 
         event.movimientosAfectados().stream()
-                // Si el tipo de movimiento es de reservacion
                 .filter(mov -> Objects.equals(mov.tipoMovimiento(), MovimientosEnum.RESERVACIONES.getId()))
                 .forEach(mov -> {
                     try {
-                        log.info("Detectado movimiento de reservacion (ID: {}). Actualizando reserva...", mov.idMovimiento());
-
-                        // Obtenemos los detalles de la reservacion
                         ResumenReservacionDto reservacion = reservacionesService.obtenerResumenReservacionXMovimiento(event.membresia(), mov.idMovimiento());
 
-                        // ejecutamos la cancelacion
-                        recepcionService.cancelarReservacion(new CancelarReservacionRequest(
-                                reservacion.membresia(),
-                                reservacion.consecutivo(),
-                                event.motivoCancelacion(),
-                                false // no cobramos la cuota
-                        ), event.usuario());
+                        // 2. Protegemos las reservas que por regla de negocio NO pueden ser canceladas
+                        // aunque la instrucción global sea true.
+                        boolean esCancelable = !reservacion.estatusClave().equals("CHECK-IN") &&
+                                !reservacion.estatusClave().equals("CHECK-OUT");
+
+                        if (cancelarReservas && esCancelable) {
+                            log.info("Cancelando reservación {} por decisión global del usuario...", reservacion.consecutivo());
+                            recepcionService.cancelarReservacion(new CancelarReservacionRequest(
+                                    reservacion.membresia(),
+                                    reservacion.consecutivo(),
+                                    event.motivoCancelacion(),
+                                    false
+                            ), event.usuario());
+                        } else {
+                            log.info("La reservación {} se mantuvo activa (estatus: {} o decisión general: false)",
+                                    reservacion.consecutivo(), reservacion.estatusClave());
+                        }
                     } catch (Exception e) {
-                        log.error("Error revirtiendo reserva para movimiento {}: {}", mov.idMovimiento(), e.getMessage());
-                        // Modulith marcará el evento como fallido en la tabla EVENT_PUBLICATION para reintento
+                        log.error("Error procesando evento de cancelación para reserva {}: {}", mov.idMovimiento(), e.getMessage());
                         throw e;
                     }
                 });

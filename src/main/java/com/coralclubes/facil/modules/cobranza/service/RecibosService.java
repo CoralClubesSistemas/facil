@@ -3,10 +3,12 @@ package com.coralclubes.facil.modules.cobranza.service;
 import com.coralclubes.facil.modules.cobranza.dto.projection.DatosReciboResponse;
 import com.coralclubes.facil.modules.cobranza.dto.request.CancelarReciboRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.RegistarEvidenciaReciboCancelado;
-import com.coralclubes.facil.modules.cobranza.dto.response.BuscarRecibosResponse;
-import com.coralclubes.facil.modules.cobranza.dto.response.ObtenerDetallesReciboResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.*;
 import com.coralclubes.facil.modules.cobranza.repository.CobranzaRepository;
 import com.coralclubes.facil.modules.cobranza.repository.RecibosRepository;
+import com.coralclubes.facil.modules.reservaciones.dto.response.ResumenReservacionDto;
+import com.coralclubes.facil.modules.reservaciones.service.ReservacionesService;
+import com.coralclubes.facil.shared.enums.MovimientosEnum;
 import com.coralclubes.facil.shared.events.dto.ReciboCanceladoEvent;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
@@ -24,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -39,7 +42,7 @@ public class RecibosService {
     private final BusinessLogger businessLogger;
     private final CobranzaPostProcesoAsyncService postProceso;
 
-    private final StorageClient storageClient;
+    private final StorageClient storageClient; 
 
     @Value("${app.clients.storage.aliases.default}")
     private String aliasStorageDefault;
@@ -165,9 +168,21 @@ public class RecibosService {
         businessLogger.info(usuario, "Evento de cancelacion de recibo publicado, membresia: {}, recibo: {}, serie: {}",
                 request.membresia(), request.numeroRecibo(), request.serieReciboId());
 
+        ReciboCanceladoEvent eventoFinal = new ReciboCanceladoEvent(
+                evento.membresia(),
+                evento.tipoMembresia(),
+                evento.clasificacionMembresia(),
+                evento.usuario(),
+                evento.motivoCancelacion(),
+                evento.correoCliente(),
+                evento.correoUsuario(),
+                evento.movimientosAfectados(),
+                request.decisionesUsuario()
+        );
+
         // 2. Disparar el evento de dominio (Orquestación desacoplada)
         // El resto de los módulos (Reservas, Puntos) estarán escuchando este record
-        eventPublisher.publishEvent(evento);
+        eventPublisher.publishEvent(eventoFinal);
 
         // Procesamos de forma asincrona la generacion y envio del pdf de cancelacion
         postProceso.procesarReciboCanceladoYNotificar(datosRecibo, usuario, evento.correoCliente(), evento.correoUsuario());

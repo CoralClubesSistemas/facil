@@ -1,7 +1,6 @@
 package com.coralclubes.facil.modules.cobranza.dto.response;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,6 +21,5 @@ public record ObtenerDetallesReciboResponse(
         List<DetalleReciboFormaPagoDto> formasPago,
         String desarrollo,
         String producto
-) {
-}
+) {}
 
