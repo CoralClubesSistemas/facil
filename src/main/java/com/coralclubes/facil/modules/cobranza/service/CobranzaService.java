@@ -226,4 +226,12 @@ public class CobranzaService {
     public ApiResponse<List<RecibosCancelados>> obtenerRecibosCancelados(String membresia, String recibo) {
         return ApiResponse.success("Recibos obtenidos correctamente", repository.spCobranzaObtenerRecibosCancelados(membresia, recibo));
     }
+
+    public ApiResponse<List<CarteraEjecutivoResponse>> obtenerCarteraEjecutivo() {
+        String usuario = userContext.getUsername();
+        return ApiResponse.success(
+                "Cartera de ejecutivo obtenida correctamente.",
+                repository.spCobranzaObtenerCarteraEjecutivo(usuario)
+        );
+    }
 }

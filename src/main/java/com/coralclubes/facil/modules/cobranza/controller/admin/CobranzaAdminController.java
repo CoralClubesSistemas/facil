@@ -95,4 +95,10 @@ public class CobranzaAdminController {
             @RequestParam(required = false) String recibo) {
         return ResponseEntity.ok(cobranzaService.obtenerRecibosCancelados(membresia, recibo));
     }
+
+    @GetMapping("/cartera-ejecutivo")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<List<CarteraEjecutivoResponse>>> obtenerCarteraEjecutivo() {
+        return ResponseEntity.ok(cobranzaService.obtenerCarteraEjecutivo());
+    }
 }

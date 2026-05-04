@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -69,6 +70,42 @@ public class CobranzaRepository {
                     rs.getDate("fechaPago") != null ? rs.getDate("fechaPago").toLocalDate() : null,
                     rs.getBigDecimal("importe"),
                     rs.getString("estatusRecibo")
+            );
+
+    private final RowMapper<CarteraEjecutivoResponse> carteraEjecutivoMapper = (rs, rowNum) ->
+            new CarteraEjecutivoResponse(
+                    rs.getObject("TotalRegistros", Integer.class),
+                    rs.getString("membresia"),
+                    rs.getString("nombreCompleto"),
+                    rs.getString("nombre"),
+                    rs.getString("segundoNombre"),
+                    rs.getString("apellidoPaterno"),
+                    rs.getString("apellidoMaterno"),
+                    rs.getDate("fechaNacimiento") != null ? rs.getDate("fechaNacimiento").toLocalDate() : null,
+                    rs.getString("correo"),
+                    rs.getString("correoAlternativo"),
+                    rs.getString("telefono"),
+                    rs.getString("telefonoAlternativo"),
+                    rs.getBigDecimal("saldoFinMes"),
+                    rs.getString("tipoTarjetaAfiliada"),
+                    rs.getString("ejecutivoAsignado"),
+                    rs.getString("ultimoPQAPagado"),
+                    rs.getBigDecimal("puntosDisponibles"),
+                    rs.getBigDecimal("puntosConsumidos"),
+                    rs.getObject("totalBenefActivos", Integer.class),
+                    rs.getString("nombresBeneficiarios"),
+                    rs.getObject("tipoMembresiaId", Integer.class),
+                    rs.getString("tipoMembresia"),
+                    rs.getObject("clasificacionMembresiaId", Integer.class),
+                    rs.getString("clasificacionMembresia"),
+                    rs.getObject("desarrolloId", Integer.class),
+                    rs.getString("desarrollo"),
+                    rs.getObject("estatusMembresiaId", Integer.class),
+                    rs.getString("estatusMembresia"),
+                    rs.getObject("carteraCobranzaId", Integer.class),
+                    rs.getString("carteraCobranza"),
+                    rs.getString("vigenciaOriginal"),
+                    rs.getString("tiempoRestante")
             );
 
     public Optional<GenerarOrdenCobranzaResponse> spCobranzaGenerarOrdenCobranza(
@@ -190,6 +227,14 @@ public class CobranzaRepository {
                 "spCobranzaObtenerRecibosCancelados",
                 params,
                 recibosCanceladosMapper
+        );
+    }
+
+    public List<CarteraEjecutivoResponse> spCobranzaObtenerCarteraEjecutivo(String usuario) {
+        return spExecutor.queryList(
+                "spCobranzaObtenerCarteraEjecutivo",
+                Map.of("Usuario", usuario),
+                carteraEjecutivoMapper
         );
     }
 }
