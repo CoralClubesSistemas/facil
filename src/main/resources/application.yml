@@ -87,6 +87,7 @@ app:
   url:
     frontend: ${FRONTEND_URL}
     password-reset: ${PASSWORD_RESET_URL}
+    portal-socios: ${PORTAL_SOCIOS_URL}
 
   banco:
     cie:
@@ -169,6 +170,7 @@ app:
   url:
     frontend: http://localhost:4200
     password-reset: http://localhost:4200/auth/confirm-reset
+    portal-socios: https://coralpagos.com.mx/PortalSocios/socios
 
   clients:
     storage:
