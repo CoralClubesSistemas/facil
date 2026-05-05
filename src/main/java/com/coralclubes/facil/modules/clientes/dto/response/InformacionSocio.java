@@ -3,6 +3,7 @@ package com.coralclubes.facil.modules.clientes.dto.response;
 import lombok.Builder;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Builder
 public record InformacionSocio (
@@ -29,5 +30,9 @@ public record InformacionSocio (
     String carteraCobranza,
     Integer vigenciaOriginal,
     String vigenciaRestante,
+    Integer alertaConsultaActiva,
+    Integer alertaConsultaConsecutivo,
+    String alertaConsultaNota,
+    LocalDateTime alertaConsultaFechaRegistro,
     String convenioCie
 ){}

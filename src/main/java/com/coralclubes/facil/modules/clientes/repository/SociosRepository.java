@@ -1,7 +1,6 @@
 package com.coralclubes.facil.modules.clientes.repository;
 
 import com.coralclubes.facil.modules.clientes.dto.projection.InformacionSocioDb;
-import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioBusqueda;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioTabla;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
@@ -20,31 +19,37 @@ public class SociosRepository {
     private final StoredProcedureExecutor executor;
 
     private final RowMapper<InformacionSocioDb> informacionSocioRowMapper = (rs, rowNum) ->
-            InformacionSocioDb.builder()
-                    .membresia(rs.getString("membresia"))
-                    .nombreCompleto(rs.getString("nombreCompleto"))
-                    .nombre(rs.getString("nombre"))
-                    .segundoNombre(rs.getString("segundoNombre"))
-                    .apellidoPaterno(rs.getString("apellidoPaterno"))
-                    .apellidoMaterno(rs.getString("apellidoMaterno"))
-                    .correo(rs.getString("correo"))
-                    .correoAlternativo(rs.getString("correoAlternativo"))
-                    .telefono(rs.getString("telefono"))
-                    .telefonoAlternativo(rs.getString("telefonoAlternativo"))
-                    .fechaNacimiento(rs.getDate("fechaNacimiento").toLocalDate())
-                    .tipoMembresiaId(rs.getInt("tipoMembresiaId"))
-                    .tipoMembresia(rs.getString("tipoMembresia"))
-                    .clasificacionMembresiaId(rs.getInt("clasificacionMembresiaId"))
-                    .clasificacionMembresia(rs.getString("clasificacionMembresia"))
-                    .desarrolloId(rs.getInt("desarrolloId"))
-                    .desarrollo(rs.getString("desarrollo"))
-                    .estatusMembresiaId(rs.getInt("estatusMembresiaId"))
-                    .estatusMembresia(rs.getString("estatusMembresia"))
-                    .carteraCobranzaId(rs.getInt("carteraCobranzaId"))
-                    .carteraCobranza(rs.getString("carteraCobranza"))
-                    .vigenciaOriginal(rs.getInt("vigenciaOriginal"))
-                    .vigenciaRestante(rs.getString("tiempoRestante"))
-                    .build();
+            new InformacionSocioDb(
+                    rs.getString("membresia"),
+                    rs.getString("nombreCompleto"),
+                    rs.getString("nombre"),
+                    rs.getString("segundoNombre"),
+                    rs.getString("apellidoPaterno"),
+                    rs.getString("apellidoMaterno"),
+                    rs.getString("correo"),
+                    rs.getString("correoAlternativo"),
+                    rs.getString("telefono"),
+                    rs.getString("telefonoAlternativo"),
+                    rs.getDate("fechaNacimiento").toLocalDate(),
+                    rs.getInt("tipoMembresiaId"),
+                    rs.getString("tipoMembresia"),
+                    rs.getInt("clasificacionMembresiaId"),
+                    rs.getString("clasificacionMembresia"),
+                    rs.getInt("desarrolloId"),
+                    rs.getString("desarrollo"),
+                    rs.getInt("estatusMembresiaId"),
+                    rs.getString("estatusMembresia"),
+                    rs.getInt("carteraCobranzaId"),
+                    rs.getString("carteraCobranza"),
+                    rs.getObject("vigenciaOriginal", Integer.class),
+                    rs.getString("tiempoRestante"),
+                    rs.getObject("AlertaConsultaActiva", Integer.class),
+                    rs.getObject("AlertaConsultaConsecutivo", Integer.class),
+                    rs.getString("AlertaConsultaNota"),
+                    rs.getTimestamp("AlertaConsultaFechaRegistro") != null
+                            ? rs.getTimestamp("AlertaConsultaFechaRegistro").toLocalDateTime()
+                            : null
+            );
 
     private final RowMapper<InformacionSocioBusqueda> informacionSocioBusquedaRowMapper = (rs, rowNum) ->
             InformacionSocioBusqueda.builder()

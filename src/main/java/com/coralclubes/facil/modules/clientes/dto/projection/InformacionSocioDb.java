@@ -3,6 +3,7 @@ package com.coralclubes.facil.modules.clientes.dto.projection;
 import lombok.Builder;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Builder
 public record InformacionSocioDb (
@@ -28,5 +29,9 @@ public record InformacionSocioDb (
         int carteraCobranzaId,
         String carteraCobranza,
         Integer vigenciaOriginal,
-        String vigenciaRestante
+        String vigenciaRestante,
+        Integer alertaConsultaActiva,
+        Integer alertaConsultaConsecutivo,
+        String alertaConsultaNota,
+        LocalDateTime alertaConsultaFechaRegistro
 ){}

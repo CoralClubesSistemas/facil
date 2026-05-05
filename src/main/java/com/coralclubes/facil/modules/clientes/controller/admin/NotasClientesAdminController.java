@@ -13,7 +13,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -71,5 +70,12 @@ public class NotasClientesAdminController {
             @PathVariable String membresia,
             @PathVariable Integer consecutivo) {
         return ResponseEntity.ok(service.obtenerArchivosNota(membresia, consecutivo));
+    }
+
+    @PostMapping("/{membresia}/{consecutivo}/alerta/desactivar")
+    public ResponseEntity<ApiResponse<Boolean>> desactivarNotaConAlerta(
+            @PathVariable String membresia,
+            @PathVariable Integer consecutivo) {
+        return ResponseEntity.ok(service.desactivarNotaConAlerta(membresia, consecutivo));
     }
 }

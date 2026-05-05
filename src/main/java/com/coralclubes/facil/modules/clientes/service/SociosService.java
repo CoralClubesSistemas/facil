@@ -50,6 +50,10 @@ public class SociosService {
                 .carteraCobranza(socio.carteraCobranza())
                 .vigenciaOriginal(socio.vigenciaOriginal())
                 .vigenciaRestante(socio.vigenciaRestante())
+                .alertaConsultaActiva(socio.alertaConsultaActiva())
+                .alertaConsultaConsecutivo(socio.alertaConsultaConsecutivo())
+                .alertaConsultaNota(socio.alertaConsultaNota())
+                .alertaConsultaFechaRegistro(socio.alertaConsultaFechaRegistro())
                 .convenioCie(obtenerConvenioCIECadena(socio.membresia()))
                 .build();
 

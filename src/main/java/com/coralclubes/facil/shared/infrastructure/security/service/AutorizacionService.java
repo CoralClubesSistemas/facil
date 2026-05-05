@@ -5,6 +5,7 @@ import com.coralclubes.facil.shared.infrastructure.security.dto.projection.Simpl
 import com.coralclubes.facil.shared.infrastructure.security.dto.request.ValidacionAutorizacion;
 import com.coralclubes.facil.shared.infrastructure.security.enums.TipoAutorizacion;
 import com.coralclubes.facil.shared.infrastructure.security.repository.LoginRepository;
+import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -26,8 +27,11 @@ public class AutorizacionService {
 
     private final LoginRepository loginRepository;
     private final PasswordEncoder passwordEncoder;
+    private final BusinessLogger businessLogger;
 
     public ApiResponse<Boolean> validarAutorizacionFueraDePolitica(ValidacionAutorizacion request) {
+        businessLogger.info(request.username(), "Validando autorización fuera de política: {}", request.autorizacion());
+
         // 1. Validar credenciales (re-validación de identidad)
         SimpleLoginResult userStored = loginRepository.spLoginSimple(request.username())
                 .orElseThrow(() -> new BadCredentialsException("Usuario no encontrado"));
@@ -48,6 +52,8 @@ public class AutorizacionService {
         // 3. Ejecutar SP de validación
         int validado = loginRepository.spLoginValidarAutorizacionFueraDePolitica(request.username(), claveRealBD);
         boolean esValido = validado == 1;
+
+        businessLogger.info(request.username(), "Resultado de validación para autorización real '{}': {}", claveRealBD, esValido ? "Válida" : "No válida");
 
         return ApiResponse.from(
                 esValido ? LoginResponseCode.LOGIN_AUTHORIZATION_SUCCESS : LoginResponseCode.LOGIN_NOT_PERMITIONS,

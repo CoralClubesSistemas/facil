@@ -105,5 +105,13 @@ public class NotasClientesRepository {
 
         return executor.queryList("spObtenerArchivosNotas", params, archivoNotaMapper);
     }
-}
 
+    public void spDesactivarNotaConAlerta(String membresia, String usuario, Integer consecutivo) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("Membresia", membresia);
+        params.put("Usuario", usuario);
+        params.put("Consecutivo", consecutivo);
+
+        executor.execute("spDesactivarNotaConAlerta", params);
+    }
+}

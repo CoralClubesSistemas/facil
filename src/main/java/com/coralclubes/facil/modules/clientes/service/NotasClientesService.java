@@ -192,4 +192,16 @@ public class NotasClientesService {
 
         return ApiResponse.success("Archivos de nota obtenidos correctamente.", respuesta);
     }
+
+    public ApiResponse<Boolean> desactivarNotaConAlerta(String membresia, Integer consecutivo) {
+        String usuario = userContext.getUsername();
+
+        repository.spDesactivarNotaConAlerta(membresia, usuario, consecutivo);
+
+        businessLogger.info(usuario,
+                "Alerta de nota desactivada para membresía: {}, consecutivo: {}",
+                membresia, consecutivo);
+
+        return ApiResponse.success("Alerta de nota desactivada correctamente.", true);
+    }
 }
