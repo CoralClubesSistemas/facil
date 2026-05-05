@@ -46,7 +46,6 @@ public class NotasClientesService {
 
     public ApiResponse<List<SelectGenerico<Integer>>> obtenerClasificacionesXUsuario() {
         Integer rolId = userContext.getRoleId();
-
         return ApiResponse.success(repository.spObtenerClasificacionNotasXUsuario(rolId));
     }
 
@@ -83,9 +82,9 @@ public class NotasClientesService {
      * Solicita URLs de carga prefirmadas para adjuntos de una nota.
      * Construye rutas lógicas y metadatos asociados a la membresía y consecutivo.
      *
-     * @param membresia    Identificador de membresía
-     * @param consecutivo  Número consecutivo de la nota
-     * @param solicitudes  Lista de archivos a cargar (nombre, tipo, tamaño)
+     * @param membresia   Identificador de membresía
+     * @param consecutivo Número consecutivo de la nota
+     * @param solicitudes Lista de archivos a cargar (nombre, tipo, tamaño)
      * @return URLs de carga prefirmadas del servicio de almacenamiento
      */
     public ApiResponse<List<RespuestaCargaDto>> solicitarUrlsDeCargaArchivos(
@@ -96,19 +95,17 @@ public class NotasClientesService {
         String usuario = userContext.getUsername();
 
         // Construir ruta lógica inmutable para archivos de notas
-        String rutaLogica = "notas/archivos-socios/" + membresia + "/" + consecutivo + "/";
+        String rutaLogica = "notas/archivos-socios/" + membresia + "/" + consecutivo;
 
         List<RespuestaCargaDto> respuestas = solicitudes.stream()
                 .map(solicitud -> {
-                    String ruta = rutaLogica + solicitud.id();
-
                     SolicitudCargaDto solicitudStorage = SolicitudCargaDto.builder()
                             .nombreArchivo(solicitud.nombreArchivo())
                             .contentType(solicitud.contentType())
                             .tamanoBytes(solicitud.tamanoBytes())
                             .aliasConfiguracion(aliasStorageDefault)
                             .esPublico(false)
-                            .rutaLogica(ruta)
+                            .rutaLogica(rutaLogica)
                             .metadatos(Map.of(
                                     "modulo", "CLIENTES",
                                     "membresia", membresia,
@@ -132,11 +129,11 @@ public class NotasClientesService {
      * Registra archivos adjuntos en una nota existente.
      * Persiste la información de los archivos en el storage y base de datos.
      *
-     * @param membresia      Identificador de membresía
-     * @param consecutivo    Número consecutivo de la nota
-     * @param nombreArchivo  Nombre del archivo
-     * @param uuidArchivo    UUID único del archivo en storage
-     * @param tipoArchivo    Tipo MIME del archivo
+     * @param membresia     Identificador de membresía
+     * @param consecutivo   Número consecutivo de la nota
+     * @param nombreArchivo Nombre del archivo
+     * @param uuidArchivo   UUID único del archivo en storage
+     * @param tipoArchivo   Tipo MIME del archivo
      */
     public void registrarArchivoNota(
             String membresia,
@@ -147,33 +144,26 @@ public class NotasClientesService {
     ) {
         String usuario = userContext.getUsername();
 
-        try {
-            java.util.UUID uuid = java.util.UUID.fromString(uuidArchivo);
+        repository.spRegistrarArhivosNotas(
+                membresia,
+                consecutivo,
+                nombreArchivo,
+                uuidArchivo,
+                tipoArchivo,
+                usuario
+        );
 
-            repository.spRegistrarArhivosNotas(
-                    membresia,
-                    consecutivo,
-                    nombreArchivo,
-                    uuid,
-                    tipoArchivo,
-                    usuario
-            );
-
-            businessLogger.info(usuario,
-                    "Archivo registrado en nota - Membresía: {}, Consecutivo: {}, Archivo: {}",
-                    membresia, consecutivo, nombreArchivo);
-
-        } catch (IllegalArgumentException ex) {
-            throw new IllegalStateException("UUID de archivo inválido: " + uuidArchivo);
-        }
+        businessLogger.info(usuario,
+                "Archivo registrado en nota - Membresía: {}, Consecutivo: {}, Archivo: {}",
+                membresia, consecutivo, nombreArchivo);
     }
 
     /**
      * Obtiene los archivos adjuntos de una nota específica con URLs de descarga.
      * Replica el patrón de HotelesService para enriquecimiento de recursos.
      *
-     * @param membresia    Identificador de membresía
-     * @param consecutivo  Número consecutivo de la nota
+     * @param membresia   Identificador de membresía
+     * @param consecutivo Número consecutivo de la nota
      * @return Lista de archivos asociados a la nota con URLs de descarga
      */
     public ApiResponse<List<ObtenerArchivosNotaResponse>> obtenerArchivosNota(String membresia, Integer consecutivo) {

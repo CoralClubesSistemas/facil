@@ -75,6 +75,7 @@ public class GatewayHeaderFilter extends OncePerRequestFilter {
         // para que UserContext pueda leerlos sin depender de CustomUserDetails
         request.setAttribute("X-Auth-Username", username);
         request.setAttribute("X-Auth-Role", request.getHeader("X-Auth-Role"));
+        request.setAttribute("X-Auth-RoleId", request.getHeader("X-Auth-RoleId"));
         request.setAttribute("X-Auth-Source", request.getHeader("X-Auth-Source"));
         request.setAttribute("X-Auth-LegacyId", request.getHeader("X-Auth-LegacyId"));
         request.setAttribute("X-Auth-System", request.getHeader("X-Auth-System"));

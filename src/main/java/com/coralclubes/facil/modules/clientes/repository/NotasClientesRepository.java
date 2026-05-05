@@ -85,7 +85,7 @@ public class NotasClientesRepository {
         return executor.querySingle("spCrearNotaUsuario", params, crearNotaUsuarioMapper);
     }
 
-    public void spRegistrarArhivosNotas(String membresia, Integer consecutivo, String nombreArchivo, UUID uuidArchivo, String tipoArchivo, String usuario) {
+    public void spRegistrarArhivosNotas(String membresia, Integer consecutivo, String nombreArchivo, String uuidArchivo, String tipoArchivo, String usuario) {
         Map<String, Object> params = new HashMap<>();
         params.put("Membresia", membresia);
         params.put("Consecutivo", consecutivo);
