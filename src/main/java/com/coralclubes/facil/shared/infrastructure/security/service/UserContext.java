@@ -18,11 +18,11 @@ import java.util.stream.Stream;
 
 /**
  * Servicio de utilidad para acceder a la información del usuario autenticado.
- *
+ * <p>
  * El API Gateway valida el JWT y envía los headers X-Auth-*.
  * GatewayHeaderFilter lee esos headers y establece el SecurityContext.
  * Este servicio expone la identidad de forma limpia a los Services.
- *
+ * <p>
  * Si los permisos no vienen del gateway, se obtienen directamente desde la base de datos.
  */
 @Service
@@ -68,6 +68,18 @@ public class UserContext {
      */
     public String getRole() {
         return getRequestAttribute("X-Auth-Role");
+    }
+
+    public Integer getRoleId() {
+        String rolId = getRequestAttribute("X-Auth-RoleId");
+        if (rolId != null && !rolId.isBlank()) {
+            try {
+                return Integer.parseInt(rolId);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return null;
     }
 
     /**
