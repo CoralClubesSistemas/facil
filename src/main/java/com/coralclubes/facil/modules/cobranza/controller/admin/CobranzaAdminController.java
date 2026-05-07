@@ -101,4 +101,12 @@ public class CobranzaAdminController {
     public ResponseEntity<ApiResponse<List<CarteraEjecutivoResponse>>> obtenerCarteraEjecutivo() {
         return ResponseEntity.ok(cobranzaService.obtenerCarteraEjecutivo());
     }
+
+    @GetMapping("/analisis-ia/{membresia}")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<AnalisisCobranzaResponse>> analizarClienteConIa(
+            @PathVariable String membresia
+    ) {
+        return ResponseEntity.ok(cobranzaService.analizarClienteParaCobranza(membresia));
+    }
 }

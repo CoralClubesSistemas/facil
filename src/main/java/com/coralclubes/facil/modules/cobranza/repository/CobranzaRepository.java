@@ -237,4 +237,12 @@ public class CobranzaRepository {
                 carteraEjecutivoMapper
         );
     }
+
+    public Optional<String> spClientesObtenerDataParaAnalisis(String membresia) {
+        return spExecutor.querySingle(
+                "spClientesObtenerDataParaAnalisis",
+                Map.of("Membresia", membresia),
+                jsonStringMapper
+        );
+    }
 }

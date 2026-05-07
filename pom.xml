@@ -225,6 +225,12 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>bedrockruntime</artifactId>
+            <version>2.44.3</version>
+        </dependency>
+
     </dependencies>
     <dependencyManagement>
         <dependencies>

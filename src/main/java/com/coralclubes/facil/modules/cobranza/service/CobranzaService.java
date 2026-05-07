@@ -10,6 +10,7 @@ import com.coralclubes.facil.modules.cobranza.repository.CobranzaRepository;
 import com.coralclubes.facil.modules.cobranza.repository.IntentoPagoRepository;
 import com.coralclubes.facil.modules.usuarios.service.UsuarioService;
 import com.coralclubes.facil.shared.events.dto.ReciboPagadoEvent;
+import com.coralclubes.facil.shared.infrastructure.integration.ia.analisis.AnalisisDeInformacion;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.NotificationClient;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.dto.SolicitudNotificacionDto;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
@@ -47,6 +48,8 @@ public class CobranzaService {
     private final CobranzaPostProcesoAsyncService postProcesoAsyncService;
 
     private final ApplicationEventPublisher eventPublisher;
+
+    private final AnalisisDeInformacion bedrockClient;
 
     public ApiResponse<GenerarOrdenCobranzaResponse> generarOrdenCobranza(GenerarOrdenCobranzaRequest request, String usuario) {
         String movimientosJson = serializarMovimientos(request);
@@ -233,5 +236,36 @@ public class CobranzaService {
                 "Cartera de ejecutivo obtenida correctamente.",
                 repository.spCobranzaObtenerCarteraEjecutivo(usuario)
         );
+    }
+
+
+
+
+    public ApiResponse<AnalisisCobranzaResponse> analizarClienteParaCobranza(String membresia) {
+        String dataJsonCliente = repository.spClientesObtenerDataParaAnalisis(membresia)
+                .orElseThrow(() -> new IllegalStateException("No se encontró información para la membresía proporcionada."));
+
+        // 2. Definir el System Prompt específico para este caso de uso
+        String systemPrompt = """
+            Eres un experto analista financiero. Analiza el JSON del cliente.
+            Debes devolver la respuesta ESTRICTAMENTE en formato JSON con la siguiente estructura, sin formato Markdown ni texto antes o después:
+            {
+              "clasificacionRiesgo": "Excelente | Regular | Moroso | Riesgo de Abandono",
+              "justificacionAnalisis": "Breve explicación del por qué de la clasificación basada en sus pagos y notas",
+              "mensajeWhatsappRecomendado": "El mensaje de cobranza persuasivo y empático listo para enviar"
+            }
+            """;
+
+        // 3. Solicitar el análisis a Bedrock
+        String respuestaIa = bedrockClient.analizarData(systemPrompt, dataJsonCliente);
+
+        // 4. Mapear el JSON de respuesta devuelto por la IA a nuestro Record de Java
+        try {
+            AnalisisCobranzaResponse analisis = objectMapper.readValue(respuestaIa, AnalisisCobranzaResponse.class);
+            return ApiResponse.success("Análisis de IA generado correctamente.", analisis);
+        } catch (JsonProcessingException e) {
+            log.error(userContext.getUsername(), "La IA no devolvió un JSON válido: {}", respuestaIa);
+            throw new IllegalStateException("Ocurrió un error al procesar la respuesta de la inteligencia artificial.");
+        }
     }
 }
