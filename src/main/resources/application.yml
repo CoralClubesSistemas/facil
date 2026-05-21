@@ -2,9 +2,6 @@ spring:
   application:
     name: facil
 
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
-
   modulith:
     events:
       externalization:
@@ -12,9 +9,6 @@ spring:
       republish-outstanding-events-on-restart: true
 
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USER}
-    password: ${DB_PASS}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
     hikari:
       maximum-pool-size: 20
@@ -23,9 +17,6 @@ spring:
       idle-timeout: 600000
 
   datasource-replica:
-    url: ${DB_REPLICA_URL:${DB_URL}}
-    username: ${DB_REPLICA_USER:${DB_USER}}
-    password: ${DB_REPLICA_PASS:${DB_PASS}}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
     hikari:
       maximum-pool-size: 10
@@ -43,159 +34,9 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.SQLServerDialect
 
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASS:}
-
-  rabbitmq:
-    host: ${RABBIT_HOST:localhost}
-    port: ${RABBIT_PORT:5672}
-    username: ${RABBIT_USER:guest}
-    password: ${RABBIT_PASS:guest}
-
-# ==============================
-# CONFIGURACIÓN APP
-# ==============================
-app:
-  clients:
-    storage:
-      url: ${STORAGE_SERVICE_URL}
-      api-key: ${STORAGE_API_KEY}
-      aliases:
-        default: ${APP_CLIENTS_STORAGE_ALIASES_DEFAULT:MINIO_MAIN}
-
-    notifications:
-      url: ${NOTIFICATIONS_SERVICE_URL}
-      api-key: ${NOTIFICATIONS_API_KEY}
-      system-code: FACIL
-      aliases:
-        default: ${APP_CLIENTS_NOTIFICATIONS_ALIASES_DEFAULT:SMTP_GENERAL}
-        aws-ses: ${APP_CLIENTS_NOTIFICATIONS_ALIASES_AWS_SES:AWS_SES}
-      templates:
-        reset-password: ${APP_CLIENTS_NOTIFICATIONS_TEMPLATES_RESET_PASSWORD:reset-pass-v1}
-        reserva-creada: ${APP_CLIENTS_NOTIFICATIONS_TEMPLATES_RESERVA_CREADA:reserva-creada-v1}
-        reserva-cancelada: ${APP_CLIENTS_NOTIFICATIONS_TEMPLATES_RESERVA_CANCELADA:reserva-cancelada-v1}
-
-  security:
-    cors:
-      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
-    password-reset:
-      expiration-minutes: ${APP_SECURITY_PASSWORD_RESET_EXPIRATION_MINUTES:60}
-
-  url:
-    frontend: ${FRONTEND_URL}
-    password-reset: ${PASSWORD_RESET_URL}
-    portal-socios: ${PORTAL_SOCIOS_URL}
-
-  banco:
-    cie:
-      bbva: ${BANCO_CIE_BBVA}
-
 # ==============================
 # JWT
 # ==============================
 jwt:
-  secret: ${JWT_SECRET}
   expiration: 3600000
   refresh-expiration: 86400000
-
-# ==============================
-# LOGGING
-# ==============================
-logging:
-  pattern:
-    level: "%5p [${spring.application.name:}]"
-    console: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"
-
-# ==================================================================
-# PERFIL QA
-# ==================================================================
----
-spring:
-  config:
-    activate:
-      on-profile: qa
-
-# QA usa 100% variables de entorno → no hardcode
-app:
-  clients:
-    storage:
-      url: ${STORAGE_SERVICE_URL}
-      api-key: ${STORAGE_API_KEY}
-      aliases:
-        default: ${APP_CLIENTS_STORAGE_ALIASES_DEFAULT:MINIO_MAIN}
-
-    notifications:
-      url: ${NOTIFICATIONS_SERVICE_URL}
-      api-key: ${NOTIFICATIONS_API_KEY}
-      system-code: FACIL
-      aliases:
-        default: ${APP_CLIENTS_NOTIFICATIONS_ALIASES_DEFAULT:SMTP_GENERAL}
-        aws-ses: ${APP_CLIENTS_NOTIFICATIONS_ALIASES_AWS_SES:AWS_SES}
-
-    pdf-generator:
-      url: ${PDF_GENERATOR_URL}
-      api-key: ${PDF_GENERATOR_API_KEY}
-      plantillas:
-        recibo: ${APP_CLIENTS_PDF_GENERATOR_PLANTILLAS_RECIBO:RECIBO-FACIL}
-
-# ==================================================================
-# PERFIL DEV
-# ==================================================================
----
-spring:
-  config:
-    activate:
-      on-profile: dev
-
-  datasource:
-    url: jdbc:sqlserver://localhost:1433;databaseName=Facil_Prueba3;trustServerCertificate=true;encrypt=false
-    username: sa
-    password: 1122334455667788
-
-  datasource-replica:
-    url: jdbc:sqlserver://localhost:1433;databaseName=Facil_Prueba3;trustServerCertificate=true;encrypt=false
-    username: sa
-    password: 1122334455667788
-
-  rabbitmq:
-    host: 10.10.3.154
-    port: 5672
-    username: guest
-    password: guest
-
-app:
-  url:
-    frontend: http://localhost:4200
-    password-reset: http://localhost:4200/auth/confirm-reset
-    portal-socios: https://coralpagos.com.mx/PortalSocios/socios
-
-  clients:
-    storage:
-      url: http://10.10.3.154:8085
-      api-key: FACIL_PRjS7QZ9J7APlgez6wXuA04Qsv0esjJu
-      aliases:
-        default: MINIO_MAIN
-
-    notifications:
-      url: http://10.10.3.154:8081
-      api-key: FACIL_PRjS7QZ9J7APlgez6wXuA04Qsv0esjJu
-      system-code: FACIL
-      aliases:
-        default: SMTP_GENERAL
-        aws-ses: AWS_SES
-
-    pdf-generator:
-      url: http://localhost:8081
-      api-key: FACIL_PRjS7QZ9J7APlgez6wXuA04Qsv0esjJu
-      plantillas:
-        recibo: RECIBO_FACIL
-
-  banco:
-    cie:
-      bbva: 2072866
-
-jwt:
-  secret: nTUtfGTwSCZlj4WC00mzXKTLAZbgFZST7MFpivsizOwCzzfP5eiEhuMBFOyHyJC2kiCqjvwctSgk9KCtAUjVGA==

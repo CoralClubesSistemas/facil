@@ -4,6 +4,9 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * Dto interno que usamos para recibir la informacion del archivo que deseamos subir
+ * */
 public record SolicitarUrlRequest(
         Integer id,
 

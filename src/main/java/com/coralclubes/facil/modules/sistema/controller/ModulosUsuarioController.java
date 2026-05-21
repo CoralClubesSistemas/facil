@@ -3,7 +3,7 @@ package com.coralclubes.facil.modules.sistema.controller;
 import com.coralclubes.facil.modules.sistema.dto.projection.ModuloDtoResult;
 import com.coralclubes.facil.modules.sistema.dto.response.ModuloApiResponse;
 import com.coralclubes.facil.modules.sistema.service.ModulosService;
-import com.coralclubes.facil.shared.infrastructure.codes.LoginResponseCode;
+import com.coralclubes.facil.shared.infrastructure.domain.codes.LoginResponseCode;
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.NoPermissionsException;
 import com.coralclubes.facil.shared.infrastructure.security.repository.LoginRepository;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;

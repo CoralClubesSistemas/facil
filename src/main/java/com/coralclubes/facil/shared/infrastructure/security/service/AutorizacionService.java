@@ -1,6 +1,6 @@
 package com.coralclubes.facil.shared.infrastructure.security.service;
 
-import com.coralclubes.facil.shared.infrastructure.codes.LoginResponseCode;
+import com.coralclubes.facil.shared.infrastructure.domain.codes.LoginResponseCode;
 import com.coralclubes.facil.shared.infrastructure.security.dto.projection.SimpleLoginResult;
 import com.coralclubes.facil.shared.infrastructure.security.dto.request.ValidacionAutorizacion;
 import com.coralclubes.facil.shared.infrastructure.security.enums.TipoAutorizacion;

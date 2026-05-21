@@ -1,0 +1,81 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  autoconfigure:
+    exclude:
+      - io.awspring.cloud.autoconfigure.sqs.SqsAutoConfiguration
+
+  datasource:
+    url: jdbc:sqlserver://10.10.8.2:1433;databaseName=Facil_Prueba3;trustServerCertificate=true;encrypt=false
+    username: sa
+    password: 1122334455667788
+
+  datasource-replica:
+    url: jdbc:sqlserver://10.10.8.2:1433;databaseName=Facil_Prueba3;trustServerCertificate=true;encrypt=false
+    username: sa
+    password: 1122334455667788
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ""
+
+  rabbitmq:
+    host: 10.10.8.2
+    port: 5672
+    username: user
+    password: CoralClubes1234
+
+app:
+  messaging:
+    provider: rabbitmq
+
+  rabbitmq:
+    exchange: coral.storage.exchange
+    queues:
+      ready: coral.storage.files.ready
+
+  url:
+    frontend: http://10.10.8.2:4200
+    password-reset: http://10.10.8.2:4200/auth/confirm-reset
+    portal-socios: https://coralpagos.com.mx/PortalSocios/socios
+
+  clients:
+    storage:
+      url: http://10.10.8.2:8081
+      api-key: FACIL_4dkQZoLmzOZ2Ynob6GnIeYbPR3O0yyEq
+      aliases:
+        default: MINIO_MAIN
+
+    notifications:
+      url: http://10.10.8.2:8082
+      api-key: FACIL_4dkQZoLmzOZ2Ynob6GnIeYbPR3O0yyEq
+      aliases:
+        default: SMTP_GENERAL
+        aws-ses: SES_GENERAL
+      templates:
+        reset-password: reset-pass-v1
+        reserva-creada: reserva-creada-v1
+        reserva-cancelada: reserva-cancelada-v1
+
+    pdf-generator:
+      url: http://localhost:8081
+      api-key: FACIL_PRjS7QZ9J7APlgez6wXuA04Qsv0esjJu
+      plantillas:
+        recibo: RECIBO_FACIL
+
+  security:
+    cors:
+      allowed-origins: http://localhost:4200
+    password-reset:
+      expiration-minutes: 60
+
+  banco:
+    cie:
+      bbva: 2072866
+
+jwt:
+  secret: nTUtfGTwSCZlj4WC00mzXKTLAZbgFZST7MFpivsizOwCzzfP5eiEhuMBFOyHyJC2kiCqjvwctSgk9KCtAUjVGA==

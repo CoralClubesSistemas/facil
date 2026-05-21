@@ -2,9 +2,7 @@ package com.coralclubes.facil.shared.infrastructure.integration.storage;
 
 import com.coralclubes.facil.shared.infrastructure.domain.dto.ArchivoDescarga;
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.ServiceUnavailableException;
-import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.InfoArchivoDto;
-import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
-import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaDto;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.*;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +33,7 @@ public class StorageClient {
 
     /**
      * Negocia una URL de carga directa con el microservicio de almacenamiento.
+     * Solicitud de carga individual
      */
     public RespuestaCargaDto solicitarUrlCarga(SolicitudCargaDto solicitud) {
         try {
@@ -45,7 +44,8 @@ public class StorageClient {
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(solicitud)
                     .retrieve()
-                    .body(new ParameterizedTypeReference<>() {});
+                    .body(new ParameterizedTypeReference<>() {
+                    });
 
             if (response != null && response.data() != null) {
                 return response.data();
@@ -60,6 +60,33 @@ public class StorageClient {
     }
 
     /**
+     * Solicita firmas de carga por lote
+     * Optimiza el rendimiento evitando múltiples llamadas HTTP desde el cliente.
+     */
+    public RespuestaBatchDto<RespuestaCargaDto> solicitarCargaBatch(SolicitudCargaBatchDto batchDto) {
+        try {
+            ApiResponse<RespuestaBatchDto<RespuestaCargaDto>> response = restClient.post()
+                    .uri(serviceUrl + "/api/v1/storage/sign-upload/batch")
+                    .header("X-API-KEY", apiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(batchDto)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<>() {
+                    });
+
+            if (response != null && response.data() != null) {
+                return response.data();
+            }
+
+            throw new IllegalStateException("El microservicio de storage devolvió una respuesta vacía.");
+
+        } catch (Exception e) {
+            logger.error("STORAGE_CLIENT", "Error al solicitar carga batch: " + e.getMessage(), e);
+            throw new ServiceUnavailableException("El servicio de almacenamiento no está disponible en este momento.");
+        }
+    }
+
+    /**
      * Obtiene la URL de descarga de un archivo.
      */
     public String obtenerUrlDescarga(UUID uuid) {
@@ -69,7 +96,8 @@ public class StorageClient {
                     .uri(serviceUrl + "/api/v1/storage/files/" + uuid)
                     .header("X-API-KEY", apiKey)
                     .retrieve()
-                    .body(new ParameterizedTypeReference<>() {});
+                    .body(new ParameterizedTypeReference<>() {
+                    });
 
             if (response != null && response.data() != null) {
                 return response.data().urlDescarga();
@@ -84,6 +112,33 @@ public class StorageClient {
     }
 
     /**
+     * Consulta detalles y URLs de descarga por lote (Batch).
+     * Útil para galerías o listados de documentos.
+     */
+    public RespuestaBatchDto<InfoArchivoDto> consultarArchivosBatch(SolicitudDescargaBatchDto batchDto) {
+        try {
+            ApiResponse<RespuestaBatchDto<InfoArchivoDto>> response = restClient.post()
+                    .uri(serviceUrl + "/api/v1/storage/files/batch")
+                    .header("X-API-KEY", apiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(batchDto)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<>() {
+                    });
+
+            if (response != null && response.data() != null) {
+                return response.data();
+            }
+
+            throw new IllegalStateException("El microservicio de storage devolvió una respuesta vacía.");
+
+        } catch (Exception e) {
+            logger.error("STORAGE_CLIENT", "Error al consultar archivos batch: " + e.getMessage(), e);
+            throw new ServiceUnavailableException("El servicio de almacenamiento no está disponible en este momento.");
+        }
+    }
+
+    /**
      * Obtiene la URL de descarga de un archivo mas el nombre original del archivo para mostrarlo en el frontend (Ej: Historial de Descargas).
      */
     public ArchivoDescarga obtenerUrlDescargaYNombre(UUID uuid) {
@@ -93,7 +148,8 @@ public class StorageClient {
                     .uri(serviceUrl + "/api/v1/storage/files/" + uuid)
                     .header("X-API-KEY", apiKey)
                     .retrieve()
-                    .body(new ParameterizedTypeReference<>() {});
+                    .body(new ParameterizedTypeReference<>() {
+                    });
 
             if (response != null && response.data() != null) {
                 ArchivoDescarga resultado = new ArchivoDescarga(response.data().nombreOriginal(), response.data().urlDescarga());

@@ -1,0 +1,74 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASS}
+
+  datasource-replica:
+    url: ${DB_REPLICA_URL}
+    username: ${DB_REPLICA_USER}
+    password: ${DB_REPLICA_PASS}
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASS}
+
+app:
+  messaging:
+    provider: sqs
+
+  aws:
+    sqs:
+      ready-queue-url: ${SQS_READY_URL}
+
+  url:
+    frontend: ${FRONTEND_URL}
+    password-reset: ${PASSWORD_RESET_URL}
+    portal-socios: ${PORTAL_SOCIOS_URL}
+
+  clients:
+    storage:
+      url: ${STORAGE_SERVICE_URL}
+      api-key: ${STORAGE_API_KEY}
+      aliases:
+        default: ${APP_CLIENTS_STORAGE_ALIASES_DEFAULT}
+
+    notifications:
+      url: ${NOTIFICATIONS_SERVICE_URL}
+      api-key: ${NOTIFICATIONS_API_KEY}
+      aliases:
+        default: ${APP_CLIENTS_NOTIFICATIONS_ALIASES_DEFAULT}
+        aws-ses: ${APP_CLIENTS_NOTIFICATIONS_ALIASES_AWS_SES}
+      templates:
+        reset-password: ${APP_CLIENTS_NOTIFICATIONS_TEMPLATES_RESET_PASSWORD}
+        reserva-creada: ${APP_CLIENTS_NOTIFICATIONS_TEMPLATES_RESERVA_CREADA}
+        reserva-cancelada: ${APP_CLIENTS_NOTIFICATIONS_TEMPLATES_RESERVA_CANCELADA}
+
+    pdf-generator:
+      url: ${PDF_GENERATOR_URL}
+      api-key: ${PDF_GENERATOR_API_KEY}
+      plantillas:
+        recibo: ${APP_CLIENTS_PDF_GENERATOR_PLANTILLAS_RECIBO}
+
+  security:
+    cors:
+      allowed-origins: ${CORS_ALLOWED_ORIGINS}
+    password-reset:
+      expiration-minutes: ${APP_SECURITY_PASSWORD_RESET_EXPIRATION_MINUTES}
+
+  banco:
+    cie:
+      bbva: ${BANCO_CIE_BBVA}
+
+jwt:
+  secret: ${JWT_SECRET}

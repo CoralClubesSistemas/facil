@@ -8,11 +8,13 @@ import java.util.Map;
  */
 @Builder
 public record SolicitudCargaDto(
+        String idCorrelacion, // Identificador que mandamos para cuando el sistema responda saber que uuid corresponde a que registro
         String nombreArchivo,
         String contentType,
         Long tamanoBytes,
         String aliasConfiguracion,
         Map<String, String> metadatos,
         Boolean esPublico,
-        String rutaLogica
+        String rutaLogica,
+        Boolean requiereDepuracion
 ) {}

@@ -1,7 +1,7 @@
 package com.coralclubes.facil.shared.infrastructure.exceptions;
 
 import com.coralclubes.RestApiExceptionHandler;
-import com.coralclubes.facil.shared.infrastructure.codes.LoginResponseCode;
+import com.coralclubes.facil.shared.infrastructure.domain.codes.LoginResponseCode;
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.NoWebRegistrationException;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
