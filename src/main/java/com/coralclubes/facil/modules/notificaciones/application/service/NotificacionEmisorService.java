@@ -8,7 +8,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class NotificacionEmisorService {
     private final NotificacionRepository notificacionRepository;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
 
     /**
@@ -91,13 +91,15 @@ public class NotificacionEmisorService {
                     notificacion.getFechaLectura()
             );
 
-            messagingTemplate.convertAndSendToUser(
-                    notificacion.getDestinatarioUsername(),
-                    "/queue/alertas",
-                    dto
-            );
+            String channel = "user-events:facil:" + notificacion.getDestinatarioUsername();
+            String jsonPayload = objectMapper.writeValueAsString(dto);
+
+            redisTemplate.convertAndSend(channel, jsonPayload);
+            log.debug("Notificación publicada en Redis para el usuario {} en el canal {}",
+                    notificacion.getDestinatarioUsername(), channel);
         } catch (Exception e) {
-            log.warn("El usuario {} no está conectado al WS. La notificación se leerá después.", notificacion.getDestinatarioUsername());
+            log.warn("Error al empujar la notificación a Redis para el usuario {}: {}",
+                    notificacion.getDestinatarioUsername(), e.getMessage());
         }
     }
 

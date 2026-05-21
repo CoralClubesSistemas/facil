@@ -65,9 +65,6 @@ public class SecurityConfig {
                         // Endpoints públicos (portales web)
                         .requestMatchers("/api/v1/public/**").permitAll()
 
-                        // WebSocket
-                        .requestMatchers("/ws-api/**").permitAll()
-
                         // TODO LO DEMÁS requiere estar autenticado
                         .anyRequest().authenticated()
                 )
