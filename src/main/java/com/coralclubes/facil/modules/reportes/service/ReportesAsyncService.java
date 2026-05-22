@@ -60,6 +60,7 @@ public class ReportesAsyncService {
             String rutaLogica = "reportes/" + Year.now().getValue() + "/" + usuario;
 
             SolicitudCargaDto solicitudStorage = SolicitudCargaDto.builder()
+                    .requiereDepuracion(false)
                     .nombreArchivo(nombreArchivoFinal)
                     .contentType(MIME_TYPE_EXCEL)
                     .tamanoBytes((long) excelBytes.length)

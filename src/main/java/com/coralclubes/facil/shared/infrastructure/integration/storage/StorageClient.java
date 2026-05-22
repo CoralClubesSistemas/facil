@@ -8,8 +8,14 @@ import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
 import java.io.OutputStream;
@@ -17,6 +23,10 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.UUID;
 
+/**
+ * Cliente de integración para comunicarse con el microservicio de almacenamiento (Coral Almacenamiento).
+ * Proporciona soporte tanto para el flujo moderno asíncrono (Valet Key) como para el flujo legacy síncrono.
+ */
 @Component
 @RequiredArgsConstructor
 public class StorageClient {
@@ -32,8 +42,11 @@ public class StorageClient {
     private String apiKey;
 
     /**
-     * Negocia una URL de carga directa con el microservicio de almacenamiento.
-     * Solicitud de carga individual
+     * Negocia una URL de carga directa con el microservicio de almacenamiento (flujo asíncrono - Valet Key).
+     *
+     * @param solicitud Metadatos y detalles del archivo a subir (nombre, tamaño, alias de configuración, etc.).
+     * @return La respuesta de carga conteniendo la URL prefirmada de subida directa (uploadUrl) y el identificador único.
+     * @throws ServiceUnavailableException Si el servicio de almacenamiento no responde o responde con un error.
      */
     public RespuestaCargaDto solicitarUrlCarga(SolicitudCargaDto solicitud) {
         try {
@@ -60,8 +73,11 @@ public class StorageClient {
     }
 
     /**
-     * Solicita firmas de carga por lote
-     * Optimiza el rendimiento evitando múltiples llamadas HTTP desde el cliente.
+     * Solicita firmas de carga por lote (Batch) en el flujo asíncrono para múltiples archivos.
+     *
+     * @param batchDto Lista de solicitudes de carga individuales.
+     * @return Objeto que contiene las respuestas de carga exitosas y los fallidos con su detalle.
+     * @throws ServiceUnavailableException Si el servicio de almacenamiento no responde o responde con un error.
      */
     public RespuestaBatchDto<RespuestaCargaDto> solicitarCargaBatch(SolicitudCargaBatchDto batchDto) {
         try {
@@ -87,7 +103,11 @@ public class StorageClient {
     }
 
     /**
-     * Obtiene la URL de descarga de un archivo.
+     * Obtiene la URL temporal de descarga para un archivo específico (pública directa o firmada si es privado).
+     *
+     * @param uuid El identificador único del archivo.
+     * @return La URL final para la descarga del archivo.
+     * @throws ServiceUnavailableException Si el servicio de almacenamiento no responde o responde con un error.
      */
     public String obtenerUrlDescarga(UUID uuid) {
         try {
@@ -112,8 +132,11 @@ public class StorageClient {
     }
 
     /**
-     * Consulta detalles y URLs de descarga por lote (Batch).
-     * Útil para galerías o listados de documentos.
+     * Consulta detalles y URLs de descarga por lote (Batch) de varios archivos a la vez.
+     *
+     * @param batchDto Lista de UUIDs de archivos a consultar.
+     * @return Objeto con los detalles de descarga exitosos y fallidos.
+     * @throws ServiceUnavailableException Si el servicio de almacenamiento no responde o responde con un error.
      */
     public RespuestaBatchDto<InfoArchivoDto> consultarArchivosBatch(SolicitudDescargaBatchDto batchDto) {
         try {
@@ -139,7 +162,11 @@ public class StorageClient {
     }
 
     /**
-     * Obtiene la URL de descarga de un archivo mas el nombre original del archivo para mostrarlo en el frontend (Ej: Historial de Descargas).
+     * Obtiene la URL de descarga de un archivo y su nombre original, facilitando la descarga en el frontend.
+     *
+     * @param uuid El identificador único del archivo.
+     * @return Un objeto {@link ArchivoDescarga} con el nombre original y la URL temporal de descarga.
+     * @throws ServiceUnavailableException Si el servicio de almacenamiento no responde o responde con un error.
      */
     public ArchivoDescarga obtenerUrlDescargaYNombre(UUID uuid) {
         try {
@@ -165,7 +192,11 @@ public class StorageClient {
     }
 
     /**
-     * Elimina un archivo del almacenamiento.
+     * Solicita la eliminación lógica o física de un archivo en el microservicio.
+     *
+     * @param uuid      El identificador único del archivo a eliminar.
+     * @param permanent {@code true} si la eliminación debe ser física definitiva en el bucket, {@code false} para lógica.
+     * @throws ServiceUnavailableException Si el servicio de almacenamiento no responde o responde con un error.
      */
     public void eliminarArchivo(UUID uuid, boolean permanent) {
         try {
@@ -185,8 +216,13 @@ public class StorageClient {
     }
 
     /**
-     * Realiza la carga directa de un archivo binario a una URL prefirmada (MinIO / S3).
-     * Paso 2 del patrón Valet Key.
+     * Realiza la subida física del archivo binario directamente al almacenamiento (MinIO / S3)
+     * utilizando una URL prefirmada negociada previamente (Paso 2 de Valet Key).
+     *
+     * @param uploadUrl   URL prefirmada obtenida en la negociación de carga.
+     * @param archivo     El arreglo de bytes del archivo a subir.
+     * @param contentType El tipo MIME del contenido del archivo.
+     * @throws ServiceUnavailableException Si falla la subida directa del binario.
      */
     public void subirArchivoBinario(String uploadUrl, byte[] archivo, String contentType) {
 
@@ -218,6 +254,61 @@ public class StorageClient {
         } catch (Exception e) {
             logger.error("STORAGE_CLIENT", "Error al subir el archivo binario directo al bucket: " + e.getMessage(), e);
             throw new ServiceUnavailableException("Fallo la carga directa al bucket de almacenamiento.");
+        }
+    }
+
+    /**
+     * Carga un archivo de forma síncrona en el microservicio de almacenamiento (flujo legacy).
+     * Envía tanto el binario del archivo como sus metadatos asociados en una sola petición multipart.
+     * Útil cuando el backend mismo genera el archivo y no nos preocupa el tiempo de transferencia.
+     *
+     * @param archivoBytes    Contenido binario del archivo en un arreglo de bytes.
+     * @param nombreArchivo   Nombre original del archivo (ej. "reporte.xlsx").
+     * @param contentType     Tipo de contenido del archivo (ej. "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet").
+     * @param solicitudLegacy Datos y configuraciones del archivo (canal/alias, metadatos personalizados, etc.).
+     * @return Información detallada del archivo una vez persistido y disponible en el storage.
+     * @throws ServiceUnavailableException Si el servicio de almacenamiento no responde o responde con un error.
+     */
+    public InfoArchivoDto cargarArchivoSincrono(byte[] archivoBytes, String nombreArchivo, String contentType, SolicitudCargaLegacyDto solicitudLegacy) {
+        try {
+            ByteArrayResource fileResource = new ByteArrayResource(archivoBytes) {
+                @Override
+                public String getFilename() {
+                    return nombreArchivo;
+                }
+            };
+
+            HttpHeaders fileHeaders = new HttpHeaders();
+            if (contentType != null) {
+                fileHeaders.setContentType(MediaType.parseMediaType(contentType));
+            }
+            HttpEntity<Resource> filePart = new HttpEntity<>(fileResource, fileHeaders);
+
+            HttpHeaders metadataHeaders = new HttpHeaders();
+            metadataHeaders.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<SolicitudCargaLegacyDto> metadataPart = new HttpEntity<>(solicitudLegacy, metadataHeaders);
+
+            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+            body.add("file", filePart);
+            body.add("metadata", metadataPart);
+
+            ApiResponse<InfoArchivoDto> response = restClient.post()
+                    .uri(serviceUrl + "/api/v1/storage/legacy/upload-sync")
+                    .header("X-API-KEY", apiKey)
+                    .contentType(MediaType.MULTIPART_FORM_DATA)
+                    .body(body)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<>() {});
+
+            if (response != null && response.data() != null) {
+                return response.data();
+            }
+
+            throw new IllegalStateException("El microservicio de storage devolvió una respuesta vacía.");
+
+        } catch (Exception e) {
+            logger.error("STORAGE_CLIENT", "Error al cargar archivo síncrono (legacy): " + e.getMessage(), e);
+            throw new ServiceUnavailableException("El servicio de almacenamiento no está disponible en este momento.");
         }
     }
 }

@@ -55,6 +55,7 @@ public class GeneradorDocumentosService {
         // Pedir permiso al MS Storage
         // =========================================================================
         SolicitudCargaDto solicitud = SolicitudCargaDto.builder()
+                .requiereDepuracion(false)
                 .nombreArchivo(nombreArchivo)
                 .contentType("application/pdf")
                 .tamanoBytes((long) pdfBytes.length)

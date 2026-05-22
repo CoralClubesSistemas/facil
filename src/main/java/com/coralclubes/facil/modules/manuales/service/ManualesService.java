@@ -95,6 +95,8 @@ public class ManualesService {
 
         // Crear payload para el StorageClient
         SolicitudCargaDto solicitudStorage = SolicitudCargaDto.builder()
+                .idCorrelacion(String.valueOf(request.id()))
+                .requiereDepuracion(true)
                 .nombreArchivo(request.nombreArchivo())
                 .contentType(request.contentType())
                 .tamanoBytes(request.tamanoBytes())

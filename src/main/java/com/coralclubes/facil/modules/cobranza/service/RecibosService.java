@@ -201,6 +201,8 @@ public class RecibosService {
                     String ruta = rutaLogica + solicitud.id();
 
                     SolicitudCargaDto solicitudStorage = SolicitudCargaDto.builder()
+                            .idCorrelacion(String.valueOf(solicitud.id()))
+                            .requiereDepuracion(true)
                             .nombreArchivo(solicitud.nombreArchivo())
                             .contentType(solicitud.contentType())
                             .tamanoBytes(solicitud.tamanoBytes())

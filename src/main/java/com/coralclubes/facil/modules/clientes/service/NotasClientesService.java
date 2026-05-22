@@ -100,6 +100,7 @@ public class NotasClientesService {
         List<RespuestaCargaDto> respuestas = solicitudes.stream()
                 .map(solicitud -> {
                     SolicitudCargaDto solicitudStorage = SolicitudCargaDto.builder()
+                            .idCorrelacion(String.valueOf(solicitud.id()))
                             .nombreArchivo(solicitud.nombreArchivo())
                             .contentType(solicitud.contentType())
                             .tamanoBytes(solicitud.tamanoBytes())
@@ -112,6 +113,7 @@ public class NotasClientesService {
                                     "notaConsecutivo", String.valueOf(consecutivo),
                                     "subidoPor", usuario
                             ))
+                            .requiereDepuracion(true)
                             .build();
 
                     return storageClient.solicitarUrlCarga(solicitudStorage);
