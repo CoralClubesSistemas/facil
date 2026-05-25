@@ -19,10 +19,10 @@ public class Notificacion {
     private Long id;
 
     @Column(name = "NOT_REMITENTE_USERNAME", nullable = false, length = 50)
-    private String remitenteUsername;
+    private String remitente;
 
     @Column(name = "NOT_DESTINATARIO_USERNAME", nullable = false, length = 50)
-    private String destinatarioUsername;
+    private String destinatario;
 
     @Column(name = "NOT_TIPO_MENSAJE", nullable = false, length = 30)
     private String tipoMensaje;
@@ -54,10 +54,10 @@ public class Notificacion {
             this.fechaCreacion = LocalDateTime.now();
         }
         if (this.estado == null) {
-            this.estado = "NO_LEIDO";
+            this.estado = "NO_LEIDO"; // SIEMPRE NACEN COMO NO LEÍDAS
         }
         if (this.nivelPrioridad == null) {
-            this.nivelPrioridad = 1;
+            this.nivelPrioridad = 1; // SIEMPRE NACEN CON NIVEL DE PRIORIDAD BAJO, A MENOS QUE EL SISTEMA INDIQUE LO CONTRARIO
         }
     }
 }

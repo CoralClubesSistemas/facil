@@ -52,7 +52,6 @@ public class NotificacionController {
             @RequestBody EnviarNotificacionMasivaRequest request
     ) {
         String username = userContext.getUsername();
-
         emisorService.enviarAMultiples(username, request.destinatarios(), request.contenido());
 
         return ApiResponse.success("Notificaciones enviadas exitosamente.", true);

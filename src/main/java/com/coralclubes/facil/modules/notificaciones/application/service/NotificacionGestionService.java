@@ -27,28 +27,19 @@ public class NotificacionGestionService {
     public List<NotificacionDto> obtenerNoLeidas() {
         String username = userContext.getUsername();
 
-        List<Notificacion> resp = notificacionRepository.findByDestinatarioUsernameAndEstadoOrderByFechaCreacionDesc(username, "NO_LEIDO");
+        List<Notificacion> resp = notificacionRepository.findByDestinatarioAndEstadoOrderByFechaCreacionDesc(username, "NO_LEIDO");
 
         return resp.stream().map(n -> new NotificacionDto(
                 n.getId(),
-                n.getRemitenteUsername(),
+                n.getRemitente(),
                 n.getTipoMensaje(),
                 n.getNivelPrioridad(),
                 n.getTitulo(),
                 n.getMensaje(),
                 parseContenido(n.getMetadataJson()),
                 n.getFechaCreacion(),
-                n.getEstado(),
-                n.getFechaLectura()
+                n.getEstado()
         )).toList();
-    }
-
-    private Map<String, Object> parseContenido(String contenidoJson) {
-        try {
-            return objectMapper.readValue(contenidoJson, new TypeReference<Map<String, Object>>() {});
-        } catch (Exception e) {
-            return Map.of(); // Retorna un mapa vacío si hay error
-        }
     }
 
     // 2. Obtener solo el contador (para el numero rojo en la campanita)
@@ -56,7 +47,7 @@ public class NotificacionGestionService {
     public long contarNoLeidas() {
         String username = userContext.getUsername();
 
-        return notificacionRepository.countByDestinatarioUsernameAndEstado(username, "NO_LEIDO");
+        return notificacionRepository.countByDestinatarioAndEstado(username, "NO_LEIDO");
     }
 
     // 3. Marcar una notificación específica como leída (cuando hace clic en ella)
@@ -66,7 +57,7 @@ public class NotificacionGestionService {
 
         notificacionRepository.findById(id).ifPresent(notificacion -> {
             // Validar que la notificación realmente le pertenece a este usuario
-            if (notificacion.getDestinatarioUsername().equals(username) && "NO_LEIDO".equals(notificacion.getEstado())) {
+            if (notificacion.getDestinatario().equals(username) && "NO_LEIDO".equals(notificacion.getEstado())) {
                 notificacion.setEstado("LEIDO");
                 notificacion.setFechaLectura(LocalDateTime.now());
                 notificacionRepository.save(notificacion);
@@ -80,7 +71,7 @@ public class NotificacionGestionService {
         String username = userContext.getUsername();
 
         List<Notificacion> notificaciones = notificacionRepository
-                .findByDestinatarioUsernameAndEstadoOrderByFechaCreacionDesc(username, "NO_LEIDO");
+                .findByDestinatarioAndEstadoOrderByFechaCreacionDesc(username, "NO_LEIDO");
 
         if (notificaciones == null || notificaciones.isEmpty()) return;
 
@@ -91,5 +82,14 @@ public class NotificacionGestionService {
         });
 
         notificacionRepository.saveAll(notificaciones);
+    }
+
+    /* HELPER PARA PARSEAR STRING A JSON */
+    private Map<String, Object> parseContenido(String contenidoJson) {
+        try {
+            return objectMapper.readValue(contenidoJson, new TypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            return Map.of(); // Retorna un mapa vacío si hay error
+        }
     }
 }

@@ -9,6 +9,6 @@ import java.util.List;
 @Repository
 public interface NotificacionRepository extends JpaRepository<Notificacion, Long> {
 
-    List<Notificacion> findByDestinatarioUsernameAndEstadoOrderByFechaCreacionDesc(String destinatario, String estado);
-    long countByDestinatarioUsernameAndEstado(String destinatario, String estado);
+    List<Notificacion> findByDestinatarioAndEstadoOrderByFechaCreacionDesc(String destinatario, String estado);
+    long countByDestinatarioAndEstado(String destinatario, String estado);
 }

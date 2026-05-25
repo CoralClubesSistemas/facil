@@ -48,12 +48,15 @@ public class NotificacionEmisorService {
         List<Notificacion> guardadas = notificacionRepository.saveAll(notificaciones);
 
         log.info("Notificación enviada a {} usuarios. Remitente: {}, Título: {}", guardadas.size(), remitente, dto.titulo());
-        log.info("Destinatarios: {}", guardadas.stream().map(Notificacion::getDestinatarioUsername).toList());
+        log.info("Destinatarios: {}", guardadas.stream().map(Notificacion::getDestinatario).toList());
 
         // Disparamos el WebSocket individualmente
         guardadas.forEach(this::empujarAWebSocket);
     }
 
+    /* HELPERS */
+
+    // Contruye la clase completa de Notificación a partir del DTO de petición, incluyendo la serialización de la metadata.
     private Notificacion construirEntidad(String remitente, String destinatario, PeticionNotificacionDto dto) {
         String metadataJson = null;
         try {
@@ -65,8 +68,8 @@ public class NotificacionEmisorService {
         }
 
         return Notificacion.builder()
-                .remitenteUsername(remitente)
-                .destinatarioUsername(destinatario)
+                .remitente(remitente)
+                .destinatario(destinatario)
                 .tipoMensaje(dto.tipoMensaje())
                 .nivelPrioridad(dto.nivelPrioridad() != null ? dto.nivelPrioridad() : 1)
                 .titulo(dto.titulo())
@@ -80,33 +83,37 @@ public class NotificacionEmisorService {
             // En WS enviamos el mismo contrato que REST: NotificacionDto (metadata como Map).
             NotificacionDto dto = new NotificacionDto(
                     notificacion.getId(),
-                    notificacion.getRemitenteUsername(),
+                    notificacion.getRemitente(),
                     notificacion.getTipoMensaje(),
                     notificacion.getNivelPrioridad(),
                     notificacion.getTitulo(),
                     notificacion.getMensaje(),
                     parseContenido(notificacion.getMetadataJson()),
                     notificacion.getFechaCreacion(),
-                    notificacion.getEstado(),
-                    notificacion.getFechaLectura()
+                    notificacion.getEstado()
             );
 
-            String channel = "user-events:facil:" + notificacion.getDestinatarioUsername();
+            String channel = "user-events:facil:" + notificacion.getDestinatario();
+            // parseamos el DTO completo a JSON para enviarlo por Redis
             String jsonPayload = objectMapper.writeValueAsString(dto);
 
+            // publicamos en redis bajo el canal específico del usuario ("facil:user-events:{username}")
             redisTemplate.convertAndSend(channel, jsonPayload);
             log.debug("Notificación publicada en Redis para el usuario {} en el canal {}",
-                    notificacion.getDestinatarioUsername(), channel);
+                    notificacion.getDestinatario(), channel);
+
         } catch (Exception e) {
             log.warn("Error al empujar la notificación a Redis para el usuario {}: {}",
-                    notificacion.getDestinatarioUsername(), e.getMessage());
+                    notificacion.getDestinatario(), e.getMessage());
         }
     }
 
+    // Recibe un json como string y lo parsea a un Map<String, Object>. Si el string es null, vacío o no es un JSON válido, devuelve un Map vacío.
     private java.util.Map<String, Object> parseContenido(String contenidoJson) {
         try {
             if (contenidoJson == null || contenidoJson.isBlank()) return java.util.Map.of();
-            return objectMapper.readValue(contenidoJson, new TypeReference<java.util.Map<String, Object>>() {});
+            return objectMapper.readValue(contenidoJson, new TypeReference<java.util.Map<String, Object>>() {
+            });
         } catch (Exception e) {
             return java.util.Map.of();
         }

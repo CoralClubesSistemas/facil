@@ -12,6 +12,5 @@ public record NotificacionDto(
         String mensaje,
         Map<String, Object> metadata,
         LocalDateTime fechaCreacion,
-        String estado,
-        LocalDateTime fechaLectura
+        String estado
 ) {}
