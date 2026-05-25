@@ -1,9 +1,10 @@
 package com.coralclubes.facil.shared.infrastructure.security.service;
 
 import com.coralclubes.facil.modules.sistema.dto.projection.ModuloDtoResult;
+import com.coralclubes.facil.shared.infrastructure.gateway.dto.UserInfo;
+import com.coralclubes.facil.shared.infrastructure.gateway.service.GatewayAttributes;
 import com.coralclubes.facil.shared.infrastructure.security.dto.projection.UserAutorizacionesResult;
 import com.coralclubes.facil.shared.infrastructure.security.repository.LoginRepository;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -32,61 +33,52 @@ public class UserContext {
 
     private final LoginRepository loginRepository;
 
+    private UserInfo getUserInfo() {
+        ServletRequestAttributes attrs =
+                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+
+        if (attrs == null) {
+            return null;
+        }
+
+        Object value = attrs.getRequest().getAttribute(GatewayAttributes.USER_INFO);
+
+        return value instanceof UserInfo userInfo ? userInfo : null;
+    }
+
     /**
      * Obtiene el username del usuario autenticado.
      * El principal es un String (username) establecido por GatewayHeaderFilter.
      */
     public String getUsername() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return "ANONYMOUS";
-        }
-
-        Object principal = authentication.getPrincipal();
-        return principal instanceof String s ? s : "UNKNOWN";
+        UserInfo userInfo = getUserInfo();
+        return userInfo != null ? userInfo.username() : "ANONYMOUS";
     }
 
     /**
-     * Obtiene el ID del desarrollo/sucursal del usuario.
-     * El gateway lo pasa como header X-Auth-LegacyId.
+     * Obtiene el id del desarrollo al que pertenece el usuario, si aplica.
      */
     public Integer getIdDesarrollo() {
-        String legacyId = getRequestAttribute("X-Auth-LegacyId");
-        if (legacyId != null && !legacyId.isBlank()) {
-            try {
-                return Integer.parseInt(legacyId);
-            } catch (NumberFormatException e) {
-                return null;
-            }
-        }
-        return null;
+        UserInfo userInfo = getUserInfo();
+        return userInfo != null ? userInfo.idDesarrollo() : null;
     }
 
     /**
      * Obtiene el rol del usuario.
      */
     public String getRole() {
-        return getRequestAttribute("X-Auth-Role");
+        UserInfo userInfo = getUserInfo();
+        return userInfo != null ? userInfo.role() : null;
     }
 
     public Integer getRoleId() {
-        String rolId = getRequestAttribute("X-Auth-RoleId");
-        if (rolId != null && !rolId.isBlank()) {
-            try {
-                return Integer.parseInt(rolId);
-            } catch (NumberFormatException e) {
-                return null;
-            }
-        }
-        return null;
+        UserInfo userInfo = getUserInfo();
+        return userInfo != null ? userInfo.rolId() : null;
     }
 
-    /**
-     * Obtiene el tipo de fuente del usuario (INTERNAL, EXTERNAL, SYSTEM).
-     */
     public String getSource() {
-        return getRequestAttribute("X-Auth-Source");
+        UserInfo userInfo = getUserInfo();
+        return userInfo != null ? userInfo.source() : null;
     }
 
     /**
@@ -95,12 +87,28 @@ public class UserContext {
      */
     @SuppressWarnings("unchecked")
     public List<String> getPermissions() {
-        Object attr = getRequestAttributeObject("X-Auth-Permissions");
-        if (attr instanceof List<?> list) {
-            return (List<String>) list;
+        UserInfo userInfo = getUserInfo();
+
+        if (userInfo != null && userInfo.permissions() != null) {
+            return userInfo.permissions();
         }
 
         return obtenerPermisosDesdeBD();
+    }
+
+    public String getEmail() {
+        UserInfo userInfo = getUserInfo();
+        return userInfo != null ? userInfo.email() : null;
+    }
+
+    public String getNombreCompleto() {
+        UserInfo userInfo = getUserInfo();
+        return userInfo != null ? userInfo.nombreCompleto() : null;
+    }
+
+    public String getStatus() {
+        UserInfo userInfo = getUserInfo();
+        return userInfo != null ? userInfo.status() : null;
     }
 
     private List<String> obtenerPermisosDesdeBD() {
@@ -128,23 +136,5 @@ public class UserContext {
             log.warn("Error al obtener permisos de BD para usuario {}: {}", username, e.getMessage());
             return Collections.emptyList();
         }
-    }
-
-    private String getRequestAttribute(String name) {
-        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attrs != null) {
-            HttpServletRequest request = attrs.getRequest();
-            Object value = request.getAttribute(name);
-            return value != null ? value.toString() : null;
-        }
-        return null;
-    }
-
-    private Object getRequestAttributeObject(String name) {
-        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attrs != null) {
-            return attrs.getRequest().getAttribute(name);
-        }
-        return null;
     }
 }

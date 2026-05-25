@@ -12,6 +12,7 @@ public record StorageFileProcessedEvent(
         String bucket,
         String path,
         String status,
+        String system,
         String message,
         Map<String, String> metadatos
 ) {

@@ -6,6 +6,7 @@ import com.coralclubes.facil.shared.infrastructure.integration.storage.event.Sto
 import com.coralclubes.logging.BusinessLogger;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -28,7 +29,7 @@ public class StorageEventConsumer {
      *
      * @param eventDto El evento de almacenamiento recibido y deserializado a DTO.
      */
-    @RabbitListener(queues = RabbitConfig.STORAGE_FACIL_QUEUE)
+    @RabbitListener(queues = "${app.rabbitmq.queues.storage}")
     public void recibirEventoStorage(StorageEventDto eventDto) {
         logger.info("STORAGE_CONSUMER", "Evento de RabbitMQ recibido para archivo UUID: {} (Estatus: {})",
                 eventDto.fileId(), eventDto.status());
@@ -40,6 +41,7 @@ public class StorageEventConsumer {
                     eventDto.bucket(),
                     eventDto.path(),
                     eventDto.status(),
+                    eventDto.system(),
                     eventDto.message(),
                     eventDto.metadatos()
             );

@@ -1,5 +1,7 @@
 package com.coralclubes.facil.shared.infrastructure.gateway.filter;
 
+import com.coralclubes.facil.shared.infrastructure.gateway.dto.UserInfo;
+import com.coralclubes.facil.shared.infrastructure.gateway.service.GatewayAttributes;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
@@ -26,11 +28,11 @@ import java.util.List;
  * Este filtro SOLO se activa cuando las requests provienen del gateway.
  * Si un request llega directamente (sin X-Auth-Username), se rechaza.
  */
-@Component
 @RequiredArgsConstructor
 public class GatewayHeaderFilter extends OncePerRequestFilter {
 
     private final ObjectMapper objectMapper;
+    private static final String USER_PROFILE_HEADER = "X-Auth-User-Profile";
 
     @Override
     protected void doFilterInternal(
@@ -45,55 +47,48 @@ public class GatewayHeaderFilter extends OncePerRequestFilter {
             return;
         }
 
-        String username = request.getHeader("X-Auth-Username");
+        String profileJson = request.getHeader(USER_PROFILE_HEADER);
 
-        // Sin header X-Auth-Username = request no vino del gateway
-        // (las rutas públicas ya fueron excluidas por SecurityConfig)
-        if (username == null || username.isBlank()) {
-            filterChain.doFilter(request, response);
+        // Si no viene el header de perfil, denegar acceso (no es un request válido del gateway)
+        if (profileJson == null || profileJson.isBlank()) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
-        // Leer permisos del header (JSON array como string)
-        // Si no viene del gateway, UserContext los obtendrá desde BD
-        List<String> permissions = parsePermissions(request.getHeader("X-Auth-Permissions"));
+        UserInfo userInfo;
 
-        // Construir GrantedAuthorities para @PreAuthorize
+        try {
+            userInfo = objectMapper.readValue(profileJson, UserInfo.class);
+        } catch (Exception e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
+
+        if (userInfo.username() == null || userInfo.username().isBlank()) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
+
+        List<String> permissions = userInfo.permissions() != null
+                ? userInfo.permissions()
+                : Collections.emptyList();
+
         List<SimpleGrantedAuthority> authorities = permissions.stream()
                 .map(SimpleGrantedAuthority::new)
-                .map(a -> (SimpleGrantedAuthority) a)
                 .toList();
 
-        // Crear Authentication y establecer en SecurityContext
-        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                username,
-                null,
-                authorities
-        );
+        UsernamePasswordAuthenticationToken authToken =
+                new UsernamePasswordAuthenticationToken(
+                        userInfo.username(),
+                        null,
+                        authorities
+                );
 
-        // Agregar datos adicionales como atributos del request
-        // para que UserContext pueda leerlos sin depender de CustomUserDetails
-        request.setAttribute("X-Auth-Username", username);
-        request.setAttribute("X-Auth-Role", request.getHeader("X-Auth-Role"));
-        request.setAttribute("X-Auth-RoleId", request.getHeader("X-Auth-RoleId"));
-        request.setAttribute("X-Auth-Source", request.getHeader("X-Auth-Source"));
-        request.setAttribute("X-Auth-LegacyId", request.getHeader("X-Auth-LegacyId"));
-        request.setAttribute("X-Auth-System", request.getHeader("X-Auth-System"));
-        request.setAttribute("X-Auth-Permissions", permissions);
+        // Guardar objeto completo
+        request.setAttribute(GatewayAttributes.USER_INFO, userInfo);
 
         SecurityContextHolder.getContext().setAuthentication(authToken);
 
         filterChain.doFilter(request, response);
-    }
-
-    private List<String> parsePermissions(String permissionsJson) {
-        if (permissionsJson == null || permissionsJson.isBlank()) {
-            return Collections.emptyList();
-        }
-        try {
-            return objectMapper.readValue(permissionsJson, new TypeReference<>() {});
-        } catch (Exception e) {
-            return Collections.emptyList();
-        }
     }
 }

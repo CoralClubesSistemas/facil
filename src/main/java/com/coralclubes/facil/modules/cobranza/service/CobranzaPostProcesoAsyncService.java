@@ -118,7 +118,6 @@ public class CobranzaPostProcesoAsyncService {
         log.info("Enviando email a {} con asunto '{}' y adjunto ID: {}", destinatario, asunto, fileId);
 
         SolicitudNotificacionDto solicitud = SolicitudNotificacionDto.builder()
-                .codigoSistema("FACIL")
                 .aliasConfig("SMTP_GENERAL")
                 .destinatarios(List.of(destinatario))
                 .cuerpo(asunto)

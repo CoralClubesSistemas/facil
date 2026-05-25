@@ -19,7 +19,6 @@ import java.util.Map;
  */
 @Builder
 public record SolicitudNotificacionDto(
-        String codigoSistema,
         String aliasConfig,
         List<String> destinatarios,
         String asunto,

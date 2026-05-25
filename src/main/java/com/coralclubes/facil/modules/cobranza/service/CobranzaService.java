@@ -211,7 +211,6 @@ public class CobranzaService {
     // Método auxiliar de envío
     private void enviarEmail(String destinatario, String asunto, UUID fileId) {
         SolicitudNotificacionDto solicitud = SolicitudNotificacionDto.builder()
-                .codigoSistema("FACIL")
                 .aliasConfig("SMTP_GENERAL")
                 .destinatarios(List.of(destinatario))
                 .cuerpo(asunto)

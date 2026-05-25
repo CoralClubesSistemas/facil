@@ -39,10 +39,6 @@ public class PasswordResetService {
     @Value("${app.url.password-reset}")
     private String passwordResetUrl;
 
-    // Configuración para Coral Notificaciones
-    @Value("${app.clients.notifications.system-code}")
-    private String systemCode;
-
     @Value("${app.clients.notifications.aliases.default}")
     private String aliasConfig;
 
@@ -131,7 +127,6 @@ public class PasswordResetService {
         String resetLink = passwordResetUrl + "?token=" + token;
 
         SolicitudNotificacionDto solicitud = SolicitudNotificacionDto.builder()
-                .codigoSistema(systemCode)
                 .aliasConfig(aliasConfig)
                 .destinatarios(List.of(email))
                 .codigoPlantilla(templateCode)

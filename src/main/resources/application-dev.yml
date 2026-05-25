@@ -19,9 +19,9 @@ spring:
 
   data:
     redis:
-      host: localhost
-      port: 6379
-      password: ""
+      host: 10.10.8.2
+      port: 6378
+      password:
 
   rabbitmq:
     host: 10.10.8.2
@@ -34,9 +34,8 @@ app:
     provider: rabbitmq
 
   rabbitmq:
-    exchange: coral.storage.exchange
     queues:
-      ready: coral.storage.files.ready
+      storage: coral.storage.outbox.facil
 
   url:
     frontend: http://10.10.8.2:4200
@@ -76,6 +75,3 @@ app:
   banco:
     cie:
       bbva: 2072866
-
-jwt:
-  secret: nTUtfGTwSCZlj4WC00mzXKTLAZbgFZST7MFpivsizOwCzzfP5eiEhuMBFOyHyJC2kiCqjvwctSgk9KCtAUjVGA==

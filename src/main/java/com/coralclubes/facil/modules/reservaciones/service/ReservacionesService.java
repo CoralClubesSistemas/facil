@@ -318,7 +318,6 @@ public class ReservacionesService {
 
         // 5. Construir Solicitud a Coral Notificaciones
         SolicitudNotificacionDto solicitudNotificacion = SolicitudNotificacionDto.builder()
-                .codigoSistema("FACIL")
                 .aliasConfig("SMTP_GENERAL")
                 .destinatarios(destinatarios)
                 .codigoPlantilla(templateReservaCreada)

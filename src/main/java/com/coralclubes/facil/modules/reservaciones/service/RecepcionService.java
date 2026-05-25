@@ -29,9 +29,6 @@ public class RecepcionService {
     private final NotificationClient notificationClient;
     private final AmaDeLlavesService amaDeLlavesService;
 
-    @Value("${app.clients.notifications.system-code}")
-    private String codigoSistemaNotificaciones;
-
     @Value("${app.clients.notifications.aliases.default}")
     private String aliasConfigNotificaciones;
 
@@ -300,7 +297,6 @@ public class RecepcionService {
         // Contruimos el payload para la notificación
         // 5. Construir Solicitud a Coral Notificaciones
         SolicitudNotificacionDto solicitudNotificacion = SolicitudNotificacionDto.builder()
-                .codigoSistema(codigoSistemaNotificaciones)
                 .aliasConfig(aliasConfigNotificaciones)
                 .destinatarios(List.of(destinatario))
                 .codigoPlantilla(templateReservaCancelada)

@@ -35,8 +35,8 @@ spring:
         dialect: org.hibernate.dialect.SQLServerDialect
 
 # ==============================
-# JWT
+# LOGGING
 # ==============================
-jwt:
-  expiration: 3600000
-  refresh-expiration: 86400000
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %clr(%-5level) [%15.15thread] %clr(%-40.40logger{39}){cyan} : %msg%n"
