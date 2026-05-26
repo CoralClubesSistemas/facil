@@ -301,13 +301,13 @@ public class ReservacionesService {
                 .habitaciones(habitacionesPdf)
                 .observaciones(request.peticionEspecial())
                 .importeTotal(importeTotal)
-                .fechaEntrada(contexto.getFechaEntrada().toString())
-                .fechaSalida(contexto.getFechaSalida().toString())
+                .fechaEntrada(contexto.getFechaEntrada().format(formatter))
+                .fechaSalida(contexto.getFechaSalida().format(formatter))
                 .desarrollo(contexto.getDesarrollo())
                 .build();
 
-        // 3. Llamar al Generador de Documentos (Thymeleaf -> PDF -> Storage)
-        UUID urlPdfCartaOcupacion = generadorDocumentosService.generarYGuardarCartaOcupacion(datosPdf);
+        // 3. Llamar al Generador de Documentos (Pebble -> PDF)
+        GeneradorDocumentosService.DocumentoCartaOcupacion doc = generadorDocumentosService.generarCartaOcupacion(datosPdf);
 
         // 4. Preparar Destinatarios
         List<String> destinatarios = new ArrayList<>();
@@ -323,14 +323,13 @@ public class ReservacionesService {
                 .codigoPlantilla(templateReservaCreada)
                 .variables(Map.of(
                         "nombreTitular", request.nombreReserva(),
-                        "urlDescargaPdf", urlPdfCartaOcupacion
+                        "urlDescargaPdf", ""
                 ))
                 .prioridad(10)
-                .adjuntos(List.of(urlPdfCartaOcupacion.toString()))
                 .build();
 
-        // 6. Enviar a Cola RabbitMQ (Fire and Forget)
-        notificationClient.enviarNotificacion(solicitudNotificacion);
+        // 6. Enviar por correo con adjunto directo
+        notificationClient.enviarNotificacionConAdjuntos(solicitudNotificacion, Map.of(doc.nombreArchivo(), doc.pdfBytes()));
     }
 
     // =========================================================================

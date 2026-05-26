@@ -1,13 +1,13 @@
 package com.coralclubes.facil.modules.reportes.service;
 
-import com.coralclubes.facil.modules.notificaciones.application.dto.PeticionNotificacionDto;
-import com.coralclubes.facil.modules.notificaciones.application.service.NotificacionEmisorService;
+import com.coralclubes.facil.shared.infrastructure.notificaciones.application.dto.PeticionNotificacionDto;
+import com.coralclubes.facil.shared.infrastructure.notificaciones.application.service.NotificacionEmisorService;
 import com.coralclubes.facil.modules.reportes.dto.request.EjecutarReporteRequest;
 import com.coralclubes.facil.modules.reportes.repository.ReportesMotorRepository;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaDto;
-import com.coralclubes.facil.shared.infrastructure.utils.ExcelExportService;
+import com.coralclubes.facil.shared.utils.ExcelExportService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

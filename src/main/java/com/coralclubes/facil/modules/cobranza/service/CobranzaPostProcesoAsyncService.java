@@ -8,13 +8,12 @@ import com.coralclubes.facil.shared.infrastructure.integration.notifications.Not
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.dto.SolicitudNotificacionDto;
 import com.coralclubes.logging.BusinessLogger;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -39,26 +38,26 @@ public class CobranzaPostProcesoAsyncService {
             // 1. Generar documentos (Original y Reimpresión para auditoría)
             CobranzaGeneradorDocumentosService.ResultadoRecibos archivos = generador.generarAmbosRecibos(recibo);
 
-            log.debug("Archivos generados para recibo {}: Original ID = {}, Reimpresión ID = {}", recibo.getFolio(), archivos.originalId(), archivos.reimpresionId());
+            log.debug("Archivos generados para recibo {}: Original ID = {}, Reimpresión ID = {}", recibo.getFolio(), archivos.original().fileId(), archivos.reimpression().fileId());
 
             // 2. Actualizar metadatos digitales en BD
             repository.spCobranzaActualizarMetadatosDigitales(
                     orden.numeroRecibo(),
                     orden.serieReciboId(),
-                    archivos.originalId().toString(),
+                    archivos.original().fileId().toString(),
                     archivos.cadenaOriginal(),
                     usuario
             );
 
-            // 3. Enviar a la lista de correos del cliente
+            // 3. Enviar a la lista de correos del cliente con adjunto directo
             if (correosClientes != null && !correosClientes.isEmpty()) {
                 for (String correo : correosClientes) {
-                    enviarEmail(correo, "Su Recibo de Pago (Original)", archivos.originalId());
+                    enviarEmail(correo, "Su Recibo de Pago (Original)", archivos.original());
                 }
             }
 
-            // 4. Enviar a auditoría
-            enviarEmail(correoAuditoria, "Copia de Recibo - Folio: " + recibo.getFolio(), archivos.reimpresionId());
+            // 4. Enviar a auditoría con adjunto directo
+            enviarEmail(correoAuditoria, "Copia de Recibo - Folio: " + recibo.getFolio(), archivos.reimpression());
 
             logger.info(usuario, "Generación de PDF y notificaciones completadas para folio: " + recibo.getFolio());
 
@@ -80,27 +79,27 @@ public class CobranzaPostProcesoAsyncService {
 
         try {
             // 1. Generar documentos (Original y Reimpresión para auditoría)
-            UUID archivo = generador.generarReciboCancelacion(recibo);
+            CobranzaGeneradorDocumentosService.ReciboGenerado archivo = generador.generarReciboCancelacion(recibo);
 
-            log.debug("Archivo generado para cancelación de recibo {}: ID = {}", recibo.getFolio(), archivo);
+            log.debug("Archivo generado para cancelación de recibo {}: ID = {}", recibo.getFolio(), archivo.fileId());
 
             // 2. Actualizar metadatos digitales en BD
             recibosRepository.spCobranzaActualizarCancelacionReciboDigital(
                     recibo.getNumeroRecibo(),
                     recibo.getIdSerieRecibo(),
-                    archivo.toString(),
+                    archivo.fileId().toString(),
                     usuario
             );
 
             // 3. Esperar a que el archivo termine de cargarse antes de notificar
             Thread.sleep(3000);
 
-            // 4. Enviar al correo del cliente
+            // 4. Enviar al correo del cliente con adjunto directo
             if (correoCliente != null && !correoCliente.isEmpty()) {
                 enviarEmail(correoCliente, "Recibo de Cancelación - Folio: " + recibo.getFolio(), archivo);
             }
 
-            // 5. Enviar a auditoría
+            // 5. Enviar a auditoría con adjunto directo
             enviarEmail(correoAuditoria, "Copia de Recibo Cancelado - Folio: " + recibo.getFolio(), archivo);
 
             logger.info(usuario, "Generación de PDF de cancelación y notificaciones completadas para folio: " + recibo.getFolio());
@@ -114,16 +113,16 @@ public class CobranzaPostProcesoAsyncService {
         }
     }
 
-    private void enviarEmail(String destinatario, String asunto, UUID fileId) {
-        log.info("Enviando email a {} con asunto '{}' y adjunto ID: {}", destinatario, asunto, fileId);
+    private void enviarEmail(String destinatario, String Asunto, CobranzaGeneradorDocumentosService.ReciboGenerado recibo) {
+        log.info("Enviando email a {} con asunto '{}' y adjunto directo", destinatario, Asunto);
 
         SolicitudNotificacionDto solicitud = SolicitudNotificacionDto.builder()
                 .aliasConfig("SMTP_GENERAL")
                 .destinatarios(List.of(destinatario))
-                .cuerpo(asunto)
+                .cuerpo(Asunto)
                 .prioridad(10)
-                .adjuntos(List.of(fileId.toString()))
                 .build();
-        notificationClient.enviarNotificacion(solicitud);
+        
+        notificationClient.enviarNotificacionConAdjuntos(solicitud, Map.of(recibo.nombreArchivo(), recibo.pdfBytes()));
     }
 }

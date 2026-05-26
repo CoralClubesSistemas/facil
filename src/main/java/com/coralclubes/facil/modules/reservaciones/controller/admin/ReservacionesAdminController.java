@@ -5,7 +5,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.request.*;
 import com.coralclubes.facil.modules.reservaciones.dto.response.DisponibilidadUnidadDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.ResumenCheckoutResponse;
 import com.coralclubes.facil.modules.reservaciones.service.ReservacionesService;
-import com.coralclubes.facil.shared.infrastructure.utils.ClientIpUtil;
+import com.coralclubes.facil.shared.utils.ClientIpUtil;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;

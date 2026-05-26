@@ -53,11 +53,8 @@ app:
         reserva-creada: ${APP_CLIENTS_NOTIFICATIONS_TEMPLATES_RESERVA_CREADA}
         reserva-cancelada: ${APP_CLIENTS_NOTIFICATIONS_TEMPLATES_RESERVA_CANCELADA}
 
-    pdf-generator:
-      url: ${PDF_GENERATOR_URL}
-      api-key: ${PDF_GENERATOR_API_KEY}
-      plantillas:
-        recibo: ${APP_CLIENTS_PDF_GENERATOR_PLANTILLAS_RECIBO}
+    gotenberg:
+      url: ${GOTENBERG_URL}
 
   security:
     cors:
