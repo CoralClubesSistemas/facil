@@ -7,19 +7,18 @@ Activa esta skill SIEMPRE que el requerimiento implique:
 
 ## 1. Principio Arquitectonico: "Fire and Forget"
 PROHIBIDO implementar logica de envio de correos (ej. `JavaMailSender`) en el sistema actual.
-Toda comunicacion externa se delega al microservicio centralizado mediante una peticion HTTP asincrona o sin bloqueo de hilo critico.
+Toda comunicacion externa se delega al microservicio centralizado mediante una peticion HTTP asincrona o por mensajeria asincrona.
 
 ## 2. Autenticacion
-Todas las peticiones a la API de Coral Notificaciones DEBEN incluir el header `X-API-KEY`.
+Todas las peticiones a la API de Coral Notificaciones DEBEN incluir el header `X-API-KEY`. A nivel de colas, se debe inyectar la cabecera `x-api-key` en las propiedades del mensaje.
 
-## 3. Endpoint Principal
-### POST /api/v1/notificaciones/enviar
-Debes construir un payload JSON dependiendo del caso de uso. Privilegia siempre el "Envio por Plantilla".
+## 3. Endpoints REST principales
+### 3.1 POST /api/v1/notificaciones/enviar
+Recibe un payload JSON. Privilegia siempre el "Envio por Plantilla".
 
-**Estructura Obligatoria (Envio por Plantilla):**
+**Estructura (Envio por Plantilla):**
 ```json
 {
-  "codigoSistema": "FACIL_CORE",
   "aliasConfig": "string (ej. COBRANZA_EMAIL)",
   "destinatarios": [
     "email@dominio.com"
@@ -28,20 +27,32 @@ Debes construir un payload JSON dependiendo del caso de uso. Privilegia siempre 
   "variables": {
     "llave": "valor"
   },
-  "prioridad": 5
+  "prioridad": 5,
+  "adjuntos": ["uuid-archivo-1"]
 }
 ```
-**Estructura Obligatoria (Mensaje Directo sin plantilla):**
+**Estructura (Mensaje Directo sin plantilla):**
 ```json
 {
-  "codigoSistema": "FACIL_CORE",
   "aliasConfig": "string (ej. ALERTA_SMS)",
   "destinatarios": ["+52..."],
-  "cuerpo": "Mensaje de texto"
+  "cuerpo": "Mensaje de texto",
+  "adjuntos": []
 }
 ```
-## 4. Manejo de Respuestas
-- El microservicio devuelve HTTP 202 Accepted si encolo el mensaje.
-- Extrae y guarda el trackingId del response (data.trackingId) si el proceso de negocio requiere auditar la entrega en el futuro.
-- Si el response es 4xx (ej. NOTIF_101 Template Not Found) o 5xx, el backend debe loggear el error tecnico pero NO debe detener el proceso de negocio principal (ej. Si falla el correo de bienvenida, la reserva aun asi debe guardarse exitosamente).
+
+### 3.2 POST /api/v1/notificaciones/enviar-con-adjuntos (Multipart)
+Utiliza `multipart/form-data` para enviar archivos binarios en memoria y adjuntarlos de forma directa. Requiere dos partes:
+- `solicitud` (application/json): `SolicitudNotificacionDto` estándar.
+- `archivos` (multipart/form-data): Uno o varios archivos binarios.
+
+## 4. Consumo Asíncrono por Eventos (RabbitMQ)
+Para evitar peticiones HTTP síncronas en hilos críticos, publica la solicitud en la cola `INBOX` (`coral-notificaciones-inbox`).
+Para auditar o conciliar el estado de los envíos físicos, suscríbete a la cola `READY` (`coral-notificaciones-ready`).
+
+## 5. Manejo de Respuestas
+- En REST, el microservicio devuelve HTTP 202 Accepted.
+- Extrae y guarda el `trackingId` del response (`data.trackingId`) si necesitas auditar la entrega en el futuro.
+- Si el response es 4xx o 5xx (o falla la conexión), el backend debe loggear el error técnico pero **NO** debe detener el proceso de negocio principal.
+
 

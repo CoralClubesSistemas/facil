@@ -3,10 +3,6 @@ spring:
     activate:
       on-profile: prod
 
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
-
   datasource:
     url: ${DB_URL}
     username: ${DB_USER}
@@ -25,11 +21,14 @@ spring:
 
 app:
   messaging:
-    provider: sqs
+    provider: rabbitmq
 
-  aws:
-    sqs:
-      ready-queue-url: ${SQS_READY_URL}
+  rabbitmq:
+    queues:
+      storage: coral.storage.outbox.facil
+      notifications:
+        inbox: coral-notificaciones-inbox
+        ready: coral-notificaciones-ready
 
   url:
     frontend: ${FRONTEND_URL}

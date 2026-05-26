@@ -36,6 +36,9 @@ app:
   rabbitmq:
     queues:
       storage: coral.storage.outbox.facil
+      notifications:
+        inbox: coral.notificaciones.inbox
+        ready: coral.notificaciones.ready
 
   url:
     frontend: http://10.10.8.2:4200
