@@ -8,7 +8,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
- * Escucha las confirmaciones del microservicio de notificaciones en la cola READY.
+ * Escucha las confirmaciones del microservicio de notificaciones en la cola READY y ejecuta las acciones necesarias
+ * (inicialmente solo loguear, pero se pueden agregar más acciones como alertas o reintentos).
  */
 @Slf4j
 @Component

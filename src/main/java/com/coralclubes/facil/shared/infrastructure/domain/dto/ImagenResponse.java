@@ -4,6 +4,7 @@ import lombok.Builder;
 
 import java.util.UUID;
 
+// Dto que se devuelve al frontend (contiene la url directa)
 @Builder
 public record ImagenResponse (
     Integer idImagen,

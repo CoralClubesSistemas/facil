@@ -24,7 +24,7 @@ import java.util.List;
  * Filtro que lee los headers X-Auth-* inyectados por el API Gateway
  * y construye el SecurityContext para que los Controllers y Services
  * puedan acceder a la identidad del usuario sin tener que validar JWT.
- *
+ * <p>
  * Este filtro SOLO se activa cuando las requests provienen del gateway.
  * Si un request llega directamente (sin X-Auth-Username), se rechaza.
  */

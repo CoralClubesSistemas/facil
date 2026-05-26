@@ -1,12 +1,10 @@
-package com.coralclubes.facil.shared.infrastructure.integration.storage;
+package com.coralclubes.facil.shared.infrastructure.integration.storage.consumer;
 
-import com.coralclubes.facil.shared.config.RabbitConfig;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.StorageEventDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.event.StorageFileProcessedEvent;
 import com.coralclubes.logging.BusinessLogger;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;

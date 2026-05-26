@@ -6,9 +6,6 @@ import com.coralclubes.facil.modules.cobranza.dto.request.RegistarEvidenciaRecib
 import com.coralclubes.facil.modules.cobranza.dto.response.*;
 import com.coralclubes.facil.modules.cobranza.repository.CobranzaRepository;
 import com.coralclubes.facil.modules.cobranza.repository.RecibosRepository;
-import com.coralclubes.facil.modules.reservaciones.dto.response.ResumenReservacionDto;
-import com.coralclubes.facil.modules.reservaciones.service.ReservacionesService;
-import com.coralclubes.facil.shared.enums.MovimientosEnum;
 import com.coralclubes.facil.shared.events.dto.ReciboCanceladoEvent;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
@@ -26,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 

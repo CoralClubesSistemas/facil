@@ -5,6 +5,6 @@ import com.coralclubes.responses.codes.AuthResponseCode;
 
 public class NoPermissionsException extends BaseException {
     public NoPermissionsException(String message) {
-        super(AuthResponseCode.ACCOUNT_LOCKED, message); // O el código adecuado
+        super(AuthResponseCode.ACCOUNT_LOCKED, message);
     }
 }

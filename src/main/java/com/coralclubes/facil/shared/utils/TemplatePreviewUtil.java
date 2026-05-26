@@ -24,44 +24,47 @@ import java.util.Map;
 public class TemplatePreviewUtil {
 
     private static final Map<String, Object> context = Map.ofEntries(
-            Map.entry("esCancelado", false),
-            Map.entry("esReimpresion", true),
-            Map.entry("empresa", "CORAL CLUBES, S.A. DE C.V."),
-            Map.entry("rfcEmpresa", "CCL260526XX1"),
-            Map.entry("direccionEmpresa", "Av. Reforma 123, Ciudad de México"),
-            Map.entry("folio", "REC-2026-8842"),
-            Map.entry("clienteNombre", "Luis Ángel Vivar Tovar"),
-            Map.entry("membresia", "VIP-99823"),
-            Map.entry("fecha", "26/05/2026"),
-            Map.entry("tipoDocumento", "Tarjeta de Crédito"),
-            Map.entry("moneda", "MXN"),
 
-            Map.entry("movimientos", List.of(
-                    Map.of(
-                            "descripcion", "Mantenimiento Mensual",
-                            "referencia", "REF-001-MAY",
-                            "importe", "$ 1,500.00",
-                            "interes", "$ 0.00",
-                            "descuento", "-$ 150.00",
-                            "tieneDescuento", true,
-                            "totalNeto", "$ 1,350.00",
-                            "claseFila", "row-even"
-                    ),
-                    Map.of(
-                            "descripcion", "Cargo por Servicios Adicionales",
-                            "referencia", "REF-002-MAY",
-                            "importe", "$ 500.00",
-                            "interes", "$ 25.00",
-                            "descuento", "$ 0.00",
-                            "tieneDescuento", false,
-                            "totalNeto", "$ 525.00",
-                            "claseFila", "row-odd"
+            Map.entry("desarrollo", "CORAL CLUBES ACAPULCO"),
+            Map.entry("fechaEmision", "26/05/2026"),
+
+            Map.entry("titular", "JUAN PÉREZ LÓPEZ"),
+            Map.entry("membresia", "0-123456-1"),
+
+            Map.entry("foliosReservacion", "45001, 45002"),
+
+            Map.entry("fechaEntrada", "19/08/2026"),
+            Map.entry("fechaSalida", "22/08/2026"),
+
+            Map.entry("observaciones",
+                    "Habitación cercana a elevador. " +
+                            "Cliente solicita cama king size y check-in anticipado sujeto a disponibilidad."
+            ),
+
+            Map.entry("importeTotal", "15,000.00"),
+
+            Map.entry(
+                    "habitaciones",
+                    List.of(
+
+                            Map.ofEntries(
+                                    Map.entry("tipoHabitacion", "MASTER SUITE"),
+                                    Map.entry("totalPax", 2)
+                            ),
+
+                            Map.ofEntries(
+                                    Map.entry("tipoHabitacion", "JR SUITE VISTA AL MAR"),
+                                    Map.entry("totalPax", 4)
+                            ),
+
+                            Map.ofEntries(
+                                    Map.entry("tipoHabitacion", "PENTHOUSE PRESIDENCIAL"),
+                                    Map.entry("totalPax", 6)
+                            )
+
                     )
-            )),
-            Map.entry("subtotal", "$ 2,000.00"),
-            Map.entry("descuentoTotal", "-$ 150.00"),
-            Map.entry("total", "$ 1,875.00"),
-            Map.entry("cadenaSeguridad", "||3.3|REC|2026-05-26T10:30:00|01|00001000000500000000||")
+            )
+
     );
 
     public static void main(String[] args) {
