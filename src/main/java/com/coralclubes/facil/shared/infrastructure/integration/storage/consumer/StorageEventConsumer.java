@@ -1,7 +1,7 @@
 package com.coralclubes.facil.shared.infrastructure.integration.storage.consumer;
 
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.StorageEventDto;
-import com.coralclubes.facil.shared.infrastructure.integration.storage.event.StorageFileProcessedEvent;
+import com.coralclubes.facil.shared.events.dto.StorageFileProcessedEvent;
 import com.coralclubes.logging.BusinessLogger;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;

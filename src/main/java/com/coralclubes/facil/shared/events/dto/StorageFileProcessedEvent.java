@@ -1,4 +1,4 @@
-package com.coralclubes.facil.shared.infrastructure.integration.storage.event;
+package com.coralclubes.facil.shared.events.dto;
 
 import java.util.Map;
 import java.util.UUID;

@@ -1,6 +1,6 @@
 package com.coralclubes.facil.shared.infrastructure.integration.storage;
 
-import com.coralclubes.facil.shared.infrastructure.integration.storage.event.StorageFileProcessedEvent;
+import com.coralclubes.facil.shared.events.dto.StorageFileProcessedEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

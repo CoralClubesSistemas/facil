@@ -14,6 +14,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 /**
  * Configuración de seguridad simplificada.
@@ -40,6 +45,19 @@ public class SecurityConfig {
     }
 
     @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://10.10.8.2:8090", "http://localhost:4200", "http://10.10.8.2:4200", "http://10.10.3.154:4200"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         GatewayHeaderFilter gatewayHeaderFilter = new GatewayHeaderFilter(objectMapper);
 
@@ -48,19 +66,11 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests(auth -> auth
-                        // Autenticación (legacy, se eliminará cuando el gateway asuma 100%)
-                        .requestMatchers("/api/auth/login", "/api/auth/login/simple").permitAll()
+                        // Restablecimiento de contraseña (pendiente migración)
                         .requestMatchers("/api/auth/password-reset/**").permitAll()
-                        .requestMatchers("/api/auth/refresh-token").permitAll()
 
                         // Documentación (Swagger/OpenAPI)
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-
-                        // Configuración pública y utilidades
-                        .requestMatchers("/api/config/**", "/api/util/**").permitAll()
-
-                        // Endpoints de prueba
-                        .requestMatchers("/api/test/**").permitAll()
 
                         // Endpoint interno del gateway
                         .requestMatchers("/internal/**").permitAll()
@@ -77,4 +87,6 @@ public class SecurityConfig {
 
         return http.build();
     }
+
+
 }

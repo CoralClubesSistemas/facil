@@ -23,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Servicio que maneja la lógica de negocio relacionada con los hoteles.
@@ -215,22 +214,5 @@ public class HotelesService {
         RespuestaCargaDto respuestaStorage = storageClient.solicitarUrlCarga(solicitudStorage);
 
         return ApiResponse.success("URL de carga generada exitosamente", respuestaStorage);
-    }
-
-    /**
-     * Registra una imagen de hotel de manera asíncrona una vez que el microservicio de almacenamiento confirma que está procesada.
-     *
-     * @param hotelId    ID del hotel.
-     * @param uuidImagen UUID de la imagen procesada en el storage.
-     * @param usuario    Usuario que inició la carga.
-     */
-    public void registrarImagenProcesada(Integer hotelId, UUID uuidImagen, String usuario) {
-        ImagenRequest imagen = ImagenRequest.builder()
-                .uuid(uuidImagen)
-                .esPortada(false)
-                .orden(0)
-                .build();
-
-        repo.spResvGuardarImagenesHotel(hotelId, List.of(imagen), usuario);
     }
 }

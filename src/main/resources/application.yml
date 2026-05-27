@@ -40,3 +40,5 @@ spring:
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %clr(%-5level) [%15.15thread] %clr(%-40.40logger{39}){cyan} : %msg%n"
+
+kind: Application
