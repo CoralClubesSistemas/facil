@@ -93,7 +93,7 @@ public class NotificacionEmisorService {
                     notificacion.getEstado()
             );
 
-            String channel = "user-events:facil:" + notificacion.getDestinatario();
+            String channel = "user-events:facil:" + notificacion.getDestinatario().toLowerCase();
             // parseamos el DTO completo a JSON para enviarlo por Redis
             String jsonPayload = objectMapper.writeValueAsString(dto);
 

@@ -1,6 +1,7 @@
 package com.coralclubes.facil.shared.infrastructure.gateway.dto;
 
 import lombok.Builder;
+import lombok.extern.jackson.Jacksonized;
 
 import java.util.List;
 
@@ -10,16 +11,17 @@ import java.util.List;
  * generar el JWT y los headers X-Auth-* downstream.
  */
 @Builder
+@Jacksonized
 public record UserInfo(
         String username,
         String email,
+        String nombreCompleto,
+        Integer rolId,
         String role,
         String source,
         String legacyId,
         String status,
         Integer idDesarrollo,
         String desarrolloDescripcion,
-        Integer rolId,
-        List<String> permissions,
-        String nombreCompleto
+        List<String> permissions
 ) {}

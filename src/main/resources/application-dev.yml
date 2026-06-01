@@ -73,3 +73,10 @@ app:
   banco:
     cie:
       bbva: 2072866
+
+logging:
+  level:
+    com.coralclubes.facil: DEBUG
+
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %clr(%-5level) %msg%n"

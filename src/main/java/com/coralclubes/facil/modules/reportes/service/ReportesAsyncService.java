@@ -1,5 +1,7 @@
 package com.coralclubes.facil.modules.reportes.service;
 
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.InfoArchivoDto;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaLegacyDto;
 import com.coralclubes.facil.shared.infrastructure.notificaciones.application.dto.PeticionNotificacionDto;
 import com.coralclubes.facil.shared.infrastructure.notificaciones.application.service.NotificacionEmisorService;
 import com.coralclubes.facil.modules.reportes.dto.request.EjecutarReporteRequest;
@@ -56,29 +58,25 @@ public class ReportesAsyncService {
             // 2. Convertir los datos a un arreglo de bytes (Formato Excel)
             byte[] excelBytes = excelExportService.generarExcelBytes(datosCrudos, nombreReporteBase);
 
-            // 3. Negociar la URL de Carga (Patrón Valet Key con Coral Storage)
+            // 3. Carga directa de archivo al servicio de almacenamiento
             String rutaLogica = "reportes/" + Year.now().getValue() + "/" + usuario;
 
-            SolicitudCargaDto solicitudStorage = SolicitudCargaDto.builder()
-                    .requiereDepuracion(false)
-                    .nombreArchivo(nombreArchivoFinal)
-                    .contentType(MIME_TYPE_EXCEL)
-                    .tamanoBytes((long) excelBytes.length)
-                    .esPublico(false) // Los reportes son estrictamente privados
+            SolicitudCargaLegacyDto solicitud = SolicitudCargaLegacyDto.builder()
+                    .idCorrelacion(String.valueOf(idBitacora))
                     .aliasConfiguracion(aliasStorage)
-                    .rutaLogica(rutaLogica)
                     .metadatos(Map.of(
                             "idBitacora", String.valueOf(idBitacora),
-                            "usuarioGenerador", usuario,
+                            "subidoPor", usuario,
                             "modulo", "REPORTES"
                     ))
+                    .esPublico(false)
+                    .rutaLogica(rutaLogica)
+                    .requiereDepuracion(false)
                     .build();
 
-            RespuestaCargaDto respuestaCarga = storageClient.solicitarUrlCarga(solicitudStorage);
-            UUID fileUuid = respuestaCarga.fileId();
+            InfoArchivoDto respuestaCarga = storageClient.cargarArchivoSincrono(excelBytes, nombreArchivoFinal, MIME_TYPE_EXCEL, solicitud);
+            UUID fileUuid = respuestaCarga.uuid();
 
-            // 4. Subir el binario directamente al Storage (MinIO/S3) usando la URL pre-firmada
-            storageClient.subirArchivoBinario(respuestaCarga.uploadUrl(), excelBytes, MIME_TYPE_EXCEL);
             log.info("Reporte subido exitosamente a Coral Storage. FileId: {}", fileUuid);
 
             // 5. Marcar la bitácora como completada en la Base de Datos

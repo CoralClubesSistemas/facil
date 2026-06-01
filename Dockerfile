@@ -27,7 +27,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # =================================================================
-# ETAPA 2: Ejecución
+# ETAPA 2: Ejecución (Segura y Optimizada)
 # =================================================================
 FROM eclipse-temurin:21-jre-jammy
 
@@ -36,8 +36,18 @@ WORKDIR /app
 # Exponemos el puerto estándar de Spring Boot
 EXPOSE 8080
 
-# Copiamos el JAR generado en la etapa anterior
-COPY --from=build /app/target/facil.jar app.jar
+# Definimos variables de entorno por defecto para producción
+ENV SPRING_PROFILES_ACTIVE=prod \
+    JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
 
-# Entrypoint para iniciar la aplicación
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Creamos un grupo y usuario del sistema no-root para correr la app
+RUN groupadd -r spring && useradd -r -g spring spring
+
+# Copiamos el JAR asignándole el dueño al usuario sin privilegios
+COPY --from=build --chown=spring:spring /app/target/facil.jar app.jar
+
+# Cambiamos al usuario no-root
+USER spring
+
+# Entrypoint optimizado que lee las opciones de JAVA_OPTS
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
