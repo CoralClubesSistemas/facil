@@ -5,7 +5,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.request.*;
 import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.HotelCardUI;
 import com.coralclubes.facil.modules.reservaciones.dto.response.HotelDetalleDto;
-import com.coralclubes.facil.shared.infrastructure.domain.dto.ImagenResponse;
+import com.coralclubes.facil.shared.domain.dto.ImagenResponse;
 import com.coralclubes.facil.modules.reservaciones.repository.HotelesRepository;
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.ServiceUnavailableException;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;

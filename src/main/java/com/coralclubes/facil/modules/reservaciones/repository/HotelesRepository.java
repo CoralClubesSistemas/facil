@@ -2,7 +2,7 @@ package com.coralclubes.facil.modules.reservaciones.repository;
 
 import com.coralclubes.facil.modules.reservaciones.dto.projection.*;
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
-import com.coralclubes.facil.shared.infrastructure.domain.dto.ImagenDto;
+import com.coralclubes.facil.shared.domain.dto.ImagenDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.HotelDetalleDto;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;

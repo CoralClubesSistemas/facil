@@ -1,4 +1,4 @@
-package com.coralclubes.facil.modules.sistema.controller;
+package com.coralclubes.facil.modules.sistema.controller.publico;
 
 import com.coralclubes.facil.modules.sistema.dto.response.ParametrosWeb;
 import com.coralclubes.facil.modules.sistema.service.ParametrosWebService;

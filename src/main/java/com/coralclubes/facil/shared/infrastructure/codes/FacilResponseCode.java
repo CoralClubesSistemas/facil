@@ -1,4 +1,4 @@
-package com.coralclubes.facil.shared.infrastructure.domain.codes;
+package com.coralclubes.facil.shared.infrastructure.codes;
 
 import com.coralclubes.responses.BaseResponseCode;
 

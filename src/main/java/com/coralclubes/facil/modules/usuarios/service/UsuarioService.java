@@ -1,13 +1,18 @@
 package com.coralclubes.facil.modules.usuarios.service;
 
 import com.coralclubes.facil.modules.usuarios.repository.UsuariosRepository;
+import com.coralclubes.facil.modules.sistema.dto.response.ModuloApiResponse;
+import com.coralclubes.facil.modules.sistema.mapper.ModuloResponseMapper;
+import com.coralclubes.facil.shared.utils.TreeGenerator;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import com.coralclubes.facil.modules.sistema.dto.projection.ModuloDtoResult;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -43,5 +48,16 @@ public class UsuarioService {
             log.error("Error al serializar las preferencias del usuario {}: {}", usuario, e.getMessage());
             throw new RuntimeException("Error al guardar las preferencias de usuario", e);
         }
+    }
+
+    public List<ModuloApiResponse> obtenerModulosUsuario(String usuario) {
+        List<ModuloDtoResult> modulos = repo.spLoginModulosUsuarios(usuario);
+        ModuloResponseMapper mapper = new ModuloResponseMapper();
+        return TreeGenerator.generateTree(
+                modulos,
+                mapper::map,
+                ModuloDtoResult::id,
+                ModuloDtoResult::idPadre
+        );
     }
 }

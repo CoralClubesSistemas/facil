@@ -6,6 +6,7 @@ import com.coralclubes.facil.shared.infrastructure.gateway.dto.UserInfo;
 import com.coralclubes.facil.shared.infrastructure.security.dto.projection.UserAutorizacionesResult;
 import com.coralclubes.facil.shared.infrastructure.security.dto.projection.UserLoginResult;
 import com.coralclubes.facil.shared.infrastructure.security.repository.LoginRepository;
+import com.coralclubes.facil.modules.usuarios.repository.UsuariosRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -26,6 +27,7 @@ import java.util.stream.Stream;
 public class InternalAuthService {
 
     private final LoginRepository loginRepository;
+    private final UsuariosRepository usuariosRepository;
     private final PasswordEncoder passwordEncoder;
 
     public UserInfo autenticar(String username, String password) {
@@ -44,7 +46,7 @@ public class InternalAuthService {
         }
 
         // 4. Cargar módulos (permisos del sistema)
-        List<ModuloDtoResult> modulos = loginRepository.spLoginModulosUsuarios(userData.usuario());
+        List<ModuloDtoResult> modulos = usuariosRepository.spLoginModulosUsuarios(userData.usuario());
 
         // 5. Cargar autorizaciones fuera de política
         List<UserAutorizacionesResult> autorizaciones = loginRepository.spLoginObtenerAutorizacionesUsuario(userData.usuario());
@@ -99,7 +101,7 @@ public class InternalAuthService {
         UserLoginResult userData = loginRepository.spLoginUsuarios(username)
                 .orElseThrow(() -> new BadCredentialsException("Usuario no encontrado: " + username));
 
-        List<ModuloDtoResult> modulos = loginRepository.spLoginModulosUsuarios(username);
+        List<ModuloDtoResult> modulos = usuariosRepository.spLoginModulosUsuarios(username);
         List<UserAutorizacionesResult> autorizaciones = loginRepository.spLoginObtenerAutorizacionesUsuario(username);
 
         List<String> permissions = Stream.concat(
@@ -130,7 +132,7 @@ public class InternalAuthService {
      * Usado por UserContext cuando el gateway no envía permisos en headers.
      */
     public List<String> obtenerPermisosPorUsername(String username) {
-        List<ModuloDtoResult> modulos = loginRepository.spLoginModulosUsuarios(username);
+        List<ModuloDtoResult> modulos = usuariosRepository.spLoginModulosUsuarios(username);
         List<UserAutorizacionesResult> autorizaciones = loginRepository.spLoginObtenerAutorizacionesUsuario(username);
 
         return Stream.concat(

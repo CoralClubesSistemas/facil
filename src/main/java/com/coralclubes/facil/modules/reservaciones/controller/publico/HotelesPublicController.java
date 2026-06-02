@@ -3,7 +3,7 @@ package com.coralclubes.facil.modules.reservaciones.controller.publico;
 import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.HotelCardUI;
 import com.coralclubes.facil.modules.reservaciones.dto.response.HotelDetalleDto;
-import com.coralclubes.facil.shared.infrastructure.domain.dto.ImagenResponse;
+import com.coralclubes.facil.shared.domain.dto.ImagenResponse;
 import com.coralclubes.facil.modules.reservaciones.service.HotelesService;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;

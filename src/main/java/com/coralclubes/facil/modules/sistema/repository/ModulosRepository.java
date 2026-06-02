@@ -2,6 +2,7 @@ package com.coralclubes.facil.modules.sistema.repository;
 
 import com.coralclubes.facil.modules.sistema.dto.projection.ModuloDtoResult;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
+import com.coralclubes.facil.shared.infrastructure.repository.rowmappers.ModuloMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -18,19 +19,7 @@ public class ModulosRepository {
 
     private final StoredProcedureExecutor spExecutor;
 
-    // =========================================================================
-    // MAPPERS
-    // =========================================================================
-
-    private final RowMapper<ModuloDtoResult> moduloMapper = (rs, rowNum) -> ModuloDtoResult.builder()
-            .id(rs.getInt("ID"))
-            .idPadre(rs.getObject("PADRE_ID") != null ? rs.getInt("PADRE_ID") : null)
-            .clave(rs.getString("CLAVE"))
-            .nombre(rs.getString("NOMBRE"))
-            .ruta(rs.getString("RUTA"))
-            .icono(rs.getString("ICONO"))
-            .menuFacil(rs.getInt("MENU_FACIL"))
-            .build();
+    private final RowMapper<ModuloDtoResult> moduloMapper = new ModuloMapper();
 
     /**
      * Mapper para obtener un solo entero (ID generado o status).

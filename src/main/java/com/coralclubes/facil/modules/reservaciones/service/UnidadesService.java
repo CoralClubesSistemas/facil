@@ -6,7 +6,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.response.*;
 import com.coralclubes.facil.modules.reservaciones.dto.projection.TipoUnidadCardDto;
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
 import com.coralclubes.facil.modules.reservaciones.repository.UnidadesRepository;
-import com.coralclubes.facil.shared.infrastructure.domain.dto.ImagenResponse;
+import com.coralclubes.facil.shared.domain.dto.ImagenResponse;
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.ServiceUnavailableException;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;

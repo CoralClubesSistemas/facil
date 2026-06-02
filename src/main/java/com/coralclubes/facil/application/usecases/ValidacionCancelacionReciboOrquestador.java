@@ -4,7 +4,7 @@ import com.coralclubes.facil.modules.cobranza.dto.response.AccionRequeridaDto;
 import com.coralclubes.facil.modules.cobranza.dto.response.ValidacionCancelacionReciboResponse;
 import com.coralclubes.facil.modules.cobranza.service.RecibosService;
 import com.coralclubes.facil.modules.reservaciones.service.ReservacionesService;
-import com.coralclubes.facil.shared.infrastructure.domain.codes.MovimientosEnum;
+import com.coralclubes.facil.shared.infrastructure.codes.MovimientosEnum;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 

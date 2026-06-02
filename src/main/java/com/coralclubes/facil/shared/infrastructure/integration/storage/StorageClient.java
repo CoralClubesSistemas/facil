@@ -1,6 +1,6 @@
 package com.coralclubes.facil.shared.infrastructure.integration.storage;
 
-import com.coralclubes.facil.shared.infrastructure.domain.dto.ArchivoDescarga;
+import com.coralclubes.facil.shared.domain.dto.ArchivoDescarga;
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.ServiceUnavailableException;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.*;
 import com.coralclubes.logging.BusinessLogger;

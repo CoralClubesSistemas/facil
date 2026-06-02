@@ -1,6 +1,6 @@
 package com.coralclubes.facil.modules.reservaciones.dto.response;
 
-import com.coralclubes.facil.shared.infrastructure.domain.dto.ImagenResponse;
+import com.coralclubes.facil.shared.domain.dto.ImagenResponse;
 import lombok.Builder;
 
 import java.math.BigDecimal;

@@ -1,11 +1,9 @@
-package com.coralclubes.facil.modules.sistema.controller;
+package com.coralclubes.facil.modules.usuarios.controller;
 
-import com.coralclubes.facil.modules.sistema.dto.projection.ModuloDtoResult;
 import com.coralclubes.facil.modules.sistema.dto.response.ModuloApiResponse;
-import com.coralclubes.facil.modules.sistema.service.ModulosService;
-import com.coralclubes.facil.shared.infrastructure.domain.codes.LoginResponseCode;
+import com.coralclubes.facil.modules.usuarios.service.UsuarioService;
+import com.coralclubes.facil.shared.infrastructure.codes.LoginResponseCode;
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.NoPermissionsException;
-import com.coralclubes.facil.shared.infrastructure.security.repository.LoginRepository;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,29 +19,29 @@ import java.util.List;
  * El gateway valida el JWT e inyecta X-Auth-Username header.
  */
 @RestController
-@RequestMapping("/api/v1/admin/modulos")
+@RequestMapping("/api/v1/admin/usuarios/modulos")
 @RequiredArgsConstructor
 public class ModulosUsuarioController {
 
-    private final LoginRepository loginRepository;
-    private final ModulosService modulosService;
+    private final UsuarioService usuarioService;
     private final UserContext userContext;
 
     /**
      * Obtiene los módulos asignados al usuario autenticado (árbol jerárquico).
      * El username se extrae del header X-Auth-Username inyectado por el gateway.
      */
-    @GetMapping("/usuario")
+    @GetMapping
     public ResponseEntity<ApiResponse<List<ModuloApiResponse>>> getModulosUsuario() {
         String username = userContext.getUsername();
 
-        List<ModuloDtoResult> userResults = loginRepository.spLoginModulosUsuarios(username);
+        List<ModuloApiResponse> userResults = usuarioService.obtenerModulosUsuario(username);
+
         if (userResults.isEmpty()) {
             throw new NoPermissionsException("El usuario no tiene módulos asignados");
         }
 
         return ResponseEntity.ok(
-                ApiResponse.from(LoginResponseCode.LOGIN_MODULES_CONSTRAINT, modulosService.getFormatModules(userResults))
+                ApiResponse.from(LoginResponseCode.LOGIN_MODULES_CONSTRAINT, userResults)
         );
     }
 }

@@ -3,7 +3,7 @@ package com.coralclubes.facil.modules.reservaciones.controller.admin;
 import com.coralclubes.facil.modules.reservaciones.dto.request.FiltroConsultaGeneral;
 import com.coralclubes.facil.modules.reservaciones.dto.response.ReservacionHistoricaDto;
 import com.coralclubes.facil.modules.reservaciones.service.ConsultaGeneralService;
-import com.coralclubes.facil.shared.infrastructure.domain.dto.PaginaResponse;
+import com.coralclubes.facil.shared.domain.dto.PaginaResponse;
 import com.coralclubes.responses.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

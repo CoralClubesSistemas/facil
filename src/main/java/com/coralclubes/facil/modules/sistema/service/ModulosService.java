@@ -3,6 +3,8 @@ package com.coralclubes.facil.modules.sistema.service;
 import com.coralclubes.facil.modules.sistema.dto.projection.ModuloDtoResult;
 import com.coralclubes.facil.modules.sistema.dto.response.ModuloApiResponse;
 import com.coralclubes.facil.modules.sistema.repository.ModulosRepository;
+import com.coralclubes.facil.modules.sistema.mapper.ModuloResponseMapper;
+import com.coralclubes.facil.shared.utils.TreeGenerator;
 import com.coralclubes.responses.ApiResponse;
 import com.coralclubes.responses.codes.GeneralResponseCode;
 import lombok.RequiredArgsConstructor;
@@ -29,8 +31,15 @@ public class ModulosService {
             return ApiResponse.success("No hay módulos definidos", Collections.emptyList());
         }
 
+        ModuloResponseMapper mapper = new ModuloResponseMapper();
+
         return ApiResponse.success(
-                getFormatModules(allModules)
+                TreeGenerator.generateTree(
+                        allModules,
+                        mapper::map,
+                        ModuloDtoResult::id,
+                        ModuloDtoResult::idPadre
+                )
         );
     }
 
@@ -64,80 +73,5 @@ public class ModulosService {
                 "Módulo eliminado correctamente",
                 result
         );
-    }
-
-    /**
-     * Lógica de Negocio: Construcción del Árbol de Módulos.
-     * Convierte una lista plana en una estructura jerárquica (Padre -> Hijos).
-     */
-    public List<ModuloApiResponse> getFormatModules(List<ModuloDtoResult> allModules) {
-        if (allModules == null || allModules.isEmpty()) return new ArrayList<>();
-
-        // 1. Mapeo ID -> Objeto Respuesta
-        Map<Integer, ModuloApiResponse> map = new HashMap<>();
-        allModules.forEach(mod -> map.put(mod.id(), convertToApiResponse(mod)));
-
-        // 2. Construcción de Jerarquía
-        List<ModuloApiResponse> rootModules = new ArrayList<>();
-
-        map.values().forEach(modulo -> {
-            Integer idPadre = modulo.getIdPadre();
-
-            // Regla de Negocio: El ID 10 se considera la raíz absoluta en este sistema
-            if (idPadre != null && idPadre == 10) {
-                rootModules.add(modulo);
-            } else if (idPadre != null && map.containsKey(idPadre)) {
-                // Si tiene padre y el padre existe en la lista, lo agregamos como hijo
-                map.get(idPadre).getHijos().add(modulo);
-            }
-            // Si el padre no es 10 y no está en el mapa, es un módulo huérfano o raíz alternativa.
-            // Dependiendo de la regla de negocio, se podría agregar a rootModules o ignorar.
-        });
-
-        // 3. Asignación de niveles (Recursivo)
-        rootModules.forEach(root -> asignNivelRecursivo(root, 0));
-
-        // 4. Ordenamiento Final por ID
-        rootModules.sort(Comparator.comparing(ModuloApiResponse::getId));
-
-        return rootModules;
-    }
-
-    /**
-     * Método recursivo para etiquetar la profundidad del árbol.
-     */
-    private void asignNivelRecursivo(ModuloApiResponse modulo, int depth) {
-        String nivelLabel = switch (depth) {
-            case 0 -> "PADRE";
-            case 1 -> "HIJO";
-            case 2 -> "NIETO";
-            default -> "NIVEL_" + depth;
-        };
-
-        modulo.setNivel(nivelLabel);
-
-        if (modulo.getHijos() != null && !modulo.getHijos().isEmpty()) {
-            // Ordenar hijos antes de procesarlos
-            modulo.getHijos().sort(Comparator.comparing(ModuloApiResponse::getId));
-            // Recursión
-            modulo.getHijos().forEach(hijo -> asignNivelRecursivo(hijo, depth + 1));
-        }
-    }
-
-    /**
-     * Mapper manual DTO -> Response.
-     * (Podría moverse a una clase Mapper separada con MapStruct, pero aquí es válido por simplicidad)
-     */
-    private ModuloApiResponse convertToApiResponse(ModuloDtoResult modulo) {
-        return ModuloApiResponse.builder()
-                .id(modulo.id())
-                .idPadre(modulo.idPadre())
-                .clave(modulo.clave())
-                .nombre(modulo.nombre())
-                .ruta(modulo.ruta())
-                .icono(modulo.icono())
-                .menuFacil(modulo.menuFacil())
-                .hijos(new ArrayList<>()) // Inicializamos lista vacía para evitar NullPointer
-                .build();
     }
 }

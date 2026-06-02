@@ -1,7 +1,7 @@
 package com.coralclubes.facil.modules.reservaciones.dto.projection;
 
 import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
-import com.coralclubes.facil.shared.infrastructure.domain.dto.ImagenDto;
+import com.coralclubes.facil.shared.domain.dto.ImagenDto;
 import lombok.Builder;
 
 import java.math.BigDecimal;

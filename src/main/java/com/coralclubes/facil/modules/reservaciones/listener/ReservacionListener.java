@@ -4,7 +4,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.request.CancelarReservaci
 import com.coralclubes.facil.modules.reservaciones.dto.response.ResumenReservacionDto;
 import com.coralclubes.facil.modules.reservaciones.service.RecepcionService;
 import com.coralclubes.facil.modules.reservaciones.service.ReservacionesService;
-import com.coralclubes.facil.shared.infrastructure.domain.codes.MovimientosEnum;
+import com.coralclubes.facil.shared.infrastructure.codes.MovimientosEnum;
 import com.coralclubes.facil.shared.events.dto.ReciboCanceladoEvent;
 import com.coralclubes.facil.shared.events.dto.ReciboPagadoEvent;
 import lombok.RequiredArgsConstructor;

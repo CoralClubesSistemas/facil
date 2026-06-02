@@ -1,4 +1,4 @@
-package com.coralclubes.facil.shared.infrastructure.domain.codes;
+package com.coralclubes.facil.shared.infrastructure.codes;
 
 // enum en el que definimos los ids de los movimientos que posiblemente se puedan usar en el sistema, para evitar hardcodearlos.
 public enum MovimientosEnum {
@@ -9,7 +9,6 @@ public enum MovimientosEnum {
     MENSUALIDAD(2),
     INTERESES(6),
     DESCUENTO(8);
-
 
     private final int id;
 

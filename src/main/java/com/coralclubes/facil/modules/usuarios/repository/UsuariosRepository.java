@@ -1,11 +1,14 @@
 package com.coralclubes.facil.modules.usuarios.repository;
 
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
+import com.coralclubes.facil.shared.infrastructure.repository.rowmappers.ModuloMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
+import com.coralclubes.facil.modules.sistema.dto.projection.ModuloDtoResult;
+
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -15,6 +18,12 @@ public class UsuariosRepository {
     private final StoredProcedureExecutor executor;
 
     private final RowMapper<String> campoString = (rs, rowNum) -> rs.getString(1);
+
+    private final RowMapper<ModuloDtoResult> moduloMapper = new ModuloMapper();
+
+    public List<ModuloDtoResult> spLoginModulosUsuarios(String usuario) {
+        return executor.queryList("spLoginModulosUsuarios", Map.of("USUARIO", usuario), moduloMapper);
+    }
 
     public Optional<String> spFacilObtenerCorreoUsuario(String usuario) {
         return executor.querySingle("spFacilObtenerCorreoUsuario",

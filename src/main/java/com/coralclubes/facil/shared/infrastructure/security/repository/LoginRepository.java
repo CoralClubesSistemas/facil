@@ -1,7 +1,6 @@
 package com.coralclubes.facil.shared.infrastructure.security.repository;
 
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
-import com.coralclubes.facil.modules.sistema.dto.projection.ModuloDtoResult;
 import com.coralclubes.facil.shared.infrastructure.security.dto.projection.SimpleLoginResult;
 import com.coralclubes.facil.shared.infrastructure.security.dto.projection.UserAutorizacionesResult;
 import com.coralclubes.facil.shared.infrastructure.security.dto.projection.UserLoginResult;
@@ -35,15 +34,7 @@ public class LoginRepository {
             .nombreCompleto(rs.getString("NOMBRE_COMPLETO"))
             .build();
 
-    private final RowMapper<ModuloDtoResult> moduloMapper = (rs, rowNum) -> ModuloDtoResult.builder()
-            .id(rs.getInt("MODULO_ID"))
-            .idPadre(rs.getInt("MODULO_PADRE_ID"))
-            .clave(rs.getString("MODULO_CLAVE"))
-            .nombre(rs.getString("MODULO_NOMBRE"))
-            .ruta(rs.getString("MODULO_RUTA"))
-            .icono(rs.getString("MODULO_ICONO"))
-            .menuFacil(rs.getInt("MODULO_MENU"))
-            .build();
+
 
     private final RowMapper<UserAutorizacionesResult> autorizacionMapper = (rs, rowNum) -> UserAutorizacionesResult.builder()
             .id(rs.getInt("AFP_ID"))
@@ -59,9 +50,7 @@ public class LoginRepository {
         return spExecutor.querySingle("spLoginUsuarios", params, userLoginMapper);
     }
 
-    public List<ModuloDtoResult> spLoginModulosUsuarios(String usuario) {
-        return spExecutor.queryList("spLoginModulosUsuarios", Map.of("USUARIO", usuario), moduloMapper);
-    }
+
 
     public List<UserAutorizacionesResult> spLoginObtenerAutorizacionesUsuario(String usuario) {
         return spExecutor.queryList("spLoginObtenerAutorizacionesUsuario", Map.of("USUARIO", usuario), autorizacionMapper);

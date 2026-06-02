@@ -1,4 +1,4 @@
-package com.coralclubes.facil.shared.infrastructure.domain.dto;
+package com.coralclubes.facil.shared.domain.dto;
 
 import java.util.List;
 
