@@ -21,4 +21,20 @@ public class UsuariosRepository {
                 Map.of("Usuario", usuario),
                 campoString);
     }
+
+    @org.springframework.cache.annotation.Cacheable(value = "preferencias_usuario", key = "#usuario", unless = "#result == null")
+    public Optional<String> spUserObtenerPreferencias(String usuario) {
+        return executor.querySingle("spUserObtenerPreferencias",
+                Map.of("Usuario", usuario),
+                campoString);
+    }
+
+    @org.springframework.cache.annotation.CacheEvict(value = "preferencias_usuario", key = "#usuario")
+    public void spUserActualizarPreferencias(String usuario, String preferenciasJson) {
+        executor.execute("spUserActualizarPreferencias",
+                Map.of(
+                        "Usuario", usuario,
+                        "preferencias_json", preferenciasJson
+                ));
+    }
 }

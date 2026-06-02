@@ -41,8 +41,8 @@ app:
         ready: coral.notificaciones.ready
 
   url:
-    frontend: http://10.10.8.2:4200
-    password-reset: http://10.10.8.2:4200/auth/confirm-reset
+    frontend: http://localhost:4200
+    password-reset: http://localhost:4200/acceso/confirm-reset
     portal-socios: https://coralpagos.com.mx/PortalSocios/socios
 
   clients:
