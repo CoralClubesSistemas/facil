@@ -1,5 +1,10 @@
 package com.coralclubes.facil.shared.config;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +25,15 @@ public class CacheConfig {
     public RedisCacheManager cacheManager(
             RedisConnectionFactory connectionFactory) {
 
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.registerModule(new Jdk8Module());
+        objectMapper.activateDefaultTyping(
+                LaissezFaireSubTypeValidator.instance,
+                ObjectMapper.DefaultTyping.NON_FINAL,
+                JsonTypeInfo.As.PROPERTY
+        );
+
         RedisCacheConfiguration config =
                 RedisCacheConfiguration.defaultCacheConfig()
                         .entryTtl(Duration.ofHours(2))
@@ -33,7 +47,7 @@ public class CacheConfig {
                         .serializeValuesWith(
                                 RedisSerializationContext.SerializationPair
                                         .fromSerializer(
-                                                new GenericJackson2JsonRedisSerializer()
+                                                new GenericJackson2JsonRedisSerializer(objectMapper)
                                         )
                         );
 

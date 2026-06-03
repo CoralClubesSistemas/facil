@@ -2,7 +2,7 @@ package com.coralclubes.facil.modules.reservaciones.controller.admin;
 
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
 import com.coralclubes.facil.modules.reservaciones.dto.response.*;
-import com.coralclubes.facil.modules.reservaciones.service.RecepcionService;
+import com.coralclubes.facil.modules.reservaciones.service.ReservacionesService;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
@@ -18,7 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RecepcionController {
 
-    private final RecepcionService recepcionService;
+    private final ReservacionesService recepcionService;
     private final UserContext userContext;
 
     @GetMapping("/operaciones/hoy")

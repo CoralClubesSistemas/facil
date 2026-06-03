@@ -32,8 +32,7 @@ public class PdfGeneratorService {
      */
     public byte[] generarPdfDesdeHtml(String templateName, Map<String, Object> variables) {
         // 1. Obtener la plantilla de la base de datos
-        PlantillaPdfProjection plantilla = plantillasRepository.obtenerPorCodigo(templateName)
-                .orElseThrow(() -> new IllegalArgumentException("No se encontró la plantilla activa con código: " + templateName));
+        PlantillaPdfProjection plantilla = plantillasRepository.obtenerPorCodigo(templateName);
 
         // 2. Procesar el HTML con Pebble usando StringLoader (el contenido es la clave de caché y la plantilla en sí)
         String htmlProcesado;

@@ -5,6 +5,8 @@ import com.coralclubes.facil.modules.reservaciones.dto.response.TarifaDto;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import com.coralclubes.utils.json.JsonUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
@@ -49,6 +51,7 @@ public class TarifasRepository {
     // LECTURA
     // =========================================================================
 
+    @Cacheable(value = "tarifas_reservaciones", key = "(#idDesarrollo != null ? #idDesarrollo : 0) + '-' + (#anio != null ? #anio : 'todos')")
     public List<TarifaDto> spResvObtenerTarifasReservaciones(Integer idDesarrollo, Integer anio) {
         Map<String, Object> params = new HashMap<>();
         params.put("IdDesarrollo", idDesarrollo != null ? idDesarrollo : 0);
@@ -61,6 +64,7 @@ public class TarifasRepository {
     // ESCRITURA Y ELIMINACIÓN
     // =========================================================================
 
+    @CacheEvict(value = "tarifas_reservaciones", allEntries = true)
     public Optional<Integer> spResvGuardarTarifasReservaciones(List<TarifaRequest> tarifas, String usuario) {
         Map<String, Object> params = new HashMap<>();
         params.put("TarifasJson", JsonUtils.toJson(tarifas)); // Magia: Parseamos la lista a string JSON
@@ -69,6 +73,7 @@ public class TarifasRepository {
         return spExecutor.querySingleLog("spResvGuardarTarifasReservaciones", params, scalarIntMapper, usuario, false, true);
     }
 
+    @CacheEvict(value = "tarifas_reservaciones", allEntries = true)
     public Optional<Integer> spResvEliminarTarifasReservaciones(List<Integer> idsTarifas, String usuario) {
         Map<String, Object> params = new HashMap<>();
         params.put("IdsJson", JsonUtils.toJson(idsTarifas)); // Se enviará algo como "[5, 6, 7]"

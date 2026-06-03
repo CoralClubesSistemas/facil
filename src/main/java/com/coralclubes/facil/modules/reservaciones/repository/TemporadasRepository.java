@@ -7,6 +7,9 @@ import com.coralclubes.facil.modules.reservaciones.dto.response.TemporadaFechaRe
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import com.coralclubes.utils.json.JsonUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
@@ -49,6 +52,7 @@ public class TemporadasRepository {
     // LECTURA
     // =========================================================================
 
+    @Cacheable(value = "temporadas_reservaciones", key = "(#idDesarrollo != null ? #idDesarrollo : 0) + '-' + (#anio != null ? #anio : 'todos')")
     public List<TemporadaDto> spResvObtenerTemporadasReservaciones(Integer idDesarrollo, Integer anio) {
         Map<String, Object> params = new HashMap<>();
         params.put("IdDesarrollo", idDesarrollo != null ? idDesarrollo : 0);
@@ -61,6 +65,10 @@ public class TemporadasRepository {
     // ESCRITURA
     // =========================================================================
 
+    @Caching(evict = {
+            @CacheEvict(value = "temporadas_reservaciones", allEntries = true),
+            @CacheEvict(value = "temporadas_fecha", allEntries = true)
+    })
     public Optional<Integer> spResvGuardarTemporadaReservacion(TemporadaRequest request, String usuario) {
         Map<String, Object> params = new HashMap<>();
         params.put("IdTemporadaFecha", request.idTemporadaFecha());
@@ -74,6 +82,10 @@ public class TemporadasRepository {
         return spExecutor.querySingleLog("spResvGuardarTemporadaReservacion", params, scalarIntMapper, usuario, false, true);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "temporadas_reservaciones", allEntries = true),
+            @CacheEvict(value = "temporadas_fecha", allEntries = true)
+    })
     public void spResvEliminarTemporadaReservacion(Integer idTemporadaFecha, String usuario) {
         Map<String, Object> params = new HashMap<>();
         params.put("IdTemporadaFecha", idTemporadaFecha);
@@ -81,6 +93,7 @@ public class TemporadasRepository {
         spExecutor.querySingleLog("spResvEliminarTemporadaReservacion", params, scalarBooleanMapper, usuario, true, true);
     }
 
+    @Cacheable(value = "temporadas_fecha", key = "(#idDesarrollo != null ? #idDesarrollo : 0) + '-' + #fecha")
     public List<TemporadaFechaResponse> spResvObtenerTemporadasFecha(Integer idDesarrollo, LocalDate fecha) {
         Map<String, Object> params = new HashMap<>();
         params.put("IdDesarrollo", idDesarrollo != null ? idDesarrollo : 0);
@@ -90,6 +103,10 @@ public class TemporadasRepository {
         return spExecutor.queryList("spResvObtenerTemporadasFecha", params, temporadaFechaMapper);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "temporadas_reservaciones", allEntries = true),
+            @CacheEvict(value = "temporadas_fecha", allEntries = true)
+    })
     public Optional<Integer> spResvGuardarTemporadasMasivas(List<TemporadaMasivaRequest> temporadas, String usuario) {
         Map<String, Object> params = new HashMap<>();
         params.put("TemporadasJson", JsonUtils.toJson(temporadas)); // Convierte la lista a JSON

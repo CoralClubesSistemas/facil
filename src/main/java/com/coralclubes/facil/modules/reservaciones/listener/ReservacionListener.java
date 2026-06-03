@@ -2,7 +2,6 @@ package com.coralclubes.facil.modules.reservaciones.listener;
 
 import com.coralclubes.facil.modules.reservaciones.dto.request.CancelarReservacionRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.response.ResumenReservacionDto;
-import com.coralclubes.facil.modules.reservaciones.service.RecepcionService;
 import com.coralclubes.facil.modules.reservaciones.service.ReservacionesService;
 import com.coralclubes.facil.shared.infrastructure.codes.MovimientosEnum;
 import com.coralclubes.facil.shared.events.dto.ReciboCanceladoEvent;
@@ -20,7 +19,6 @@ import java.util.Objects;
 public class ReservacionListener {
 
     private final ReservacionesService reservacionesService;
-    private final RecepcionService recepcionService;
 
     /**
      * Este método escucha el evento de cancelación de recibo.
@@ -45,7 +43,7 @@ public class ReservacionListener {
 
                         if (cancelarReservas && esCancelable) {
                             log.info("Cancelando reservación {} por decisión global del usuario...", reservacion.consecutivo());
-                            recepcionService.cancelarReservacion(new CancelarReservacionRequest(
+                            reservacionesService.cancelarReservacion(new CancelarReservacionRequest(
                                     reservacion.membresia(),
                                     reservacion.consecutivo(),
                                     event.motivoCancelacion(),

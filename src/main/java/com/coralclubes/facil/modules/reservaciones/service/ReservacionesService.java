@@ -10,12 +10,14 @@ import com.coralclubes.facil.modules.reservaciones.dto.response.*;
 import com.coralclubes.facil.modules.reservaciones.model.promociones.dto.ReservacionContexto;
 import com.coralclubes.facil.modules.reservaciones.model.promociones.engine.PromocionesEngine;
 import com.coralclubes.facil.modules.reservaciones.repository.ReservacionesRepository;
+import com.coralclubes.facil.shared.domain.dto.PaginaResponse;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.NotificationClient;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.dto.SolicitudNotificacionDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
+import com.coralclubes.responses.codes.GeneralResponseCode;
 import com.coralclubes.utils.json.JsonUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -47,9 +50,19 @@ public class ReservacionesService {
 
     private final GeneradorDocumentosService generadorDocumentosService;
     private final NotificationClient notificationClient;
+    private final AmaDeLlavesService amaDeLlavesService;
 
     @Value("${app.clients.notifications.templates.reserva-creada}")
     private String templateReservaCreada;
+
+    @Value("${app.clients.notifications.aliases.default}")
+    private String aliasConfigNotificaciones;
+
+    @Value("${app.clients.notifications.templates.reserva-cancelada}")
+    private String templateReservaCancelada;
+
+    @Value("${app.clients.notifications.aliases.aws-ses}")
+    private String aliasAwsSes;
 
     // =========================================================================
     // 1. GESTIÓN DE INVENTARIO Y DISPONIBILIDAD
@@ -318,12 +331,13 @@ public class ReservacionesService {
 
         // 5. Construir Solicitud a Coral Notificaciones
         SolicitudNotificacionDto solicitudNotificacion = SolicitudNotificacionDto.builder()
-                .aliasConfig("SMTP_GENERAL")
+                .aliasConfig(aliasAwsSes)
                 .destinatarios(destinatarios)
                 .codigoPlantilla(templateReservaCreada)
+                .remitenteOverride("reservaciones@lvivardev.com")
                 .variables(Map.of(
-                        "nombreTitular", request.nombreReserva(),
-                        "urlDescargaPdf", ""
+                        "nombreUsuario", request.nombreReserva(),
+                        "numeroReserva", foliosStr
                 ))
                 .prioridad(10)
                 .build();
@@ -518,12 +532,254 @@ public class ReservacionesService {
         return ApiResponse.success("Disponibilidad de unidad obtenida exitosamente", dto);
     }
 
+    public void actualizarReservacionPagada(String membresia, Integer consecutivo) {
+        repository.spResvActualizarReservacionPagada(membresia, consecutivo);
+    }
+
+    // =========================================================================
+    // METODOS DE CONSULTA GENERAL Y RECEPCION REFACTOR
+    // =========================================================================
+
+    public ApiResponse<PaginaResponse<ReservacionHistoricaDto>> consultarHistorico(FiltroConsultaGeneral filtro) {
+        var filtroConDesarrollo = new FiltroConsultaGeneral(
+                userContext.getIdDesarrollo(),
+                filtro.fechaInicio(),
+                filtro.fechaFin(),
+                filtro.tipoFecha(),
+                filtro.estatusClave(),
+                filtro.busqueda(),
+                filtro.pageNumber(),
+                filtro.pageSize()
+        );
+
+        List<ReservacionHistoricaDto> resultados = repository.consultarHistoricoReservaciones(filtroConDesarrollo);
+
+        Integer totalRegistros = resultados.isEmpty() ? 0 : resultados.getFirst().totalRegistros();
+
+        PaginaResponse<ReservacionHistoricaDto> pagina = new PaginaResponse<>(
+                resultados,
+                totalRegistros,
+                filtro.pageNumber(),
+                filtro.pageSize()
+        );
+
+        return ApiResponse.success("Consulta histórica completada", pagina);
+    }
+
+    public ApiResponse<List<OperacionDiaDto>> obtenerOperacionesDelDia() {
+        Integer desarrolloId = userContext.getIdDesarrollo();
+
+        if (desarrolloId == null || desarrolloId <= 0) {
+            throw new IllegalArgumentException("El desarrollo asignado a su usuario no permite el acceso a esta información. Contacte al administrador del sistema.");
+        }
+
+        List<OperacionDiaDto> operaciones = repository.obtenerOperacionesDelDia(desarrolloId);
+        return ApiResponse.success("Operaciones del día obtenidas", operaciones);
+    }
+
+    public ApiResponse<List<EstadisticaDelDiaDto>> obtenerEstadisticasDelDia() {
+        Integer desarrolloId = userContext.getIdDesarrollo();
+
+        if (desarrolloId == null || desarrolloId <= 0) {
+            throw new IllegalArgumentException("El desarrollo asignado a su usuario no permite el acceso a esta información. Contacte al administrador del sistema.");
+        }
+
+        List<EstadisticaDelDiaDto> estadisticas = repository.obtenerEstadisticasDelDia(desarrolloId);
+        return ApiResponse.success("Estadísticas del día calculadas", estadisticas);
+    }
+
+    public ApiResponse<Boolean> registrarCheckIn(CheckInRequest request) {
+        String usuario = userContext.getUsername();
+        repository.ejecutarCheckIn(request, usuario);
+        return ApiResponse.success("Check-In registrado exitosamente", true);
+    }
+
+    public ApiResponse<Boolean> registrarCheckOut(CheckOutRequest request) {
+        String usuario = userContext.getUsername();
+
+        ResumenReservacionDto detalle = obtenerResumenReservacion(request.membresia(), request.consecutivo()).data();
+
+        repository.ejecutarCheckOut(request, usuario);
+
+        if (detalle.idUnidadFisica() != null) {
+            amaDeLlavesService.crearTareaYNotificar(
+                    detalle.idUnidadFisica(),
+                    detalle.numeroUnidad(),
+                    detalle.desarrolloId(),
+                    usuario,
+                    "CHECK-OUT"
+            );
+        }
+
+        return ApiResponse.success("Check-Out registrado exitosamente. La habitación ha sido liberada.", true);
+    }
+
+    public ApiResponse<CheckInOutEspecialCotizacionDto> cotizarCheckInOutEspecial(String membresia, Integer consecutivo) {
+        if (membresia == null || membresia.isBlank() || consecutivo == null) {
+            throw new IllegalArgumentException("La membresía y el consecutivo son obligatorios.");
+        }
+
+        CheckInOutEspecialCotizacionDto cotizacion = repository.cotizarCheckInOutEspecial(membresia, consecutivo);
+
+        if (cotizacion == null) {
+            return ApiResponse.error(GeneralResponseCode.NOT_FOUND, "No se encontró la reservación especificada.");
+        }
+
+        return ApiResponse.success("Cotización de operación especial obtenida.", cotizacion);
+    }
+
+    public ApiResponse<Boolean> registrarMovimientoCheckInOutEspecial(CheckInOutEspecialRequest request) {
+        String usuario = userContext.getUsername();
+
+        repository.registrarMovimientoCheckInOutEspecial(request, usuario);
+
+        businessLogger.info(usuario, "Cargo por {} registrado: Membresía {}, Consecutivo {}",
+                request.tipoOperacion(), request.membresia(), request.consecutivo());
+        return ApiResponse.success("Cargo por " + request.tipoOperacion().name() + " registrado correctamente.", true);
+    }
+
+    public ApiResponse<List<UnidadDisponibleDto>> obtenerUnidadesDisponiblesCheckIn(String membresia, Integer consecutivo, Integer rhdtId) {
+        if (rhdtId == null || rhdtId <= 0) {
+            throw new IllegalArgumentException("El ID del tipo de unidad es obligatorio.");
+        }
+        if (membresia == null || membresia.isBlank() || consecutivo == null) {
+            throw new IllegalArgumentException("La membresía y el consecutivo son obligatorios para validar la disponibilidad real.");
+        }
+
+        List<UnidadDisponibleDto> unidades = repository.obtenerUnidadesDisponiblesParaCheckIn(membresia, consecutivo, rhdtId);
+        return ApiResponse.success("Unidades disponibles obtenidas", unidades);
+    }
+
+    public ApiResponse<List<CatalogoCargoDto>> obtenerCatalogoCargos(String membresia) {
+        if (membresia == null || membresia.isBlank()) {
+            throw new IllegalArgumentException("La membresía es obligatoria.");
+        }
+
+        List<CatalogoCargoDto> catalogo = repository.obtenerCatalogoCargosHabitacion(membresia);
+        return ApiResponse.success("Catálogo de cargos obtenido.", catalogo);
+    }
+
+    public ApiResponse<Boolean> generarCargo(GenerarCargoRequest request) {
+        String usuario = userContext.getUsername();
+
+        repository.generarCargoHabitacion(request, usuario);
+
+        return ApiResponse.success("Cargo aplicado a la habitación exitosamente.", true);
+    }
+
+    public ApiResponse<List<MapaUnidadDto>> obtenerMapaUnidades() {
+        Integer desarrolloId = userContext.getIdDesarrollo();
+
+        List<MapaUnidadDto> mapa = repository.obtenerMapaUnidades(desarrolloId);
+        return ApiResponse.success("Mapa de unidades obtenido con éxito.", mapa);
+    }
+
+    public ApiResponse<List<String>> obtenerActividadReciente() {
+        Integer desarrolloId = userContext.getIdDesarrollo();
+
+        List<String> actividad = repository.obtenerActividadDiaria(desarrolloId);
+        return ApiResponse.success("Actividad reciente obtenida.", actividad);
+    }
+
+    public ApiResponse<Boolean> transferirUnidad(TransferirUnidadRequest request) {
+        String usuario = userContext.getUsername();
+
+        ResumenReservacionDto detalle = obtenerResumenReservacion(request.membresia(), request.consecutivo()).data();
+
+        repository.transferirUnidad(request, usuario);
+
+        businessLogger.info(usuario, "Transferencia de habitación realizada para Membresía: {}, Consecutivo: {}, Nuevo RHDT ID: {}, Nuevo RUN ID: {}, Importe Diferencia: {}",
+                request.membresia(), request.consecutivo(), request.nuevoRhdtId(), request.nuevoRunId(), request.importeDiferencia());
+
+        if (detalle.idUnidadFisica() != null) {
+            amaDeLlavesService.crearTareaYNotificar(
+                    detalle.idUnidadFisica(),
+                    detalle.numeroUnidad(),
+                    detalle.desarrolloId(),
+                    usuario,
+                    "TRANSFERENCIA-HABITACION"
+            );
+        }
+
+        return ApiResponse.success("La transferencia de habitación se realizó con éxito.", true);
+    }
+
+    public ApiResponse<BigDecimal> calcularDiferenciaTransferencia(String membresia, Integer consecutivo, Integer nuevoRhdtId) {
+        DetalleReservacionDto detalle = obtenerDetalleReservacion(membresia, consecutivo).data();
+
+        DisponibilidadUnidadDto disponibilidad = obtenerDisponibilidadUnidad(
+                nuevoRhdtId,
+                detalle.membresia(),
+                detalle.fechaEntrada(),
+                detalle.fechaSalida()
+        ).data();
+
+        BigDecimal diferencia = getBigDecimal(disponibilidad, detalle);
+
+        if (diferencia.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("La nueva unidad seleccionada tiene una tarifa menor a la actual. Por favor, seleccione una unidad con tarifa igual o mayor.");
+        }
+
+        return ApiResponse.success("Diferencia de tarifa calculada.", diferencia);
+    }
+
+    private static BigDecimal getBigDecimal(DisponibilidadUnidadDto disponibilidad, DetalleReservacionDto detalle) {
+        if (disponibilidad.capacidad() < detalle.numeroSocios()) {
+            throw new IllegalArgumentException("La nueva unidad no tiene la capacidad suficiente para alojar a la cantidad de personas de la reservación original.");
+        }
+
+        BigDecimal tarifaActual = detalle.importeTotal();
+        BigDecimal tarifaNueva = disponibilidad.costoEstancia();
+
+        BigDecimal diferencia = tarifaNueva.subtract(tarifaActual);
+        return diferencia;
+    }
+
+    public ApiResponse<BigDecimal> calcularPenalizacionCancelacion(String membresia, Integer consecutivo) {
+        BigDecimal penalizacion = repository.calcularPenalizacionCancelacion(membresia, consecutivo);
+        return ApiResponse.success("Cálculo de penalización completado.", penalizacion);
+    }
+
+    public ApiResponse<Boolean> cancelarReservacion(CancelarReservacionRequest request, String usuario) {
+        ResumenReservacionDto detalle = obtenerResumenReservacion(request.membresia(), request.consecutivo()).data();
+
+        repository.cancelarReservacion(request, usuario);
+
+        businessLogger.info(usuario, "Cancelación de reservación realizada para Membresía: {}, Consecutivo: {}, Motivo: {}, Cobro Penalización: {}",
+                request.membresia(), request.consecutivo(), request.motivoCancelacion(), request.cobrarCuotaCancelacion());
+
+        BigDecimal costoCancelacion = request.cobrarCuotaCancelacion() ? repository.calcularPenalizacionCancelacion(request.membresia(), request.consecutivo()) : BigDecimal.ZERO;
+
+        enviarCorreoCancelacion(detalle, costoCancelacion);
+
+        return ApiResponse.success("La reservación ha sido cancelada y la habitación liberada con éxito.", true);
+    }
+
+    private void enviarCorreoCancelacion(ResumenReservacionDto detalle, BigDecimal costoCancelacion) {
+        String destinatario = detalle.emailContacto();
+        String nombreCliente = detalle.nombreContacto();
+        String membresia = detalle.membresia();
+        Integer consecutivo = detalle.consecutivo();
+
+        Map<String, Object> urlVariables = new HashMap<>();
+        urlVariables.put("membresia", membresia);
+        urlVariables.put("folio", consecutivo);
+        urlVariables.put("nombreTitular", nombreCliente);
+        urlVariables.put("costoCancelacion", costoCancelacion.compareTo(BigDecimal.ZERO) > 0 ? costoCancelacion.toString() : null);
+
+        SolicitudNotificacionDto solicitudNotificacion = SolicitudNotificacionDto.builder()
+                .aliasConfig(aliasConfigNotificaciones)
+                .destinatarios(List.of(destinatario))
+                .codigoPlantilla(templateReservaCancelada)
+                .variables(urlVariables)
+                .prioridad(10)
+                .build();
+
+        notificationClient.enviarNotificacion(solicitudNotificacion);
+    }
+
     public ResumenReservacionDto obtenerResumenReservacionXMovimiento(String membresia, Integer movimiento) {
         return repository.spResvObtenerReservacionXMovimiento(membresia, movimiento)
                 .orElseThrow(() -> new IllegalArgumentException("No se encontró información para la reservación solicitada."));
-    }
-
-    public void actualizarReservacionPagada(String membresia, Integer consecutivo) {
-        repository.spResvActualizarReservacionPagada(membresia, consecutivo);
     }
 }

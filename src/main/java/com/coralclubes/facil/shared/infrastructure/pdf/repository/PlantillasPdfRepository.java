@@ -22,10 +22,11 @@ public class PlantillasPdfRepository {
             rs.getString("contenido")
     );
 
-    @Cacheable(value = "plantillas_pdf", key = "#codigo", unless = "#result == null or !#result.isPresent()")
-    public Optional<PlantillaPdfProjection> obtenerPorCodigo(String codigo) {
+    @Cacheable(value = "plantillas_pdf", key = "#codigo", unless = "#result == null")
+    public PlantillaPdfProjection obtenerPorCodigo(String codigo) {
         Map<String, Object> params = new HashMap<>();
         params.put("codigo", codigo);
-        return spExecutor.querySingle("sp_obtener_plantilla_por_codigo", params, mapper);
+        return spExecutor.querySingle("sp_obtener_plantilla_por_codigo", params, mapper)
+                .orElseThrow(() -> new RuntimeException("Plantilla PDF no encontrada para el código: " + codigo));
     }
 }
