@@ -2,12 +2,16 @@ package com.coralclubes.facil.modules.reservaciones.repository;
 
 import com.coralclubes.facil.modules.reservaciones.dto.projection.*;
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
+import com.coralclubes.facil.modules.reservaciones.dto.response.HotelesCardList;
 import com.coralclubes.facil.shared.domain.dto.ImagenDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.HotelDetalleDto;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import com.coralclubes.utils.json.JsonUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
@@ -72,11 +76,22 @@ public class HotelesRepository {
             .idTipo(rs.getObject("ID_TIPO") != null ? rs.getInt("ID_TIPO") : null)
             .build();
 
+    private final RowMapper<HotelesCardList> hotelesCardListRowMapper = (rs, rowNum) -> HotelesCardList.builder()
+            .id(rs.getInt("id"))
+            .nombre(rs.getString("nombre"))
+            .descripcion(rs.getString("descripcion"))
+            .portada_uuid(rs.getString("portada_uuid") != null ? UUID.fromString(rs.getString("portada_uuid")) : null)
+            .build();
+
 
     // =========================================================================
     // MÉTODOS DE ESCRITURA (Write / Upsert / Delete)
     // =========================================================================
 
+    @Caching(evict = {
+            @CacheEvict(value = "hotel_detalles", key = "#hotel.id()", condition = "#hotel.id() != null"),
+            @CacheEvict(value = "hoteles_cards", allEntries = true)
+    })
     public Optional<Integer> spResvGuardarHotel(HotelRequest hotel, String usuario) {
         Map<String, Object> params = new HashMap<>();
         params.put("IdHotel", hotel.id());
@@ -96,6 +111,7 @@ public class HotelesRepository {
         return spExecutor.querySingleLog("spResvGuardarHotel", params, scalarIntMapper, usuario, true, true);
     }
 
+    @CacheEvict(value = "hotel_caracteristicas", key = "#hotelId")
     public Optional<Integer> spResvGuardarCaracteristicasHotel(Integer hotelId, List<RelacionCaracteristicaRequest> caracteristicas, String usuario) {
         // Convertimos la lista de Java a String JSON para que el SP pueda leerla con OPENJSON
         String jsonCaracteristicas = JsonUtils.toJson(caracteristicas);
@@ -109,6 +125,10 @@ public class HotelesRepository {
         return spExecutor.querySingleLog("spResvGuardarCaracteristicasHotel", params, scalarIntMapper, usuario, false, true);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "hotel_imagenes", key = "#hotelId"),
+            @CacheEvict(value = "hoteles_cards", allEntries = true)
+    })
     public Optional<Integer> spResvGuardarImagenesHotel(Integer hotelId, List<ImagenRequest> imagenes, String usuario) {
         String jsonImagenes = JsonUtils.toJson(imagenes);
 
@@ -121,6 +141,10 @@ public class HotelesRepository {
         return spExecutor.querySingleLog("spResvGuardarImagenesHotel", params, scalarIntMapper, usuario, false, true);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "hotel_imagenes", key = "#hotelId"),
+            @CacheEvict(value = "hoteles_cards", allEntries = true)
+    })
     public void spResvEliminarImagenesHotel(Integer hotelId, List<EliminarImagenRequest> imagenes, String usuario) {
         String jsonImagenes = JsonUtils.toJson(imagenes);
 
@@ -132,6 +156,10 @@ public class HotelesRepository {
         spExecutor.executeLog("spResvEliminarImagenesHotel", params, usuario, false, true);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "hotel_imagenes", key = "#hotelId"),
+            @CacheEvict(value = "hoteles_cards", allEntries = true)
+    })
     public void spResvCambiarImagenPortadaHotel(Integer hotelId, UUID nuevaPortadaUuid, String usuario) {
         Map<String, Object> params = Map.of(
                 "HotelId", hotelId,
@@ -141,6 +169,12 @@ public class HotelesRepository {
         spExecutor.executeLog("spResvCambiarImagenPortadaHotel", params, usuario, false, false);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "hotel_detalles", key = "#hotelId"),
+            @CacheEvict(value = "hotel_imagenes", key = "#hotelId"),
+            @CacheEvict(value = "hotel_caracteristicas", key = "#hotelId"),
+            @CacheEvict(value = "hoteles_cards", allEntries = true)
+    })
     public void spResvDesactivarHotel(Integer hotelId, String usuario) {
         Map<String, Object> params = Map.of(
                 "HotelId", hotelId,
@@ -150,11 +184,17 @@ public class HotelesRepository {
         spExecutor.executeLog("spResvDesactivarHotel", params, usuario, true, true);
     }
 
+    @CacheEvict(value = "hoteles_cards", allEntries = true)
+    public void spResvReactivarHotel(Integer id) {
+        spExecutor.execute("spResvReactivarHotel", Map.of("id", id));
+    }
+
 
     // =========================================================================
     // MÉTODOS DE LECTURA (Read)
     // =========================================================================
 
+    @Cacheable(value = "hoteles_cards", key = "#idDesarrollo != null ? #idDesarrollo : 'todos'")
     public List<HotelCardDto> spResvObtenerHotelesCard(Integer idDesarrollo) {
         Map<String, Object> params = new HashMap<>();
         params.put("IdDesarrollo", idDesarrollo); // Puede ser null
@@ -162,15 +202,22 @@ public class HotelesRepository {
         return spExecutor.queryList("spResvObtenerHotelesCard", params, hotelCardMapper);
     }
 
+    @Cacheable(value = "hotel_detalles", key = "#idDesarrollo")
     public Optional<HotelDetalleDto> spResvObtenerHotelDetalles(Integer idDesarrollo) {
         return spExecutor.querySingle("spResvObtenerHotelDetalles", Map.of("IdDesarrollo", idDesarrollo), hotelDetalleMapper);
     }
 
+    @Cacheable(value = "hotel_imagenes", key = "#idDesarrollo")
     public List<ImagenDto> spResvObtenerHotelImagenes(Integer idDesarrollo) {
         return spExecutor.queryList("spResvObtenerHotelImagenes", Map.of("IdDesarrollo", idDesarrollo), imagenHotelMapper);
     }
 
+    @Cacheable(value = "hotel_caracteristicas", key = "#idHotel")
     public List<CaracteristicaDto> spResvObtenerCaracteristicasXHotel(Integer idHotel) {
         return spExecutor.queryList("spResvObtenerCaracteristicasXHotel", Map.of("IdHotel", idHotel), caracteristicaMapper);
+    }
+
+    public List<HotelesCardList> spResvObtenerHotelesDesactivados() {
+        return spExecutor.queryList("spResvObtenerHotelesDesactivados", Map.of(), hotelesCardListRowMapper);
     }
 }

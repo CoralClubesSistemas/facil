@@ -5,6 +5,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.request.*;
 import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.HotelCardUI;
 import com.coralclubes.facil.modules.reservaciones.dto.response.HotelDetalleDto;
+import com.coralclubes.facil.modules.reservaciones.dto.response.HotelesCardList;
 import com.coralclubes.facil.shared.domain.dto.ImagenResponse;
 import com.coralclubes.facil.modules.reservaciones.repository.HotelesRepository;
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.ServiceUnavailableException;
@@ -12,6 +13,8 @@ import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageCl
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaDto;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudDescargaBatchDto;
+import com.coralclubes.facil.shared.domain.dto.ImagenDto;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import com.coralclubes.responses.codes.GeneralResponseCode;
@@ -21,8 +24,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Servicio que maneja la lógica de negocio relacionada con los hoteles.
@@ -35,6 +40,7 @@ public class HotelesService {
     private final HotelesRepository repo;
     private final UserContext userContext;
     private final StorageClient storageClient;
+    private final StorageUrlsCacheService storageUrlsCacheService;
 
     @Value("${app.clients.storage.aliases.default}")
     private String aliasStorageDefault;
@@ -128,7 +134,7 @@ public class HotelesService {
 
         List<HotelCardUI> hotelesUi = hoteles.stream().map(hotel -> {
             var uuidPortada = hotel.uuidPortada();
-            String urlPortada = uuidPortada != null ? storageClient.obtenerUrlDescarga(uuidPortada) : null;
+            String urlPortada = uuidPortada != null ? storageUrlsCacheService.obtenerUrlImagen(uuidPortada) : null;
 
             List<CaracteristicaDto> caracteristicas = repo.spResvObtenerCaracteristicasXHotel(hotel.idDesarrollo());
 
@@ -165,10 +171,32 @@ public class HotelesService {
      * Obtiene la galería de imágenes (UUIDs y orden) de un hotel.
      */
     public ApiResponse<List<ImagenResponse>> obtenerHotelImagenes(Integer idDesarrollo) {
-        List<ImagenResponse> imgs = repo.spResvObtenerHotelImagenes(idDesarrollo).stream()
+        List<ImagenDto> dbImgs = repo.spResvObtenerHotelImagenes(idDesarrollo);
+
+        // extraemos el listado de uuids de las imagenes
+        List<UUID> uuids = dbImgs.stream()
+                .map(ImagenDto::uuid)
+                .filter(uuid -> uuid != null)
+                .toList();
+
+        // construimos un map de uuid -> url
+        Map<UUID, String> urlMap = new HashMap<>();
+        if (!uuids.isEmpty()) {
+            // ejecutamos una llamada batch para obtener todas las URLs de descarga en una sola consulta al microservicio de almacenamiento
+            var batchResult = storageUrlsCacheService.consultarArchivosBatch(new SolicitudDescargaBatchDto(uuids));
+            if (batchResult != null && batchResult.exitosos() != null) {
+                for (var info : batchResult.exitosos()) {
+                    if (info.uuid() != null && info.urlDescarga() != null) {
+                        urlMap.put(info.uuid(), info.urlDescarga());
+                    }
+                }
+            }
+        }
+
+        List<ImagenResponse> imgs = dbImgs.stream()
                 .map(img -> ImagenResponse.builder()
                         .idImagen(img.idImagen())
-                        .urlImagen(img.uuid() != null ? storageClient.obtenerUrlDescarga(img.uuid()) : null)
+                        .urlImagen(img.uuid() != null ? urlMap.get(img.uuid()) : null)
                         .uuid(img.uuid())
                         .esPortada(img.esPortada())
                         .orden(img.orden())
@@ -214,5 +242,25 @@ public class HotelesService {
         RespuestaCargaDto respuestaStorage = storageClient.solicitarUrlCarga(solicitudStorage);
 
         return ApiResponse.success("URL de carga generada exitosamente", respuestaStorage);
+    }
+
+    public List<HotelesCardList> obtenerHotelesDesactivados() {
+        return repo.spResvObtenerHotelesDesactivados().stream()
+                .map(hotel -> {
+                    var uuidPortada = hotel.portada_uuid();
+                    String urlPortada = uuidPortada != null ? storageUrlsCacheService.obtenerUrlImagen(uuidPortada) : null;
+
+                    return HotelesCardList.builder()
+                            .id(hotel.id())
+                            .nombre(hotel.nombre())
+                            .descripcion(hotel.descripcion())
+                            .portada_uuid(hotel.portada_uuid())
+                            .portada_url(urlPortada)
+                            .build();
+                }).toList();
+    }
+
+    public void reactivarHotel(Integer id) {
+        repo.spResvReactivarHotel(id);
     }
 }

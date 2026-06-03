@@ -4,10 +4,12 @@ import com.coralclubes.facil.modules.reservaciones.dto.request.*;
 import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.HotelCardUI;
 import com.coralclubes.facil.modules.reservaciones.dto.response.HotelDetalleDto;
+import com.coralclubes.facil.modules.reservaciones.dto.response.HotelesCardList;
 import com.coralclubes.facil.modules.reservaciones.service.HotelesService;
 import com.coralclubes.facil.shared.domain.dto.ImagenResponse;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
+import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,14 +29,15 @@ import java.util.List;
 public class HotelesAdminController {
 
     private final HotelesService service;
+    private final UserContext userContext;
 
     // =========================================================================
     // ENDPOINTS DE LECTURA (admin, equivalente a public)
     // =========================================================================
 
     @GetMapping("/all")
-    public ResponseEntity<ApiResponse<List<HotelCardUI>>> obtenerHotelesCard(
-            @RequestParam(required = false) Integer idDesarrollo) {
+    public ResponseEntity<ApiResponse<List<HotelCardUI>>> obtenerHotelesCard() {
+        Integer idDesarrollo = userContext.getIdDesarrollo();
         return ResponseEntity.ok(service.obtenerHotelesCard(idDesarrollo));
     }
 
@@ -55,6 +58,11 @@ public class HotelesAdminController {
     public ResponseEntity<ApiResponse<List<CaracteristicaDto>>> obtenerCaracteristicasXHotel(
             @RequestParam Integer idDesarrollo) {
         return ResponseEntity.ok(service.obtenerCaracteristicasXHotel(idDesarrollo));
+    }
+
+    @GetMapping("/desactivados")
+    public ResponseEntity<ApiResponse<List<HotelesCardList>>> obtenerHotelesDesactivados() {
+        return ResponseEntity.ok(ApiResponse.success(service.obtenerHotelesDesactivados()));
     }
 
     // =========================================================================
@@ -115,5 +123,13 @@ public class HotelesAdminController {
             @Valid @RequestBody SolicitarUrlRequest request) {
 
         return ResponseEntity.ok(service.obtenerUrlCargaImagen(request));
+    }
+
+    @PostMapping("reactivar")
+    @PreAuthorize("hasAuthority('AUTH_DHTL')")
+    public ResponseEntity<ApiResponse<Void>> reactivarHotel(
+            @RequestParam Integer idHotel) {
+        service.reactivarHotel(idHotel);
+        return ResponseEntity.ok(ApiResponse.empty());
     }
 }

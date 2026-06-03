@@ -39,7 +39,7 @@ public class RecepcionService {
         Integer desarrolloId = userContext.getIdDesarrollo();
 
         if (desarrolloId == null || desarrolloId <= 0) {
-            throw new IllegalArgumentException("El ID del desarrollo es obligatorio para consultar la recepción.");
+            throw new IllegalArgumentException("El desarrollo asignado a su usuario no permite el acceso a esta información. Contacte al administrador del sistema.");
         }
 
         List<OperacionDiaDto> operaciones = repository.obtenerOperacionesDelDia(desarrolloId);
@@ -50,7 +50,7 @@ public class RecepcionService {
         Integer desarrolloId = userContext.getIdDesarrollo();
 
         if (desarrolloId == null || desarrolloId <= 0) {
-            throw new IllegalArgumentException("El ID del desarrollo es obligatorio.");
+            throw new IllegalArgumentException("El desarrollo asignado a su usuario no permite el acceso a esta información. Contacte al administrador del sistema.");
         }
 
         List<EstadisticaDelDiaDto> estadisticas = repository.obtenerEstadisticasDelDia(desarrolloId);

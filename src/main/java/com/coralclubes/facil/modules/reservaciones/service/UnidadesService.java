@@ -12,6 +12,8 @@ import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageCl
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaDto;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudDescargaBatchDto;
+import com.coralclubes.facil.shared.domain.dto.ImagenDto;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
@@ -22,8 +24,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Servicio central para la gestión de Unidades (Lógicas y Físicas).
@@ -36,6 +40,7 @@ public class UnidadesService {
     private final UnidadesRepository tipoUnidadRepo;
     private final UserContext userContext;
     private final StorageClient storageClient;
+    private final StorageUrlsCacheService storageUrlsCacheService;
     private final BusinessLogger businessLogger;
     private final ObjectMapper objectMapper;
     private final AmaDeLlavesService amaDeLlavesService;
@@ -114,7 +119,7 @@ public class UnidadesService {
 
         List<TipoUnidadUI> ui = lista.stream().map(unidad -> {
             var uuidPortada = unidad.uuidPortada();
-            String urlPortada = uuidPortada != null ? storageClient.obtenerUrlDescarga(uuidPortada) : null;
+            String urlPortada = uuidPortada != null ? storageUrlsCacheService.obtenerUrlImagen(uuidPortada) : null;
 
             List<CaracteristicaDto> caracteristicas = tipoUnidadRepo.spResvObtenerCaracteristicasXTipoUnidad(unidad.idTipoUnidad());
 
@@ -149,10 +154,29 @@ public class UnidadesService {
      * Obtiene la galería de imágenes (UUIDs y orden) de un tipo de unidad.
      */
     public ApiResponse<List<ImagenResponse>> obtenerTipoUnidadImagenes(Integer idTipoUnidad) {
-        List<ImagenResponse> imagenes = tipoUnidadRepo.spResvObtenerTipoUnidadImagenes(idTipoUnidad).stream()
+        List<ImagenDto> dbImgs = tipoUnidadRepo.spResvObtenerTipoUnidadImagenes(idTipoUnidad);
+
+        List<UUID> uuids = dbImgs.stream()
+                .map(ImagenDto::uuid)
+                .filter(uuid -> uuid != null)
+                .toList();
+
+        Map<UUID, String> urlMap = new HashMap<>();
+        if (!uuids.isEmpty()) {
+            var batchResult = storageUrlsCacheService.consultarArchivosBatch(new SolicitudDescargaBatchDto(uuids));
+            if (batchResult != null && batchResult.exitosos() != null) {
+                for (var info : batchResult.exitosos()) {
+                    if (info.uuid() != null && info.urlDescarga() != null) {
+                        urlMap.put(info.uuid(), info.urlDescarga());
+                    }
+                }
+            }
+        }
+
+        List<ImagenResponse> imagenes = dbImgs.stream()
                 .map(img -> ImagenResponse.builder()
                         .idImagen(img.idImagen())
-                        .urlImagen(img.uuid() != null ? storageClient.obtenerUrlDescarga(img.uuid()) : null)
+                        .urlImagen(img.uuid() != null ? urlMap.get(img.uuid()) : null)
                         .uuid(img.uuid())
                         .esPortada(img.esPortada())
                         .orden(img.orden())
@@ -248,6 +272,34 @@ public class UnidadesService {
         TipoUnidadDetalles detalles = tipoUnidadRepo.spResvObtenerDetalleTipoUnidad(idTipoUnidad)
                 .orElseThrow(() -> new ServiceUnavailableException("No se pudieron obtener los detalles del tipo de unidad."));
 
+        List<ImagenDto> dbImgs = detalles.imagenesUUID();
+        List<UUID> uuids = dbImgs.stream()
+                .map(ImagenDto::uuid)
+                .filter(uuid -> uuid != null)
+                .toList();
+
+        Map<UUID, String> urlMap = new HashMap<>();
+        if (!uuids.isEmpty()) {
+            var batchResult = storageUrlsCacheService.consultarArchivosBatch(new SolicitudDescargaBatchDto(uuids));
+            if (batchResult != null && batchResult.exitosos() != null) {
+                for (var info : batchResult.exitosos()) {
+                    if (info.uuid() != null && info.urlDescarga() != null) {
+                        urlMap.put(info.uuid(), info.urlDescarga());
+                    }
+                }
+            }
+        }
+
+        List<ImagenResponse> imagenes = dbImgs.stream()
+                .map(img -> ImagenResponse.builder()
+                        .idImagen(img.idImagen())
+                        .urlImagen(img.uuid() != null ? urlMap.get(img.uuid()) : null)
+                        .uuid(img.uuid())
+                        .esPortada(img.esPortada())
+                        .orden(img.orden())
+                        .build())
+                .toList();
+
         TipoUnidadUIDetalles uiDetalles = TipoUnidadUIDetalles.builder()
                 .rhdtId(detalles.rhdtId())
                 .nombreTipoUnidad(detalles.nombreTipoUnidad())
@@ -257,13 +309,7 @@ public class UnidadesService {
                 .calificacion(detalles.calificacion())
                 .nombreDesarrollo(detalles.nombreDesarrollo())
                 .caracteristicas(detalles.caracteristicas())
-                .imagenes(detalles.imagenesUUID().stream().map(img -> ImagenResponse.builder()
-                        .idImagen(img.idImagen())
-                        .urlImagen(img.uuid() != null ? storageClient.obtenerUrlDescarga(img.uuid()) : null)
-                        .uuid(img.uuid())
-                        .esPortada(img.esPortada())
-                        .orden(img.orden())
-                        .build()).toList())
+                .imagenes(imagenes)
                 .build();
 
         return ApiResponse.success(uiDetalles);

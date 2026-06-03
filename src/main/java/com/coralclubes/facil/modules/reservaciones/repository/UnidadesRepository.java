@@ -9,6 +9,9 @@ import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExe
 import com.coralclubes.utils.json.JsonUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import com.coralclubes.dto.SelectGenerico;
@@ -150,6 +153,11 @@ public class UnidadesRepository {
     // MÉTODOS DE ESCRITURA (Write)
     // =========================================================================
 
+    @Caching(evict = {
+            @CacheEvict(value = "tipo_unidad_detalles", key = "#request.idTipoUnidad()", condition = "#request.idTipoUnidad() != null"),
+            @CacheEvict(value = "detalle_tipo_unidad", key = "#request.idTipoUnidad()", condition = "#request.idTipoUnidad() != null"),
+            @CacheEvict(value = "tipos_unidad_cards", allEntries = true)
+    })
     public Optional<Integer> spResvGuardarTipoUnidad(TipoUnidadRequest request, String usuario) {
         Map<String, Object> params = new HashMap<>();
         params.put("IdTipoUnidad", request.idTipoUnidad());
@@ -164,24 +172,43 @@ public class UnidadesRepository {
         return spExecutor.querySingleLog("spResvGuardarTipoUnidad", params, scalarIntMapper, usuario, true, true);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "tipo_unidad_caracteristicas", key = "#tipoUnidadId"),
+            @CacheEvict(value = "detalle_tipo_unidad", key = "#tipoUnidadId")
+    })
     public Optional<Integer> spResvGuardarCaracteristicasTipoUnidad(Integer tipoUnidadId, List<RelacionCaracteristicaRequest> caracteristicas, String usuario) {
         return spExecutor.querySingleLog("spResvGuardarCaracteristicasTipoUnidad",
                 Map.of("TipoUnidadId", tipoUnidadId, "Caracteristicas", JsonUtils.toJson(caracteristicas), "Usuario", usuario),
                 scalarIntMapper, usuario, false, true);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "tipo_unidad_imagenes", key = "#tipoUnidadId"),
+            @CacheEvict(value = "detalle_tipo_unidad", key = "#tipoUnidadId"),
+            @CacheEvict(value = "tipos_unidad_cards", allEntries = true)
+    })
     public Optional<Integer> spResvGuardarImagenesTipoUnidad(Integer tipoUnidadId, List<ImagenRequest> imagenes, String usuario) {
         return spExecutor.querySingleLog("spResvGuardarImagenesTipoUnidad",
                 Map.of("TipoUnidadId", tipoUnidadId, "ImagenesJson", JsonUtils.toJson(imagenes), "Usuario", usuario),
                 scalarIntMapper, usuario, false, true);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "tipo_unidad_imagenes", key = "#tipoUnidadId"),
+            @CacheEvict(value = "detalle_tipo_unidad", key = "#tipoUnidadId"),
+            @CacheEvict(value = "tipos_unidad_cards", allEntries = true)
+    })
     public void spResvEliminarImagenesTipoUnidad(Integer tipoUnidadId, List<EliminarImagenRequest> imagenesAEliminar, String usuario) {
         spExecutor.executeLog("spResvEliminarImagenesTipoUnidad",
                 Map.of("TipoUnidadId", tipoUnidadId, "ImagenesJson", JsonUtils.toJson(imagenesAEliminar)),
                 usuario, false, true);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "tipo_unidad_imagenes", key = "#tipoUnidadId"),
+            @CacheEvict(value = "detalle_tipo_unidad", key = "#tipoUnidadId"),
+            @CacheEvict(value = "tipos_unidad_cards", allEntries = true)
+    })
     public void spResvCambiarImagenPortadaTipoUnidad(Integer tipoUnidadId, UUID nuevaPortadaUuid, String usuario) {
         spExecutor.executeLog("spResvCambiarImagenPortadaTipoUnidad",
                 Map.of("TipoUnidadId", tipoUnidadId,
@@ -192,6 +219,13 @@ public class UnidadesRepository {
                 false);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "tipo_unidad_detalles", key = "#tipoUnidadId"),
+            @CacheEvict(value = "tipo_unidad_imagenes", key = "#tipoUnidadId"),
+            @CacheEvict(value = "tipo_unidad_caracteristicas", key = "#tipoUnidadId"),
+            @CacheEvict(value = "detalle_tipo_unidad", key = "#tipoUnidadId"),
+            @CacheEvict(value = "tipos_unidad_cards", allEntries = true)
+    })
     public void spResvDesactivarTipoUnidad(Integer tipoUnidadId, String usuario) {
         spExecutor.executeLog("spResvDesactivarTipoUnidad",
                 Map.of("TipoUnidadId", tipoUnidadId, "Usuario", usuario),
@@ -203,18 +237,22 @@ public class UnidadesRepository {
     // MÉTODOS DE LECTURA (Read)
     // =========================================================================
 
+    @Cacheable(value = "tipos_unidad_cards", key = "#idDesarrollo != null ? #idDesarrollo : 'todos'")
     public List<TipoUnidadCardDto> spResvObtenerTiposUnidadCard(Integer idDesarrollo) {
         return spExecutor.queryList("spResvObtenerTiposUnidadCard", Map.of("IdDesarrollo", idDesarrollo), tipoUnidadCardMapper);
     }
 
+    @Cacheable(value = "tipo_unidad_detalles", key = "#idTipoUnidad")
     public Optional<TipoUnidadDetalleDto> spResvObtenerTipoUnidadDetalles(Integer idTipoUnidad) {
         return spExecutor.querySingle("spResvObtenerTipoUnidadDetalles", Map.of("IdTipoUnidad", idTipoUnidad), tipoUnidadDetalleMapper);
     }
 
+    @Cacheable(value = "tipo_unidad_imagenes", key = "#idTipoUnidad")
     public List<ImagenDto> spResvObtenerTipoUnidadImagenes(Integer idTipoUnidad) {
         return spExecutor.queryList("spResvObtenerTipoUnidadImagenes", Map.of("IdTipoUnidad", idTipoUnidad), imagenUnidadMapper);
     }
 
+    @Cacheable(value = "tipo_unidad_caracteristicas", key = "#idTipoUnidad")
     public List<CaracteristicaDto> spResvObtenerCaracteristicasXTipoUnidad(Integer idTipoUnidad) {
         return spExecutor.queryList("spResvObtenerCaracteristicasXTipoUnidad", Map.of("IdTipoUnidad", idTipoUnidad), caracteristicaMapper);
     }
@@ -272,6 +310,7 @@ public class UnidadesRepository {
         return spExecutor.queryList("spResvObtenerCatalogoPosiblesPadres", params, posiblesPadresMapper);
     }
 
+    @Cacheable(value = "detalle_tipo_unidad", key = "#idTipoUnidad")
     public Optional<TipoUnidadDetalles> spResvObtenerDetalleTipoUnidad(Integer idTipoUnidad) {
         return spExecutor.querySingle("spResvObtenerDetalleTipoUnidad", Map.of("RhdtId", idTipoUnidad), detallesUIRowMapper);
     }

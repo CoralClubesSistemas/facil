@@ -4,7 +4,7 @@ import com.coralclubes.responses.BaseResponseCode;
 
 public enum LoginResponseCode implements BaseResponseCode {
     LOGIN_AUTHORIZATION_SUCCESS("LOGIN_AUTHORIZATION_SUCCESS", "Authorization successful", 200),
-    LOGIN_NOT_PERMITIONS("LOGIN_NOT_PERMITIONS", "The user does not have permissions for this action", 403),
+    LOGIN_NOT_PERMITIONS("LOGIN_NOT_PERMITIONS", "El usuario no cuenta con los permisos necesarios para realizar esta accion", 403),
     LOGIN_MODULES_CONSTRAINT("LOGIN_MODULES_CONSTRAINT", "Los modulos del usuario han sido construidos correctamente", 200),
     NO_WEB_REGISTRATION("NO_WEB_REGISTRATION", "El usuario no tiene registro web", 400),
     LOGIN_AUTHORIZATION_FAILURE("LOGIN_AUTHORIZATION_FAILURE", "Authorization failed", 401);
