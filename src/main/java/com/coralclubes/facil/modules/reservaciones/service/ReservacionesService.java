@@ -4,6 +4,10 @@ import com.coralclubes.facil.modules.clientes.dto.request.ConsumoPuntosRequest;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleDto;
 import com.coralclubes.facil.modules.clientes.dto.response.PuntosMembresia;
 import com.coralclubes.facil.modules.clientes.service.PuntosService;
+import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaMovimientoRequest;
+import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaRequest;
+import com.coralclubes.facil.modules.cobranza.dto.response.ConfirmacionReservaResponse;
+import com.coralclubes.facil.modules.cobranza.service.CobranzaService;
 import com.coralclubes.facil.modules.reservaciones.dto.projection.DisponibilidadUnidadProjection;
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
 import com.coralclubes.facil.modules.reservaciones.dto.response.*;
@@ -51,6 +55,8 @@ public class ReservacionesService {
     private final GeneradorDocumentosService generadorDocumentosService;
     private final NotificationClient notificationClient;
     private final AmaDeLlavesService amaDeLlavesService;
+
+    private final CobranzaService cobranzaService;
 
     @Value("${app.clients.notifications.templates.reserva-creada}")
     private String templateReservaCreada;
@@ -183,6 +189,40 @@ public class ReservacionesService {
     // =========================================================================
     // 3. CONFIRMACIÓN FINAL DE RESERVACIÓN
     // =========================================================================
+
+    @Transactional
+    public ApiResponse<ConfirmacionReservaResponse> confirmarReservacionConOrden(ConfirmarReservaRequest request) {
+        List<Integer> foliosGenerados = confirmarReservacion(request).data();
+
+        // consultamos el listado de movimientos generados para estos folios
+        List<GenerarOrdenCobranzaMovimientoRequest> movimientos = foliosGenerados.stream()
+                .flatMap(folio -> repository.obtenerCargosReservacion(request.membresia(), folio).stream()
+                        .map(cargo -> {
+                            return GenerarOrdenCobranzaMovimientoRequest.builder()
+                                    .idMovimiento(cargo.idMovimiento())
+                                    .montoCapital(cargo.importePendiente())
+                                    .montoInteres(BigDecimal.ZERO) // Por ahora no manejamos intereses en la reserva, solo el capital
+                                    .interesPago(BigDecimal.ZERO) // El cliente no paga intereses, solo el capital
+                                    .interesesBonificados(BigDecimal.ZERO)
+                                    .totalDescuento(BigDecimal.ZERO)
+                                    .justificacionDescuento(null)
+                                    .usuarioAutoriza(userContext.getUsername())
+                                    .build();
+                        }))
+                .toList();
+
+        // construimos la request de creacion de orden
+        var ordenRequest = GenerarOrdenCobranzaRequest.builder()
+                .membresia(request.membresia())
+                .movimientos(movimientos)
+                .agregarIva(false)
+                .ivaIncluido(false)
+                .build();
+
+        UUID uuidOrden = cobranzaService.generarOrdenCobranza(ordenRequest, userContext.getUsername()).data().ordenUuid();
+
+        return ApiResponse.success(new ConfirmacionReservaResponse(foliosGenerados, uuidOrden));
+    }
 
     @Transactional
     public ApiResponse<List<Integer>> confirmarReservacion(ConfirmarReservaRequest request) {

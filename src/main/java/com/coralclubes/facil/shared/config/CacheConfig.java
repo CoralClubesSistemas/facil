@@ -54,5 +54,19 @@ public class CacheConfig {
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(config)
                 .build();
+     }
+
+    @Bean
+    public org.springframework.boot.CommandLineRunner clearCacheOnStartup(RedisCacheManager cacheManager) {
+        return args -> {
+            try {
+                org.springframework.cache.Cache cache = cacheManager.getCache("plantillas_pdf");
+                if (cache != null) {
+                    cache.clear();
+                }
+            } catch (Exception e) {
+                // Silently ignore if Redis is not running or connection fails (e.g. in test envs)
+            }
+        };
     }
 }

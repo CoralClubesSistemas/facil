@@ -22,7 +22,6 @@ public class PlantillasPdfRepository {
             rs.getString("contenido")
     );
 
-    @Cacheable(value = "plantillas_pdf", key = "#codigo", unless = "#result == null")
     public PlantillaPdfProjection obtenerPorCodigo(String codigo) {
         Map<String, Object> params = new HashMap<>();
         params.put("codigo", codigo);

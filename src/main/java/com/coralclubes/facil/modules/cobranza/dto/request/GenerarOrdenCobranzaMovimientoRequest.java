@@ -3,9 +3,11 @@ package com.coralclubes.facil.modules.cobranza.dto.request;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.Builder;
 
 import java.math.BigDecimal;
 
+@Builder
 public record GenerarOrdenCobranzaMovimientoRequest(
         @NotNull Integer idMovimiento,
         @NotNull @DecimalMin(value = "0.00") BigDecimal montoCapital,

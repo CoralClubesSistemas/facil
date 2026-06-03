@@ -9,6 +9,7 @@ public record ConfirmarReservaRequest(
         @NotNull(message = "El identificador del carrito es obligatorio") UUID groupId,
         @NotBlank(message = "El nombre de la reserva es obligatorio") String nombreReserva,
         @NotBlank(message = "El email principal es obligatorio") String email,
+        String membresia,
         String email2,
         @NotBlank(message = "El teléfono es obligatorio") String telefono1,
         String telefono2,

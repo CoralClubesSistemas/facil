@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.reservaciones.controller.admin;
 
 import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleDto;
+import com.coralclubes.facil.modules.cobranza.dto.response.ConfirmacionReservaResponse;
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
 import com.coralclubes.facil.modules.reservaciones.dto.response.DisponibilidadUnidadDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.ResumenCheckoutResponse;
@@ -70,5 +71,13 @@ public class ReservacionesAdminController {
             @Valid @RequestBody ConfirmarReservaRequest request) {
 
         return ResponseEntity.ok(service.confirmarReservacion(request));
+    }
+
+    @PostMapping("/confirmar-orden")
+    @PreAuthorize("hasAuthority('MOD_SMNURESERVACIONES')")
+    public ResponseEntity<ApiResponse<ConfirmacionReservaResponse>> confirmarReservacionConOrden(
+            @Valid @RequestBody ConfirmarReservaRequest request) {
+
+        return ResponseEntity.ok(service.confirmarReservacionConOrden(request));
     }
 }
