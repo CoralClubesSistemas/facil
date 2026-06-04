@@ -1,9 +1,11 @@
 package com.coralclubes.facil.modules.reservaciones.service;
 
-import com.coralclubes.facil.modules.clientes.dto.request.ConsumoPuntosRequest;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleDto;
 import com.coralclubes.facil.modules.clientes.dto.response.PuntosMembresia;
 import com.coralclubes.facil.modules.clientes.service.PuntosService;
+import com.coralclubes.facil.shared.events.dto.ConsumoPuntosReservacionEvent;
+import com.coralclubes.facil.shared.events.dto.ReservacionConfirmadaEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaMovimientoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.ConfirmacionReservaResponse;
@@ -52,23 +54,17 @@ public class ReservacionesService {
     private final PuntosService puntosService;
     private final BusinessLogger businessLogger;
 
-    private final GeneradorDocumentosService generadorDocumentosService;
+    private final ApplicationEventPublisher eventPublisher;
     private final NotificationClient notificationClient;
     private final AmaDeLlavesService amaDeLlavesService;
 
     private final CobranzaService cobranzaService;
-
-    @Value("${app.clients.notifications.templates.reserva-creada}")
-    private String templateReservaCreada;
 
     @Value("${app.clients.notifications.aliases.default}")
     private String aliasConfigNotificaciones;
 
     @Value("${app.clients.notifications.templates.reserva-cancelada}")
     private String templateReservaCancelada;
-
-    @Value("${app.clients.notifications.aliases.aws-ses}")
-    private String aliasAwsSes;
 
     // =========================================================================
     // 1. GESTIÓN DE INVENTARIO Y DISPONIBILIDAD
@@ -272,7 +268,7 @@ public class ReservacionesService {
         }
 
         // ====================================================================
-        // 6. CONSUMIR PUNTOS A TRAVÉS DEL MÓDULO DE CLIENTES
+        // 6. PUBLICAR EVENTO DE CONSUMO DE PUNTOS
         // ====================================================================
         if (request.rrtIdsPagoPuntos() != null && !request.rrtIdsPagoPuntos().isEmpty()) {
 
@@ -284,107 +280,64 @@ public class ReservacionesService {
                     Integer desarrolloId = contexto.getIdDesarrollo();
 
                     if (desarrolloId != null) {
-                        // Construimos el DTO agnóstico para enviarlo a Clientes
-                        ConsumoPuntosRequest peticionPuntos = ConsumoPuntosRequest.builder()
+                        ConsumoPuntosReservacionEvent consumoPuntosEvent = ConsumoPuntosReservacionEvent.builder()
                                 .membresia(contexto.getMembresia())
                                 .desarrolloId(desarrolloId)
                                 .totalPuntos(opcion.costoTotalPuntos())
-
-                                // Asignamos el 100% de los puntos al rubro de Hospedaje
-                                .puntosHospedaje(opcion.costoTotalPuntos())
-                                .puntosInstalaciones(0)
-                                .puntosCampoGolf(0)
-
-                                .idMovimiento(folioPrincipal) // Enlazamos con la reserva que acaba de nacer
+                                .idMovimiento(folioPrincipal)
                                 .descripcion("RESERVA CON PUNTOS - " + opcion.nombrePromocion())
                                 .usuario(usuario)
                                 .build();
 
-                        // Delegamos el descuento de puntos
-                        puntosService.consumirPuntos(peticionPuntos);
+                        // Publicamos el evento
+                        eventPublisher.publishEvent(consumoPuntosEvent);
                     }
                 }
             }
         }
 
+        // ====================================================================
+        // 7. PUBLICAR EVENTO DE RESERVACIÓN CONFIRMADA (POST-PROCESAMIENTO ASÍNCRONO)
+        // ====================================================================
         try {
-            // Calculamos matemáticamente el importe final que verá en su recibo
             BigDecimal subtotal = listaDetalles.stream()
                     .map(d -> d.importeOriginal().subtract(d.descuento()))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            generarYEnviarCartaOcupacion(request, contexto, consecutivosGenerados, subtotal);
+            List<ReservacionConfirmadaEvent.HabitacionInfo> habitacionesEvent = new ArrayList<>();
+            for (int i = 0; i < contexto.getItems().size(); i++) {
+                var item = contexto.getItems().get(i);
+                int personas = (request.totalPersonas() != null && i < request.totalPersonas().size()) ? request.totalPersonas().get(i) : 2;
+                habitacionesEvent.add(new ReservacionConfirmadaEvent.HabitacionInfo(
+                        item.getTipoHabitacion() != null ? item.getTipoHabitacion() : "Habitación Estándar",
+                        personas
+                ));
+            }
+
+            ReservacionConfirmadaEvent reservacionConfirmadaEvent = ReservacionConfirmadaEvent.builder()
+                    .nombreReserva(request.nombreReserva())
+                    .email(request.email())
+                    .email2(request.email2())
+                    .peticionEspecial(request.peticionEspecial())
+                    .membresia(contexto.getMembresia())
+                    .fechaEntrada(contexto.getFechaEntrada())
+                    .fechaSalida(contexto.getFechaSalida())
+                    .desarrollo(contexto.getDesarrollo())
+                    .subtotal(subtotal)
+                    .foliosGenerados(consecutivosGenerados)
+                    .habitaciones(habitacionesEvent)
+                    .build();
+
+            eventPublisher.publishEvent(reservacionConfirmadaEvent);
         } catch (Exception e) {
-            businessLogger.error("SYSTEM", "Error al generar o enviar la Carta de Ocupación para la reserva con folio principal {}: {}", folioPrincipal, e.getMessage());
+            businessLogger.error("SYSTEM", "Error al publicar el evento de reservación confirmada para folio principal {}: {}", folioPrincipal, e.getMessage());
         }
 
         // 7. Retornamos la LISTA COMPLETA de folios
         return ApiResponse.success("Reservaciones generadas con éxito.", consecutivosGenerados);
     }
 
-    private void generarYEnviarCartaOcupacion(
-            ConfirmarReservaRequest request,
-            ReservacionContexto contexto,
-            List<Integer> foliosGenerados,
-            BigDecimal importeTotal
-    ) {
 
-        // 1. Formatear la lista de habitaciones para el DTO del PDF
-        List<DatosCartaOcupacionDto.HabitacionCartaDto> habitacionesPdf = new ArrayList<>();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
-        for (int i = 0; i < contexto.getItems().size(); i++) {
-            var item = contexto.getItems().get(i);
-            int personas = (request.totalPersonas() != null && i < request.totalPersonas().size()) ? request.totalPersonas().get(i) : 2;
-
-            habitacionesPdf.add(DatosCartaOcupacionDto.HabitacionCartaDto.builder()
-                    .tipoHabitacion(item.getTipoHabitacion() != null ? item.getTipoHabitacion() : "Habitación Estándar")
-                    .totalPax(personas)
-                    .build());
-        }
-
-        String foliosStr = foliosGenerados.toString().replace("[", "").replace("]", "");
-
-        // 2. Construir DTO del Generador
-        DatosCartaOcupacionDto datosPdf = DatosCartaOcupacionDto.builder()
-                .fechaEmision(LocalDate.now().format(formatter))
-                .titular(request.nombreReserva())
-                .membresia(contexto.getMembresia() != null ? contexto.getMembresia() : "PÚBLICO GENERAL")
-                .foliosReservacion(foliosStr)
-                .habitaciones(habitacionesPdf)
-                .observaciones(request.peticionEspecial())
-                .importeTotal(importeTotal)
-                .fechaEntrada(contexto.getFechaEntrada().format(formatter))
-                .fechaSalida(contexto.getFechaSalida().format(formatter))
-                .desarrollo(contexto.getDesarrollo())
-                .build();
-
-        // 3. Llamar al Generador de Documentos (Pebble -> PDF)
-        GeneradorDocumentosService.DocumentoCartaOcupacion doc = generadorDocumentosService.generarCartaOcupacion(datosPdf);
-
-        // 4. Preparar Destinatarios
-        List<String> destinatarios = new ArrayList<>();
-        destinatarios.add(request.email());
-        if (request.email2() != null && !request.email2().isBlank()) {
-            destinatarios.add(request.email2());
-        }
-
-        // 5. Construir Solicitud a Coral Notificaciones
-        SolicitudNotificacionDto solicitudNotificacion = SolicitudNotificacionDto.builder()
-                .aliasConfig(aliasAwsSes)
-                .destinatarios(destinatarios)
-                .codigoPlantilla(templateReservaCreada)
-                .remitenteOverride("reservaciones@lvivardev.com")
-                .variables(Map.of(
-                        "nombreUsuario", request.nombreReserva(),
-                        "numeroReserva", foliosStr
-                ))
-                .prioridad(10)
-                .build();
-
-        // 6. Enviar por correo con adjunto directo
-        notificationClient.enviarNotificacionConAdjuntos(solicitudNotificacion, Map.of(doc.nombreArchivo(), doc.pdfBytes()));
-    }
 
     // =========================================================================
     // 4. MÉTODOS PRIVADOS
