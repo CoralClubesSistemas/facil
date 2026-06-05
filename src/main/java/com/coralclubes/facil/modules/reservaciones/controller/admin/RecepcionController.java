@@ -8,10 +8,12 @@ import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/admin/recepcion")
@@ -139,6 +141,15 @@ public class RecepcionController {
         String usuario = userContext.getUsername();
 
         var response = recepcionService.cancelarReservacion(request, usuario);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/generar-orden-adeudo")
+    @PreAuthorize("hasAuthority('MOD_SMNURESERVACIONES')")
+    public ResponseEntity<ApiResponse<UUID>> generarOrdenCobranzaSaldosPendientes(
+            @RequestBody ReservacionInfoRequest request
+    ) {
+        ApiResponse<UUID> response = ApiResponse.success(recepcionService.generarOrdenSaldosPendientes(request.membresia(), request.folio()));
         return ResponseEntity.ok(response);
     }
 }

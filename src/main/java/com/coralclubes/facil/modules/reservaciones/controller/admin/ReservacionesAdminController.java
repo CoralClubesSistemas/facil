@@ -6,6 +6,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.request.*;
 import com.coralclubes.facil.modules.reservaciones.dto.response.DisponibilidadUnidadDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.ResumenCheckoutResponse;
 import com.coralclubes.facil.modules.reservaciones.service.ReservacionesService;
+import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
 import com.coralclubes.facil.shared.utils.ClientIpUtil;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,6 +26,7 @@ public class ReservacionesAdminController {
 
     private final ReservacionesService service;
     private final ClientIpUtil clientIpUtil;
+    private final UserContext userContext;
 
     @PostMapping("/buscar-disponibilidad")
     @PreAuthorize("hasAuthority('MOD_SMNURESERVACIONES')")
@@ -79,5 +81,14 @@ public class ReservacionesAdminController {
             @Valid @RequestBody ConfirmarReservaRequest request) {
 
         return ResponseEntity.ok(service.confirmarReservacionConOrden(request));
+    }
+
+    @PostMapping("/crear-membresia-externo")
+    @PreAuthorize("hasAuthority('MOD_SMNURESERVACIONES')")
+    public ResponseEntity<ApiResponse<String>> crearMembresiaExterno(
+            @Valid @RequestBody CrearMembresiaExternoRequest request) {
+        String usuario = userContext.getUsername();
+
+        return ResponseEntity.ok(service.crearMembresiaExterno(request, usuario));
     }
 }

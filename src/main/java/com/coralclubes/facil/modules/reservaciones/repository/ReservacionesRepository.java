@@ -576,4 +576,23 @@ public class ReservacionesRepository {
 
         spExecutor.executeLog("spResvCancelarReservacion", params);
     }
+
+    public String spResvCrearMembresiaExterno(CrearMembresiaExternoRequest request, String usuario) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("desarrollo", request.desarrollo());
+        params.put("nombre", request.nombre());
+        params.put("segundo_nombre", request.segundoNombre());
+        params.put("apellido_paterno", request.apellidoPaterno());
+        params.put("apellido_materno", request.apellidoMaterno());
+        params.put("email_principal", request.emailPrincipal());
+        params.put("telefono_principal", request.telefonoPrincipal());
+        params.put("email_secundario", request.emailSecundario());
+        params.put("telefono_secundario", request.telefonoSecundario());
+        params.put("usuario", usuario);
+
+        RowMapper<String> mapper = (rs, rowNum) -> rs.getString("MembresiaReserva");
+
+        return spExecutor.querySingle("spResvCrearMembresiaExterno", params, mapper)
+                .orElseThrow(() -> new RuntimeException("Error en base de datos: No se generó la membresía."));
+    }
 }

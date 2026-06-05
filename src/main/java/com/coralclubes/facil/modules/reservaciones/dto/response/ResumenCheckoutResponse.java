@@ -7,12 +7,16 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ResumenCheckoutResponse {
+
+    private UUID uuid;
+    private String membresia;
 
     private List<ItemCheckoutDto> habitaciones;
     private ResumenFinancieroDto resumen;
