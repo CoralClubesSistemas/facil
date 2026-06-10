@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -100,5 +101,9 @@ public class CatalogosRepository {
 
     public List<SelectGenerico<Integer>> spResvCatalogoCargosHabitacion(String membresia) {
         return spExecutor.queryList("spResvCatalogoCargosHabitacion", Map.of("Membresia", membresia), selectGenericoMapper);
+    }
+
+    public List<SelectGenerico<Integer>> spResvCatalogoOtas() {
+        return spExecutor.queryList("spResvCatalogoOtas", Map.of(), selectGenericoMapper);
     }
 }

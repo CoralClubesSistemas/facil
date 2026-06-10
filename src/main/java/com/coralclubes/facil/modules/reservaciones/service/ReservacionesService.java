@@ -596,10 +596,10 @@ public class ReservacionesService {
 
         repository.transferirUnidad(request, usuario);
 
-        businessLogger.info(usuario, "Transferencia de habitación realizada para Membresía: {}, Consecutivo: {}, Nuevo RHDT ID: {}, Nuevo RUN ID: {}, Importe Diferencia: {}",
-                request.membresia(), request.consecutivo(), request.nuevoRhdtId(), request.nuevoRunId(), request.importeDiferencia());
+        businessLogger.info(usuario, "Transferencia de habitación realizada para Membresía: {}, Consecutivo: {}, Nuevo RHDT ID: {}, Nuevo RUN ID: {}, Importe Diferencia: {}, Marcar Unidad Anterior para Limpieza: {}",
+                request.membresia(), request.consecutivo(), request.nuevoRhdtId(), request.nuevoRunId(), request.importeDiferencia(), request.limpiarUnidadAnterior());
 
-        if (detalle.idUnidadFisica() != null) {
+        if (detalle.idUnidadFisica() != null && request.limpiarUnidadAnterior()) {
             amaDeLlavesService.crearTareaYNotificar(
                     detalle.idUnidadFisica(),
                     detalle.numeroUnidad(),

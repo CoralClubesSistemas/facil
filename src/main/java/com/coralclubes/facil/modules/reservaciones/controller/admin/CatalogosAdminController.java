@@ -110,4 +110,9 @@ public class CatalogosAdminController {
             @RequestParam String membresia) {
         return ResponseEntity.ok(service.obtenerCargosHabitacion(membresia));
     }
+
+    @GetMapping("/otas")
+    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerCatalogoOtas() {
+        return ResponseEntity.ok(service.obtenerCatalogoOtas());
+    }
 }

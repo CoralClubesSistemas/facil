@@ -131,7 +131,9 @@ public class ReservacionesRepository {
             rs.getString("Descripcion"),
             rs.getBigDecimal("ImporteCargo"),
             rs.getBigDecimal("ImportePendiente"),
-            rs.getTimestamp("FechaRegistro") != null ? rs.getTimestamp("FechaRegistro").toLocalDateTime() : null
+            rs.getTimestamp("FechaRegistro") != null ? rs.getTimestamp("FechaRegistro").toLocalDateTime() : null,
+            rs.getTimestamp("fechaPagoRecibo") != null ? rs.getTimestamp("fechaPagoRecibo").toLocalDateTime() : null,
+            rs.getString("recibo")
     );
 
     // =========================================================================
@@ -526,6 +528,7 @@ public class ReservacionesRepository {
         params.put("ImporteDiferencia", request.importeDiferencia());
         params.put("Observaciones", request.observaciones());
         params.put("BloquearUnidadAnterior", request.bloquearUnidadAnterior());
+        params.put("LimpiarUnidadAnterior", request.limpiarUnidadAnterior());
         params.put("Usuario", usuario);
 
         spExecutor.executeLog("spResvTransferirUnidad", params);

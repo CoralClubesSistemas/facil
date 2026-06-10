@@ -2,14 +2,7 @@ package com.coralclubes.facil.modules.reservaciones.controller.admin;
 
 import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
-import com.coralclubes.facil.modules.reservaciones.dto.response.ArticuloAmenidadDto;
-import com.coralclubes.facil.modules.reservaciones.dto.response.ReglaAmenidadActualDto;
-import com.coralclubes.facil.modules.reservaciones.dto.response.TipoUnidadDetalleDto;
-import com.coralclubes.facil.modules.reservaciones.dto.response.TipoUnidadUI;
-import com.coralclubes.facil.modules.reservaciones.dto.response.TipoUnidadUIDetalles;
-import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
-import com.coralclubes.facil.modules.reservaciones.dto.response.UnidadBloqueadaDto;
-import com.coralclubes.facil.modules.reservaciones.dto.response.UnidadFisicaDto;
+import com.coralclubes.facil.modules.reservaciones.dto.response.*;
 import com.coralclubes.facil.modules.reservaciones.service.UnidadesService;
 import com.coralclubes.facil.shared.domain.dto.ImagenResponse;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
@@ -137,6 +130,13 @@ public class UnidadesAdminController {
     public ResponseEntity<ApiResponse<List<UnidadFisicaDto>>> obtenerUnidadesFisicasAsignadas(
             @RequestParam Integer idTipoUnidad) {
         return ResponseEntity.ok(service.obtenerUnidadesFisicasAsignadas(idTipoUnidad));
+    }
+
+    @GetMapping("/fisicas/detalle")
+    public ResponseEntity<ApiResponse<DetallesUnidadFisica>> obtenerDetallesUnidadFisica(
+            @RequestParam Integer idUnidadFisica
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(service.obtenerDetallesUnidadFisica(idUnidadFisica)));
     }
 
     @GetMapping("/fisicas/disponibles")

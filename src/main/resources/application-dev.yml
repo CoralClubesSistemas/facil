@@ -8,23 +8,23 @@ spring:
       - io.awspring.cloud.autoconfigure.sqs.SqsAutoConfiguration
 
   datasource:
-    url: jdbc:sqlserver://10.10.8.2:1433;databaseName=Facil_Prueba3;trustServerCertificate=true;encrypt=false
+    url: jdbc:sqlserver://10.10.3.204:1433;databaseName=Facil_Prueba3;trustServerCertificate=true;encrypt=false
     username: sa
     password: 1122334455667788
 
   datasource-replica:
-    url: jdbc:sqlserver://10.10.8.2:1433;databaseName=Facil_Prueba3;trustServerCertificate=true;encrypt=false
+    url: jdbc:sqlserver://10.10.3.204:1433;databaseName=Facil_Prueba3;trustServerCertificate=true;encrypt=false
     username: sa
     password: 1122334455667788
 
   data:
     redis:
-      host: 10.10.8.2
+      host: 10.10.3.204
       port: 6378
       password:
 
   rabbitmq:
-    host: 10.10.8.2
+    host: 10.10.3.204
     port: 5672
     username: user
     password: CoralClubes1234
@@ -47,13 +47,13 @@ app:
 
   clients:
     storage:
-      url: http://10.10.8.2:8081
+      url: http://10.10.3.204:8081
       api-key: FACIL_4dkQZoLmzOZ2Ynob6GnIeYbPR3O0yyEq
       aliases:
         default: MINIO_MAIN
 
     notifications:
-      url: http://10.10.8.2:8082
+      url: http://10.10.3.204:8082
       api-key: FACIL_4dkQZoLmzOZ2Ynob6GnIeYbPR3O0yyEq
       aliases:
         default: SMTP_GENERAL
@@ -64,7 +64,7 @@ app:
         reserva-cancelada: reserva-cancelada-v1
 
     gotenberg:
-      url: http://10.10.8.2:3000
+      url: http://10.10.3.204:3000
 
   security:
     password-reset:

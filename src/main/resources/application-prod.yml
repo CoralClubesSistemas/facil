@@ -69,10 +69,6 @@ app:
       url: ${GOTENBERG_URL}
 
   security:
-    cors:
-      allowed-origins:
-        - ${FRONTEND_URL}
-        - ${PORTAL_SOCIOS_URL}
     password-reset:
       expiration-minutes: 60
 

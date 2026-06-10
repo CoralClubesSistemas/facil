@@ -102,6 +102,7 @@ public class UnidadesRepository {
             }) : List.of())
             .caracteristicas(rs.getString("Caracteristicas") != null ? JsonUtils.fromJson(rs.getString("Caracteristicas"), new TypeReference<List<CaracteristicaDto>>() {
             }) : List.of())
+
             .build());
 
     private final RowMapper<UnidadBloqueadaDto> unidadBloqueadaMapper = (rs, rowNum) -> new UnidadBloqueadaDto(
@@ -146,7 +147,9 @@ public class UnidadesRepository {
             rs.getObject("piso") != null ? rs.getInt("piso") : null,
             rs.getInt("idEstatus"),
             rs.getString("nombreEstatus"),
-            rs.getObject("idPadre") != null ? rs.getInt("idPadre") : null
+            rs.getObject("idPadre") != null ? rs.getInt("idPadre") : null,
+            rs.getString("codigoSicofi"),
+            rs.getString("centroCostoNombre")
     );
 
     // =========================================================================
@@ -265,6 +268,8 @@ public class UnidadesRepository {
         params.put("NumeroUnidad", request.numeroUnidad());
         params.put("Piso", request.piso());
         params.put("IdPadre", request.idPadre());
+        params.put("CentroCostoNombre", request.centroCostoNombre());
+        params.put("CodigoSicofi", request.codigoSicofi());
         params.put("Usuario", usuario);
 
         return spExecutor.querySingleLog("spResvGuardarUnidadFisica", params, scalarIntMapper, usuario, true, true);

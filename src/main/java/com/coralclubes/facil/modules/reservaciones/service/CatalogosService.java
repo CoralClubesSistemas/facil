@@ -89,4 +89,8 @@ public class CatalogosService {
     public ApiResponse<List<SelectGenerico<Integer>>> obtenerCargosHabitacion(String membresia) {
         return ApiResponse.success(repo.spResvCatalogoCargosHabitacion(membresia));
     }
+
+    public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogoOtas() {
+        return ApiResponse.success(repo.spResvCatalogoOtas());
+    }
 }

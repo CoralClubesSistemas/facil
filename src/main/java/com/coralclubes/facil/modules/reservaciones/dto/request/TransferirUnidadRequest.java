@@ -4,6 +4,8 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import software.amazon.awssdk.services.bedrockruntime.endpoints.internal.Value;
+
 import java.math.BigDecimal;
 
 public record TransferirUnidadRequest(
@@ -26,5 +28,7 @@ public record TransferirUnidadRequest(
         @Size(max = 250, message = "Las observaciones no pueden exceder los 250 caracteres")
         String observaciones,
 
-        Boolean bloquearUnidadAnterior
+        Boolean bloquearUnidadAnterior,
+
+        Boolean limpiarUnidadAnterior
 ) {}

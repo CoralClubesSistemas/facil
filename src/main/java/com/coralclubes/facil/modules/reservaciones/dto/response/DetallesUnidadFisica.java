@@ -12,6 +12,8 @@ public record DetallesUnidadFisica(
         Integer piso,
         Integer idEstatus,
         String nombreEstatus,
-        Integer idPadre
+        Integer idPadre,
+        String codigoSicofi,
+        String centroCostoNombre
 ) {
 }

@@ -8,5 +8,7 @@ public record CargoHabitacionDto(
         String descripcion,
         BigDecimal importeCargo,
         BigDecimal importePendiente,
-        LocalDateTime fechaRegistro
+        LocalDateTime fechaRegistro,
+        LocalDateTime fechaPagoRecibo,
+        String recibo
 ) {}

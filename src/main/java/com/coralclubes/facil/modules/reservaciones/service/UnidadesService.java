@@ -229,6 +229,11 @@ public class UnidadesService {
         return ApiResponse.success("URL de carga generada exitosamente", respuestaStorage);
     }
 
+    public DetallesUnidadFisica obtenerDetallesUnidadFisica(Integer idUnidadFisica) {
+        return tipoUnidadRepo.spResvObtenerDetallesUnidadFisica(idUnidadFisica)
+                .orElseThrow(() -> new ServiceUnavailableException("No se pudieron obtener los detalles de la unidad física."));
+    }
+
     public ApiResponse<Integer> guardarUnidadFisica(UnidadFisicaRequest request) {
         String usuario = userContext.getUsername();
         Integer idGenerado = tipoUnidadRepo.spResvGuardarUnidadFisica(request, usuario)

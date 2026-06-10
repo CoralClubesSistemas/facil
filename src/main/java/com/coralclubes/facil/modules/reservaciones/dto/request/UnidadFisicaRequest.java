@@ -13,5 +13,7 @@ public record UnidadFisicaRequest(
         @NotBlank(message = "El número de unidad es obligatorio")
         String numeroUnidad,
         Integer piso,
-        Integer idPadre // Opcional (Lock-off)
+        Integer idPadre, // Opcional (Lock-off)
+        String centroCostoNombre,
+        String codigoSicofi
 ) {}
