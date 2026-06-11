@@ -246,8 +246,8 @@ public class UnidadesRepository {
     }
 
     @Cacheable(value = "tipo_unidad_detalles", key = "#idTipoUnidad")
-    public Optional<TipoUnidadDetalleDto> spResvObtenerTipoUnidadDetalles(Integer idTipoUnidad) {
-        return spExecutor.querySingle("spResvObtenerTipoUnidadDetalles", Map.of("IdTipoUnidad", idTipoUnidad), tipoUnidadDetalleMapper);
+    public TipoUnidadDetalleDto spResvObtenerTipoUnidadDetalles(Integer idTipoUnidad) {
+        return spExecutor.querySingle("spResvObtenerTipoUnidadDetalles", Map.of("IdTipoUnidad", idTipoUnidad), tipoUnidadDetalleMapper).orElse(null);
     }
 
     @Cacheable(value = "tipo_unidad_imagenes", key = "#idTipoUnidad")
@@ -316,8 +316,8 @@ public class UnidadesRepository {
     }
 
     @Cacheable(value = "detalle_tipo_unidad", key = "#idTipoUnidad")
-    public Optional<TipoUnidadDetalles> spResvObtenerDetalleTipoUnidad(Integer idTipoUnidad) {
-        return spExecutor.querySingle("spResvObtenerDetalleTipoUnidad", Map.of("RhdtId", idTipoUnidad), detallesUIRowMapper);
+    public TipoUnidadDetalles spResvObtenerDetalleTipoUnidad(Integer idTipoUnidad) {
+        return spExecutor.querySingle("spResvObtenerDetalleTipoUnidad", Map.of("RhdtId", idTipoUnidad), detallesUIRowMapper).orElse(null);
     }
 
     public List<UnidadBloqueadaDto> obtenerUnidadesBloqueadas(Integer idDesarrollo) {

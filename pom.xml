@@ -245,6 +245,11 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>
+                        com.coralclubes.facil.FacilApplication
+                    </mainClass>
+                </configuration>
             </plugin>
 
             <plugin>

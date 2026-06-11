@@ -141,8 +141,7 @@ public class UnidadesService {
     }
 
     public ApiResponse<TipoUnidadDetalleDto> obtenerTipoUnidadDetalles(Integer idTipoUnidad) {
-        TipoUnidadDetalleDto detalle = tipoUnidadRepo.spResvObtenerTipoUnidadDetalles(idTipoUnidad)
-                .orElse(null);
+        TipoUnidadDetalleDto detalle = tipoUnidadRepo.spResvObtenerTipoUnidadDetalles(idTipoUnidad);
 
         if (detalle == null) {
             return ApiResponse.error(GeneralResponseCode.NOT_FOUND, "El tipo de unidad no existe.");
@@ -202,8 +201,10 @@ public class UnidadesService {
         String usuario = userContext.getUsername();
 
         // 1. Validar que el Tipo de Unidad exista
-        tipoUnidadRepo.spResvObtenerTipoUnidadDetalles(request.id())
-                .orElseThrow(() -> new ServiceUnavailableException("El tipo de unidad especificado no existe o está inactivo."));
+        TipoUnidadDetalleDto detalle = tipoUnidadRepo.spResvObtenerTipoUnidadDetalles(request.id());
+        if (detalle == null) {
+            throw new ServiceUnavailableException("El tipo de unidad especificado no existe o está inactivo.");
+        }
 
         // 2. Construir la ruta lógica
         String rutaLogica = "reservaciones/tipos-unidad/" + request.id();
@@ -274,8 +275,10 @@ public class UnidadesService {
     }
 
     public ApiResponse<TipoUnidadUIDetalles> obtenerTipoUnidadUIDetalles(Integer idTipoUnidad) {
-        TipoUnidadDetalles detalles = tipoUnidadRepo.spResvObtenerDetalleTipoUnidad(idTipoUnidad)
-                .orElseThrow(() -> new ServiceUnavailableException("No se pudieron obtener los detalles del tipo de unidad."));
+        TipoUnidadDetalles detalles = tipoUnidadRepo.spResvObtenerDetalleTipoUnidad(idTipoUnidad);
+        if (detalles == null) {
+            throw new ServiceUnavailableException("No se pudieron obtener los detalles del tipo de unidad.");
+        }
 
         List<ImagenDto> dbImgs = detalles.imagenesUUID();
         List<UUID> uuids = dbImgs.stream()
