@@ -78,4 +78,4 @@ app:
 
 logging:
   level:
-    com.coralclubes.facil: INFO
+    com.coralclubes.facil: DEBUG

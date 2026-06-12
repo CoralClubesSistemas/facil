@@ -35,6 +35,7 @@ public class ReservacionContexto {
         private Integer idTipoHabitacion;
         private String tipoHabitacion;
         private BigDecimal costoEstancia; // Total de la unidad
+        private Integer capacidad;
         private List<BigDecimal> costoPorNoche;
     }
 }

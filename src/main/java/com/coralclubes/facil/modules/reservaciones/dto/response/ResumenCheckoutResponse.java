@@ -30,6 +30,7 @@ public class ResumenCheckoutResponse {
         private Integer idTipoHabitacion;
         private String nombreHabitacion;
         private Integer cantidad;
+        private Integer capacidadMaxima;
         private BigDecimal costoUnitario;
         private BigDecimal subtotalHabitacion;
         private BigDecimal descuentoAplicado;
