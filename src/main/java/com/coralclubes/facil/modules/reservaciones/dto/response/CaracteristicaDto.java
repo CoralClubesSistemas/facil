@@ -13,5 +13,5 @@ public record CaracteristicaDto(
         String descripcion,
         String icono,
         Integer cantidad,
-        Integer idTipo
+        String tabla
 ) {}

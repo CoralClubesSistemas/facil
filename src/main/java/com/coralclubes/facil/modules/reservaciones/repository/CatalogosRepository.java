@@ -33,6 +33,7 @@ public class CatalogosRepository {
                     .descripcion(rs.getString("DESCRIPCION"))
                     .nombre(rs.getString("NOMBRE"))
                     .icono(rs.getString("ICONO"))
+                    .tabla(rs.getString("TABLA"))
                     .build();
 
     // =========================================================================

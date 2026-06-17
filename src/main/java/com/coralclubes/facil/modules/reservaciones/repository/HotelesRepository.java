@@ -73,7 +73,7 @@ public class HotelesRepository {
             .descripcion(rs.getString("DESCRIPCION"))
             .icono(rs.getString("ICONO"))
             .cantidad(rs.getInt("CANTIDAD"))
-            .idTipo(rs.getObject("ID_TIPO") != null ? rs.getInt("ID_TIPO") : null)
+            .tabla(rs.getString("TABLA"))
             .build();
 
     private final RowMapper<HotelesCardList> hotelesCardListRowMapper = (rs, rowNum) -> HotelesCardList.builder()

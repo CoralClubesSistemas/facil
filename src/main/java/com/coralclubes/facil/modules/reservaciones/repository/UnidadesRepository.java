@@ -69,7 +69,7 @@ public class UnidadesRepository {
             .nombre(rs.getString("NOMBRE"))
             .descripcion(rs.getString("DESCRIPCION"))
             .icono(rs.getString("ICONO"))
-            .idTipo(rs.getObject("ID_TIPO") != null ? rs.getInt("ID_TIPO") : null)
+            .tabla(rs.getString("TABLA"))
             .cantidad(rs.getInt("CANTIDAD"))
             .build();
 
