@@ -3,9 +3,12 @@ package com.coralclubes.facil.modules.reservaciones.controller.admin;
 import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
 import com.coralclubes.facil.modules.reservaciones.service.CatalogosService;
+import com.coralclubes.facil.modules.reservaciones.dto.request.GuardarCaracteristicaRequest;
 import com.coralclubes.responses.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -114,5 +117,17 @@ public class CatalogosAdminController {
     @GetMapping("/otas")
     public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerCatalogoOtas() {
         return ResponseEntity.ok(service.obtenerCatalogoOtas());
+    }
+
+    @GetMapping("/tipos-caracteristicas")
+    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerTiposCaracteristicas() {
+        return ResponseEntity.ok(service.obtenerTiposCaracteristicas());
+    }
+
+    @PostMapping("/caracteristicas/save")
+    public ResponseEntity<ApiResponse<Boolean>> guardarCaracteristica(
+            @Valid @RequestBody GuardarCaracteristicaRequest request) {
+        ApiResponse<Boolean> response = service.guardarCaracteristica(request);
+        return ResponseEntity.status(response.status()).body(response);
     }
 }

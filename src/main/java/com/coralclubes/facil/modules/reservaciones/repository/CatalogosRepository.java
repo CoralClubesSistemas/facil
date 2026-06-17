@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import com.coralclubes.facil.modules.reservaciones.dto.request.GuardarCaracteristicaRequest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,5 +107,21 @@ public class CatalogosRepository {
 
     public List<SelectGenerico<Integer>> spResvCatalogoOtas() {
         return spExecutor.queryList("spResvCatalogoOtas", Map.of(), selectGenericoMapper);
+    }
+
+    public List<SelectGenerico<Integer>> spResvCatalogoTipoCaracteristica() {
+        return spExecutor.queryList("spResvCatalogoTipoCaracteristica", Map.of(), selectGenericoMapper);
+    }
+
+    public void spResvGuardarCaracteristica(GuardarCaracteristicaRequest request, String usuario) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("id", request.id());
+        params.put("nombre", request.nombre());
+        params.put("descripcion", request.descripcion());
+        params.put("icono", request.icono());
+        params.put("lsv_tabla", request.lsvTabla());
+        params.put("usuario", usuario);
+
+        spExecutor.executeLog("spResvGuardarCaracteristica", params, usuario, false, true);
     }
 }

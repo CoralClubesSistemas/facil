@@ -4,6 +4,7 @@ import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
 import com.coralclubes.facil.modules.reservaciones.repository.CatalogosRepository;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
+import com.coralclubes.facil.modules.reservaciones.dto.request.GuardarCaracteristicaRequest;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -92,5 +93,15 @@ public class CatalogosService {
 
     public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogoOtas() {
         return ApiResponse.success(repo.spResvCatalogoOtas());
+    }
+
+    public ApiResponse<List<SelectGenerico<Integer>>> obtenerTiposCaracteristicas() {
+        return ApiResponse.success(repo.spResvCatalogoTipoCaracteristica());
+    }
+
+    public ApiResponse<Boolean> guardarCaracteristica(GuardarCaracteristicaRequest request) {
+        String usuario = userContext.getUsername();
+        repo.spResvGuardarCaracteristica(request, usuario);
+        return ApiResponse.success("Característica guardada exitosamente", true);
     }
 }
