@@ -38,7 +38,7 @@
             campanas.forEach(campana -> {
                 if (campana.getImagenUuid() != null && !campana.getImagenUuid().isBlank()) {
                     try {
-                        String url = storageClient.obtenerUrlDescarga(UUID.fromString(campana.getImagenUuid()));
+                        String url = storageClient.obtenerUrlDescarga(UUID.fromString(campana.getImagenUuid())).urlDescarga();
                         campana.setImagenUrl(url);
                     } catch (IllegalArgumentException e) {
                         campana.setImagenUrl(null);

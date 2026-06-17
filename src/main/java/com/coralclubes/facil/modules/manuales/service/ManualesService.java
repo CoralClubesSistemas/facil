@@ -42,7 +42,7 @@ public class ManualesService {
         UUID uuid = repository.obtenerUuidArchivo(manualId, version)
                 .orElseThrow(() -> new RuntimeException("Archivo no encontrado para el manual y versión especificados"));
 
-        String url = storageClient.obtenerUrlDescarga(uuid);
+        String url = storageClient.obtenerUrlDescarga(uuid).urlDescarga();
         return ApiResponse.success("URL de descarga generada", url);
     }
 

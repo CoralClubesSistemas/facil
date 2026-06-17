@@ -33,7 +33,7 @@ public class StorageUrlsCacheService {
      */
     @Cacheable(value = CACHE_NAME, key = "#uuid")
     public String obtenerUrlImagen(UUID uuid) {
-        return storageClient.obtenerUrlDescarga(uuid);
+        return storageClient.obtenerUrlDescarga(uuid).urlDescarga();
     }
 
     /**

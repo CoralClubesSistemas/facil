@@ -598,4 +598,22 @@ public class ReservacionesRepository {
         return spExecutor.querySingle("spResvCrearMembresiaExterno", params, mapper)
                 .orElseThrow(() -> new RuntimeException("Error en base de datos: No se generó la membresía."));
     }
+
+    public void spResvGuardarUuidCartaOcupacion(String membresia, Integer consecutivo, String uuid) {
+        Map<String, Object> params = Map.of(
+                "membresia", membresia,
+                "consecutivo", consecutivo,
+                "uuid", uuid
+        );
+        spExecutor.execute("spResvGuardarUuidCartaOcupacion", params);
+    }
+
+    public Optional<String> spResvObtenerUuidCartaOcupacion(String membresia, Integer consecutivo) {
+        Map<String, Object> params = Map.of(
+                "membresia", membresia,
+                "consecutivo", consecutivo
+        );
+        RowMapper<String> mapper = (rs, rowNum) -> rs.getString(1);
+        return spExecutor.querySingle("spResvObtenerUuidCartaOcupacion", params, mapper);
+    }
 }

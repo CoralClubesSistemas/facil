@@ -3,8 +3,10 @@ package com.coralclubes.facil.modules.reservaciones.service;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleDto;
 import com.coralclubes.facil.modules.clientes.dto.response.PuntosMembresia;
 import com.coralclubes.facil.modules.clientes.service.PuntosService;
+import com.coralclubes.facil.shared.domain.dto.ArchivoDescarga;
 import com.coralclubes.facil.shared.events.dto.ConsumoPuntosReservacionEvent;
 import com.coralclubes.facil.shared.events.dto.ReservacionConfirmadaEvent;
+import io.lettuce.core.ScriptOutputType;
 import org.springframework.context.ApplicationEventPublisher;
 import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaMovimientoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaRequest;
@@ -20,6 +22,10 @@ import com.coralclubes.facil.shared.domain.dto.PaginaResponse;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.NotificationClient;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.dto.SolicitudNotificacionDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaLegacyDto;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.InfoArchivoDto;
+import com.coralclubes.facil.shared.infrastructure.pdf.service.PdfGeneratorService;
+import com.coralclubes.facil.shared.infrastructure.exceptions.custom.ServiceUnavailableException;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
@@ -39,6 +45,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -59,12 +66,20 @@ public class ReservacionesService {
     private final AmaDeLlavesService amaDeLlavesService;
 
     private final CobranzaService cobranzaService;
+    private final StorageClient storageClient;
+    private final PdfGeneratorService pdfGeneratorService;
 
     @Value("${app.clients.notifications.aliases.aws-ses}")
     private String aliasConfigNotificaciones;
 
     @Value("${app.clients.notifications.templates.reserva-cancelada}")
     private String templateReservaCancelada;
+
+    @Value("${app.clients.notifications.templates.reserva-creada}")
+    private String templateReservaCreada;
+
+    @Value("${app.clients.storage.aliases.default}")
+    private String aliasStorageDefault;
 
     // =========================================================================
     // 1. GESTIÓN DE INVENTARIO Y DISPONIBILIDAD
@@ -811,5 +826,176 @@ public class ReservacionesService {
             String mensaje,
             String mensajeMotivoVisual
     ) {
+    }
+
+    public ReservacionConfirmadaEvent construirEventDesdeDb(String membresia, Integer consecutivo) {
+        DetalleReservacionDto detalle = repository.obtenerDetalleReservacion(membresia, consecutivo);
+        ResumenReservacionDto resumen = repository.obtenerResumenReservacion(membresia, consecutivo);
+
+        List<ReservacionConfirmadaEvent.HabitacionInfo> habitaciones = List.of(
+                new ReservacionConfirmadaEvent.HabitacionInfo(
+                        detalle.tipoUnidad() != null ? detalle.tipoUnidad() : "Habitación Estándar",
+                        detalle.numeroSocios() != null && detalle.numeroSocios() > 0 ? detalle.numeroSocios() : 2
+                )
+        );
+
+        return ReservacionConfirmadaEvent.builder()
+                .nombreReserva(detalle.nombreHuesped())
+                .email(resumen.emailContacto())
+                .email2(null)
+                .peticionEspecial(detalle.peticionesEspeciales())
+                .membresia(detalle.membresia())
+                .fechaEntrada(detalle.fechaEntrada())
+                .fechaSalida(detalle.fechaSalida())
+                .desarrollo(detalle.nombreDesarrollo())
+                .subtotal(detalle.importeTotal())
+                .foliosGenerados(List.of(consecutivo))
+                .habitaciones(habitaciones)
+                .build();
+    }
+
+    public UUID generarYPersistirCartaOcupacion(ReservacionConfirmadaEvent event) {
+        List<DatosCartaOcupacionDto.HabitacionCartaDto> habitacionesPdf = new java.util.ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        for (var hab : event.habitaciones()) {
+            habitacionesPdf.add(DatosCartaOcupacionDto.HabitacionCartaDto.builder()
+                    .tipoHabitacion(hab.tipoHabitacion())
+                    .totalPax(hab.totalPersonas())
+                    .build());
+        }
+
+        String foliosStr = event.foliosGenerados().toString().replace("[", "").replace("]", "");
+
+        DatosCartaOcupacionDto datosPdf = DatosCartaOcupacionDto.builder()
+                .fechaEmision(LocalDate.now().format(formatter))
+                .titular(event.nombreReserva())
+                .membresia(event.membresia() != null ? event.membresia() : "PÚBLICO GENERAL")
+                .foliosReservacion(foliosStr)
+                .habitaciones(habitacionesPdf)
+                .observaciones(event.peticionEspecial())
+                .importeTotal(event.subtotal())
+                .fechaEntrada(event.fechaEntrada().format(formatter))
+                .fechaSalida(event.fechaSalida().format(formatter))
+                .desarrollo(event.desarrollo())
+                .build();
+
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("fechaEmision", datosPdf.fechaEmision());
+        variables.put("titular", datosPdf.titular());
+        variables.put("membresia", datosPdf.membresia() != null ? datosPdf.membresia() : "PÚBLICO GENERAL");
+        variables.put("foliosReservacion", datosPdf.foliosReservacion());
+        variables.put("habitaciones", datosPdf.habitaciones());
+        variables.put("observaciones", datosPdf.observaciones() != null ? datosPdf.observaciones() : "Sin observaciones adicionales.");
+        java.text.DecimalFormat df = new java.text.DecimalFormat("$#,##0.00");
+        variables.put("importeTotal", df.format(datosPdf.importeTotal()));
+        variables.put("fechaEntrada", datosPdf.fechaEntrada());
+        variables.put("fechaSalida", datosPdf.fechaSalida());
+        variables.put("desarrollo", datosPdf.desarrollo());
+
+        byte[] pdfBytes = pdfGeneratorService.generarPdfDesdeHtml("CARTA_OCUPACION", variables);
+
+        String foliosLimpio = datosPdf.foliosReservacion().replace(" ", "").replace(",", "_");
+
+        assert datosPdf.membresia() != null;
+        String membresiaLimpia = datosPdf.membresia().replace("-", "");
+
+        String nombreArchivo = "CARTA_OCUPACION_" + membresiaLimpia + foliosLimpio + ".pdf";
+
+        SolicitudCargaLegacyDto solicitudCarga = SolicitudCargaLegacyDto.builder()
+                .idCorrelacion(event.membresia() + "_" + event.foliosGenerados().getFirst())
+                .aliasConfiguracion(aliasStorageDefault)
+                .esPublico(false)
+                .rutaLogica("reservaciones/cartas-ocupacion/" + event.membresia())
+                .metadatos(Map.of(
+                        "folios", event.foliosGenerados().toString(),
+                        "subidoPor", "SYSTEM",
+                        "modulo", "RESERVACIONES"
+                ))
+                .requiereDepuracion(false)
+                .build();
+
+        InfoArchivoDto info = storageClient.cargarArchivoSincrono(
+                pdfBytes,
+                nombreArchivo,
+                "application/pdf",
+                solicitudCarga
+        );
+
+        UUID uuid = info.uuid();
+
+        for (Integer consecutivo : event.foliosGenerados()) {
+            repository.spResvGuardarUuidCartaOcupacion(event.membresia(), consecutivo, uuid.toString());
+        }
+
+        return uuid;
+    }
+
+    public void enviarNotificacionCartaOcupacion(ReservacionConfirmadaEvent event, UUID uuid, List<String> correosAdicionales) {
+        List<String> destinatarios = new java.util.ArrayList<>();
+
+        destinatarios.add(event.email());
+
+        for (String correo : correosAdicionales) {
+            if (correo != null && !correo.isBlank()) {
+                destinatarios.add(correo);
+            }
+        }
+
+        if (event.email2() != null && !event.email2().isBlank()) {
+            destinatarios.add(event.email2());
+        }
+
+        String foliosStr = event.foliosGenerados().toString().replace("[", "").replace("]", "");
+
+        SolicitudNotificacionDto solicitudNotificacion = SolicitudNotificacionDto.builder()
+                .aliasConfig(aliasConfigNotificaciones)
+                .destinatarios(destinatarios)
+                .codigoPlantilla(templateReservaCreada)
+                .remitenteOverride("reservaciones@lvivardev.com")
+                .variables(Map.of(
+                        "nombreUsuario", event.nombreReserva(),
+                        "numeroReserva", foliosStr
+                ))
+                .prioridad(10)
+                .adjuntos(List.of(uuid.toString()))
+                .build();
+
+        System.out.println("Enviando notificación de carta de ocupación a: " + destinatarios + " con UUID del PDF: " + uuid);
+
+        notificationClient.enviarNotificacion(solicitudNotificacion);
+    }
+
+    public ArchivoDescarga obtenerUrlCartaOcupacion(String membresia, Integer consecutivo) {
+        Optional<String> uuidStrOpt = repository.spResvObtenerUuidCartaOcupacion(membresia, consecutivo);
+        UUID uuid;
+        if (uuidStrOpt.isPresent() && !uuidStrOpt.get().isBlank()) {
+            uuid = UUID.fromString(uuidStrOpt.get());
+        } else {
+            ReservacionConfirmadaEvent event = construirEventDesdeDb(membresia, consecutivo);
+            uuid = generarYPersistirCartaOcupacion(event);
+        }
+        return storageClient.obtenerUrlDescarga(uuid, "inline");
+    }
+
+    public void reenviarCartaOcupacion(String membresia, Integer consecutivo, String correos) {
+        Optional<String> uuidStrOpt = repository.spResvObtenerUuidCartaOcupacion(membresia, consecutivo);
+        UUID uuid;
+        ReservacionConfirmadaEvent event = construirEventDesdeDb(membresia, consecutivo);
+
+        List<String> correosAdicionales = correos == null || correos.isBlank()
+                ? List.of()
+                : java.util.Arrays.stream(correos.split(","))
+                  .map(String::trim)
+                  .filter(correo -> !correo.isBlank())
+                  .toList();
+
+        if (uuidStrOpt.isPresent() && !uuidStrOpt.get().isBlank()) {
+            uuid = UUID.fromString(uuidStrOpt.get());
+        } else {
+            uuid = generarYPersistirCartaOcupacion(event);
+        }
+
+        enviarNotificacionCartaOcupacion(event, uuid, correosAdicionales);
     }
 }

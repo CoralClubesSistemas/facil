@@ -6,6 +6,7 @@ import com.coralclubes.facil.modules.clientes.dto.response.CrearNotaUsuarioRespo
 import com.coralclubes.facil.modules.clientes.dto.response.NotasClienteResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.ObtenerArchivosNotaResponse;
 import com.coralclubes.facil.modules.clientes.repository.NotasClientesRepository;
+import com.coralclubes.facil.shared.domain.dto.ArchivoDescarga;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
@@ -177,15 +178,16 @@ public class NotasClientesService {
 
         List<ObtenerArchivosNotaResponse> respuesta = archivos.stream()
                 .map(archivo -> {
-                    String urlDescarga = archivo.uuidArchivo() != null
+                    ArchivoDescarga urlDescarga = archivo.uuidArchivo() != null
                             ? storageClient.obtenerUrlDescarga(archivo.uuidArchivo())
                             : null;
 
+                    assert urlDescarga != null;
                     return new ObtenerArchivosNotaResponse(
                             archivo.nombreArchivo(),
                             archivo.uuidArchivo(),
                             archivo.tipoArchivo(),
-                            urlDescarga,
+                            urlDescarga.urlDescarga(),
                             archivo.usuarioCarga(),
                             archivo.fechaCarga()
                     );

@@ -109,18 +109,26 @@ public class StorageClient {
      * @return La URL final para la descarga del archivo.
      * @throws ServiceUnavailableException Si el servicio de almacenamiento no responde o responde con un error.
      */
-    public String obtenerUrlDescarga(UUID uuid) {
+    public ArchivoDescarga obtenerUrlDescarga(UUID uuid) {
+        return obtenerUrlDescarga(uuid, "inline");
+    }
+
+    public ArchivoDescarga obtenerUrlDescarga(UUID uuid, String disposition) {
         try {
+            String uri = serviceUrl + "/api/v1/storage/files/" + uuid;
+            if (disposition != null) {
+                uri += "?disposition=" + disposition;
+            }
 
             ApiResponse<InfoArchivoDto> response = restClient.get()
-                    .uri(serviceUrl + "/api/v1/storage/files/" + uuid)
+                    .uri(uri)
                     .header("X-API-KEY", apiKey)
                     .retrieve()
                     .body(new ParameterizedTypeReference<>() {
                     });
 
             if (response != null && response.data() != null) {
-                return response.data().urlDescarga();
+                return new ArchivoDescarga(response.data().nombreOriginal(), response.data().urlDescarga());
             }
 
             throw new IllegalStateException("El microservicio de storage devolvió una respuesta vacía.");
@@ -169,10 +177,18 @@ public class StorageClient {
      * @throws ServiceUnavailableException Si el servicio de almacenamiento no responde o responde con un error.
      */
     public ArchivoDescarga obtenerUrlDescargaYNombre(UUID uuid) {
+        return obtenerUrlDescargaYNombre(uuid, "inline");
+    }
+
+    public ArchivoDescarga obtenerUrlDescargaYNombre(UUID uuid, String disposition) {
         try {
+            String uri = serviceUrl + "/api/v1/storage/files/" + uuid;
+            if (disposition != null) {
+                uri += "?disposition=" + disposition;
+            }
 
             ApiResponse<InfoArchivoDto> response = restClient.get()
-                    .uri(serviceUrl + "/api/v1/storage/files/" + uuid)
+                    .uri(uri)
                     .header("X-API-KEY", apiKey)
                     .retrieve()
                     .body(new ParameterizedTypeReference<>() {

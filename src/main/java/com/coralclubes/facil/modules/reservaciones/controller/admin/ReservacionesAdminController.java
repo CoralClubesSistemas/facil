@@ -6,6 +6,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.request.*;
 import com.coralclubes.facil.modules.reservaciones.dto.response.DisponibilidadUnidadDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.ResumenCheckoutResponse;
 import com.coralclubes.facil.modules.reservaciones.service.ReservacionesService;
+import com.coralclubes.facil.shared.domain.dto.ArchivoDescarga;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
 import com.coralclubes.facil.shared.utils.ClientIpUtil;
 import com.coralclubes.responses.ApiResponse;
@@ -90,5 +91,24 @@ public class ReservacionesAdminController {
         String usuario = userContext.getUsername();
 
         return ResponseEntity.ok(service.crearMembresiaExterno(request, usuario));
+    }
+
+    @GetMapping("/carta-ocupacion/url")
+    @PreAuthorize("hasAuthority('MOD_SMNURESERVACIONES')")
+    public ResponseEntity<ApiResponse<ArchivoDescarga>> obtenerUrlCartaOcupacion(
+            @RequestParam String membresia,
+            @RequestParam Integer consecutivo) {
+        return ResponseEntity.ok(ApiResponse.success(service.obtenerUrlCartaOcupacion(membresia, consecutivo)));
+    }
+
+    @PostMapping("/carta-ocupacion/reenviar")
+    @PreAuthorize("hasAuthority('MOD_SMNURESERVACIONES')")
+    public ResponseEntity<ApiResponse<Boolean>> reenviarCartaOcupacion(
+            @RequestParam String membresia,
+            @RequestParam Integer consecutivo,
+            @RequestParam String correos
+            ) {
+        service.reenviarCartaOcupacion(membresia, consecutivo, correos);
+        return ResponseEntity.ok(ApiResponse.success("Carta de ocupación reenviada correctamente", true));
     }
 }

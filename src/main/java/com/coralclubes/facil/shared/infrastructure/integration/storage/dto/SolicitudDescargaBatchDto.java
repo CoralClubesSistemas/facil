@@ -8,5 +8,11 @@ import java.util.UUID;
 public record SolicitudDescargaBatchDto(
         @NotEmpty(message = "Debe proporcionar al menos un UUID")
         @Size(max = 100, message = "Máximo 100 archivos por petición de descarga en lote")
-        List<UUID> archivos
-) {}
+        List<UUID> archivos,
+
+        String disposition
+) {
+    public SolicitudDescargaBatchDto(List<UUID> archivos) {
+        this(archivos, "inline");
+    }
+}

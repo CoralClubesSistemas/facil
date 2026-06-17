@@ -149,9 +149,13 @@ public class StoredProcedureExecutor {
             RowMapper<T> rowMapper
     ) {
         List<T> results = queryList(spName, params, rowMapper);
-        return results.isEmpty() ? Optional.empty() : Optional.of(results.getFirst());
-    }
 
+        // Si la lista está vacía, devuelve empty.
+        // Si tiene elementos, obtenemos el primero y usamos ofNullable
+        return results.isEmpty()
+                ? Optional.empty()
+                : Optional.ofNullable(results.getFirst());
+    }
     // =========================================================================
     // 3. EXECUTE (Void / Boolean)
     // =========================================================================

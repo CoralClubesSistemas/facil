@@ -51,7 +51,7 @@ public class PromocionesService {
 
         List<PromocionListResponse> promocionesResponse = promociones.stream().map(p -> PromocionListResponse.builder().idPromocion(p.idPromocion()).nombrePromocion(p.nombrePromocion()).codigoPromocion(p.codigoPromocion()).descripcionPromocion(p.descripcionPromocion()).fechaInicio(p.fechaInicio()).fechaFin(p.fechaFin()).stockTotal(p.stockTotal()).stockDisponible(p.stockDisponible()).esPrivada(p.esPrivada()).esGlobal(p.esGlobal()).fechaVisible(p.fechaVisible())
                 // Resolvemos la URL de la imagen si existe un UUID
-                .urlImagen(p.uuidImagen() != null ? storageClient.obtenerUrlDescarga(p.uuidImagen()) : null).build()).toList();
+                .urlImagen(p.uuidImagen() != null ? storageClient.obtenerUrlDescarga(p.uuidImagen()).urlDescarga() : null).build()).toList();
 
         return ApiResponse.success("Promociones obtenidas correctamente", promocionesResponse);
     }
@@ -114,7 +114,7 @@ public class PromocionesService {
 
         // Si la promoción tiene imagen, generamos su URL para que el portal público la pueda renderizar en el carrito
         if (promo.uuidImagen() != null) {
-            String urlDescarga = storageClient.obtenerUrlDescarga(promo.uuidImagen());
+            String urlDescarga = storageClient.obtenerUrlDescarga(promo.uuidImagen()).urlDescarga();
 
             // Creamos una copia inmutable del record inyectando la URL resuelta
             promo = Promocion.builder()

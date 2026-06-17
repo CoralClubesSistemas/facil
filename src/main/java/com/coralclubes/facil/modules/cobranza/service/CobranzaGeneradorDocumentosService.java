@@ -106,7 +106,11 @@ public class CobranzaGeneradorDocumentosService {
                 .esPublico(false)
                 .aliasConfiguracion(aliasConfiguracion)
                 .rutaLogica("cobranza/recibos/" + Year.now().getValue() + "/" + recibo.getDesarrollo() + "/" + recibo.getFolio())
-                .metadatos(Map.of("folio", recibo.getFolio().toString()))
+                .metadatos(Map.of(
+                        "folio", recibo.getFolio(),
+                        "subidoPor", "SYSTEM",
+                        "modulo", "RECIBOS"
+                ))
                 .build();
 
         RespuestaCargaDto handshake = storageClient.solicitarUrlCarga(solicitud);
