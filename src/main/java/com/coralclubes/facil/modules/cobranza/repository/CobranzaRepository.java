@@ -113,15 +113,16 @@ public class CobranzaRepository {
             String usuario,
             String movimientosJson,
             Boolean agregarIVA,
-            Boolean ivaIncluido
+            Boolean ivaIncluido,
+            String mensajeAdicional
     ) {
-        Map<String, Object> params = Map.of(
-                "Membresia", membresia,
-                "Usuario", usuario,
-                "MovimientosJSON", movimientosJson,
-                "AgregarIva", agregarIVA,
-                "IvaIncluido", ivaIncluido
-        );
+        Map<String, Object> params = new HashMap<>();
+        params.put("Membresia", membresia);
+        params.put("Usuario", usuario);
+        params.put("MovimientosJSON", movimientosJson);
+        params.put("AgregarIva", agregarIVA);
+        params.put("IvaIncluido", ivaIncluido);
+        params.put("MensajeAdicional", mensajeAdicional);
 
         return spExecutor.querySingle("spCobranzaGenerarOrdenCobranza", params, generarOrdenCobranzaMapper);
     }

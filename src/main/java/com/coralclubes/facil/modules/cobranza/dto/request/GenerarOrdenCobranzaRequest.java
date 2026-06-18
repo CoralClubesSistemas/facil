@@ -12,6 +12,7 @@ public record GenerarOrdenCobranzaRequest(
         @NotBlank String membresia,
         @NotEmpty List<@Valid GenerarOrdenCobranzaMovimientoRequest> movimientos,
         Boolean agregarIva,
-        Boolean ivaIncluido
+        Boolean ivaIncluido,
+        String mensajeAdicional
 ) {}
 

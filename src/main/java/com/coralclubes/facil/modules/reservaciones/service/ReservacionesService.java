@@ -210,6 +210,7 @@ public class ReservacionesService {
     @Transactional
     public ApiResponse<ConfirmacionReservaResponse> confirmarReservacionConOrden(ConfirmarReservaRequest request) {
         List<Integer> foliosGenerados = confirmarReservacion(request).data();
+        String mensaje = "Esta orden de cobranza corresponde a la creación de una reservación la cual se encuentra en estatus PENDIENTE. Procede con el pago de la orden para confirmar la reservación. O elimina la oden de cobranza si aun no se pagará, esto no cancelara la reservación. Folios de reservación generados: " + foliosGenerados;
 
         // consultamos el listado de movimientos generados para estos folios
         List<GenerarOrdenCobranzaMovimientoRequest> movimientos = foliosGenerados.stream()
@@ -233,7 +234,9 @@ public class ReservacionesService {
                 .membresia(request.membresia())
                 .movimientos(movimientos)
                 .agregarIva(false)
+                .agregarIva(false)
                 .ivaIncluido(false)
+                .mensajeAdicional(mensaje)
                 .build();
 
         UUID uuidOrden = cobranzaService.generarOrdenCobranza(ordenRequest, userContext.getUsername()).data().ordenUuid();
@@ -960,8 +963,6 @@ public class ReservacionesService {
                 .prioridad(10)
                 .adjuntos(List.of(uuid.toString()))
                 .build();
-
-        System.out.println("Enviando notificación de carta de ocupación a: " + destinatarios + " con UUID del PDF: " + uuid);
 
         notificationClient.enviarNotificacion(solicitudNotificacion);
     }

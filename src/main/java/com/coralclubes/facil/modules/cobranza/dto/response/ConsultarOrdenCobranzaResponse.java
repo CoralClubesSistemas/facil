@@ -16,7 +16,8 @@ public record ConsultarOrdenCobranzaResponse(
         String fechaCreacion,
         BigDecimal totalPagar,
         String moneda,
-        List<ConceptoOrdenCobranzaDto> conceptos
+        List<ConceptoOrdenCobranzaDto> conceptos,
+        String mensajeAdicional
 ) {
 }
 
