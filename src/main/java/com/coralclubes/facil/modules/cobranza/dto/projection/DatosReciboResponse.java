@@ -1,6 +1,5 @@
 package com.coralclubes.facil.modules.cobranza.dto.projection;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,15 +9,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+// Dto usado para obtener toda la informacion relacionada con el recibo digital y generar los pdfs correspondientes
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class DatosReciboResponse {
-    private String cadenaSeguridad;
-    private String estatus; // Recibido desde el SP: 'ORIGINAL', 'REIMPRESION' o 'CANCELADO'
-    private String reciboUuid;
-
     private Integer numeroRecibo;
     private Integer idSerieRecibo;
 

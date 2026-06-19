@@ -2,8 +2,10 @@ package com.coralclubes.facil.modules.cobranza.service;
 
 import com.coralclubes.facil.modules.cobranza.dto.projection.DatosReciboResponse;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.InfoArchivoDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaDto;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaLegacyDto;
 import com.coralclubes.facil.shared.infrastructure.pdf.service.PdfGeneratorService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -25,28 +27,7 @@ public class CobranzaGeneradorDocumentosService {
     @Value("${app.clients.storage.aliases.default}")
     private String aliasConfiguracion;
 
-    public record ReciboGenerado(UUID fileId, byte[] pdfBytes, String nombreArchivo) {}
-
-    public record ResultadoRecibos(ReciboGenerado original, ReciboGenerado reimpression, String cadenaOriginal) {}
-
-    public ResultadoRecibos generarAmbosRecibos(DatosReciboResponse recibo) {
-        // 1. Generamos la Cadena de Seguridad del Original
-        String cadenaOriginal = generarCadenaSeguridad(recibo, "ORIGINAL");
-        ReciboGenerado original = generarReciboEspecifico(recibo, "ORIGINAL", cadenaOriginal);
-
-        // 2. Generamos la de Reimpresión
-        String cadenaReimpresion = generarCadenaSeguridad(recibo, "REIMPRESION");
-        ReciboGenerado reimpression = generarReciboEspecifico(recibo, "REIMPRESION", cadenaReimpresion);
-
-        return new ResultadoRecibos(original, reimpression, cadenaOriginal);
-    }
-
-    public ReciboGenerado generarReciboCancelacion(DatosReciboResponse recibo) {
-        String cadenaCancelacion = generarCadenaSeguridad(recibo, "CANCELADO");
-        return generarReciboEspecifico(recibo, "CANCELADO", cadenaCancelacion);
-    }
-
-    private ReciboGenerado generarReciboEspecifico(DatosReciboResponse recibo, String tipo, String cadenaSeguridad) {
+    public byte[] generarPdfRecibo(DatosReciboResponse recibo, String tipo, String cadenaSeguridad) {
         // Formatear decimales en Java
         DecimalFormat df = new DecimalFormat("$#,##0.00");
         
@@ -93,47 +74,30 @@ public class CobranzaGeneradorDocumentosService {
         );
 
         // Generamos el PDF localmente en memoria (Pebble + Gotenberg)
-        byte[] pdfBytes = pdfGenerator.generarPdfDesdeHtml("RECIBO_FACIL", variables);
+        return pdfGenerator.generarPdfDesdeHtml("RECIBO_FACIL", variables);
+    }
 
+    public UUID generarYCargarPdfRecibo(DatosReciboResponse recibo, String tipo, String cadenaSeguridad) {
+        byte[] file = generarPdfRecibo(recibo, tipo, cadenaSeguridad);
+        return cargarPdf(file, tipo, recibo.getFolio(), recibo.getMembresia()).uuid();
+    }
+
+    private InfoArchivoDto cargarPdf (byte[] file, String tipo, String folio, String membresia) {
         // Subimos el PDF al Storage
-        String nombreArchivo = tipo + "_RECIBO_" + recibo.getFolio() + "_" + System.currentTimeMillis() + ".pdf";
-        
-        SolicitudCargaDto solicitud = SolicitudCargaDto.builder()
+        String nombreArchivo = tipo + "_RECIBO_" + folio + "_" + System.currentTimeMillis() + ".pdf";
+
+        SolicitudCargaLegacyDto solicitud = SolicitudCargaLegacyDto.builder()
                 .requiereDepuracion(false)
-                .nombreArchivo(nombreArchivo)
-                .contentType("application/pdf")
-                .tamanoBytes((long) pdfBytes.length)
                 .esPublico(false)
                 .aliasConfiguracion(aliasConfiguracion)
-                .rutaLogica("cobranza/recibos/" + Year.now().getValue() + "/" + recibo.getDesarrollo() + "/" + recibo.getFolio())
+                .rutaLogica("cobranza/recibos/" + membresia + "/" + folio)
                 .metadatos(Map.of(
-                        "folio", recibo.getFolio(),
+                        "folio", folio,
                         "subidoPor", "SYSTEM",
                         "modulo", "RECIBOS"
                 ))
                 .build();
 
-        RespuestaCargaDto handshake = storageClient.solicitarUrlCarga(solicitud);
-        storageClient.subirArchivoBinario(handshake.uploadUrl(), pdfBytes, "application/pdf");
-
-        // Damos una pequeña pausa (1 segundo) para permitir que el Storage Service procese el Webhook de RabbitMQ
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException ignored) {}
-
-        return new ReciboGenerado(handshake.fileId(), pdfBytes, nombreArchivo);
-    }
-
-    public String generarCadenaSeguridad(DatosReciboResponse recibo, String tipo) {
-        String cadenaOriginal = String.format("||%s|%s|%s|%s|%s||",
-                tipo.toUpperCase(),
-                recibo.getFolio(),
-                recibo.getFecha(),
-                recibo.getMembresia(),
-                recibo.getTotal()
-        );
-
-        String hashSignatura = DigestUtils.sha256Hex(cadenaOriginal).substring(0, 12);
-        return cadenaOriginal + hashSignatura.toUpperCase();
+        return storageClient.cargarArchivoSincrono(file, nombreArchivo,"application/pdf", solicitud);
     }
 }

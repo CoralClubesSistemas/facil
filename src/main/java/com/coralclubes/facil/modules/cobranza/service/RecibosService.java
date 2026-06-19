@@ -12,6 +12,9 @@ import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.Respu
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaDto;
 import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
+import com.coralclubes.facil.shared.domain.dto.ArchivoDescarga;
+import java.util.UUID;
+import java.util.Optional;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -37,6 +40,7 @@ public class RecibosService {
     private final UserContext userContext;
     private final BusinessLogger businessLogger;
     private final CobranzaPostProcesoAsyncService postProceso;
+    private final CobranzaGeneradorDocumentosService generador;
 
     private final StorageClient storageClient; 
 
@@ -68,13 +72,21 @@ public class RecibosService {
             String terminacionTarjeta,
             Boolean filtrarPorEstatus
     ) {
+        var usuarioFinal = usuario;
+
+        // si la bandera de filtrar por estatus viene activa es por que se esta ahciendo la consulta desde el
+        // modulo de cancelacion de recibos no pagados y en este modulo solo podemos obtener los recibos generados por el usuario que consulta
+        if (filtrarPorEstatus) {
+            usuarioFinal = userContext.getUsername();
+        }
+
         List<BuscarRecibosResponse> resultados = recibosRepository.spCobranzaBuscarRecibos(
                 folioRecibo,
                 fechaGeneracionDe,
                 fechaGeneracionA,
                 membresia,
                 desarrolloId,
-                usuario,
+                usuarioFinal,
                 nombreSocio,
                 terminacionTarjeta,
                 filtrarPorEstatus
@@ -219,6 +231,110 @@ public class RecibosService {
         return ApiResponse.success("URLs de carga solicitadas exitosamente.", respuestas);
     }
 
+    public ReciboDigitalDto obtenerReciboDigital(
+            String membresia,
+            Integer numeroRecibo,
+            Integer idSerieRecibo
+    ) {
+        String usuario = userContext.getUsername();
 
+        // 1. Intentar obtener el recibo digital ya registrado en la BD
+        Optional<ReciboDigitalDto> reciboOpt = recibosRepository
+                .spCobranzaObtenerReciboDigital(membresia, numeroRecibo, idSerieRecibo);
+
+        if (reciboOpt.isPresent() && reciboOpt.get().activo() != null) {
+            return reciboOpt.get();
+        }
+
+        // 2. Si no se encuentra registrado o no tiene archivo activo:
+        // Consultar detalles del recibo
+        String detallesJson = recibosRepository
+                .spCobranzaObtenerDetallesRecibo(numeroRecibo, idSerieRecibo, membresia)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontraron detalles para el recibo solicitado."));
+
+        ObtenerDetallesReciboResponse detalles;
+        try {
+            detalles = objectMapper.readValue(detallesJson, ObtenerDetallesReciboResponse.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("No se pudo interpretar el JSON de detalles del recibo.", e);
+        }
+
+        String estatus = detalles.estatus();
+        if (estatus == null) {
+            throw new IllegalStateException("El estatus del recibo no está definido.");
+        }
+
+        String estatusNorm = estatus.trim().toUpperCase();
+
+        // 3. Obtener datos del recibo para el PDF
+        String datosJson = cobranzaRepository
+                .spCobranzaObtenerDatosRecibo(numeroRecibo, idSerieRecibo, membresia)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontraron datos para la generación del PDF del recibo."));
+
+        DatosReciboResponse datosRecibo;
+        try {
+            datosRecibo = objectMapper.readValue(datosJson, DatosReciboResponse.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("No se pudo interpretar el JSON de datos del recibo para el PDF.", e);
+        }
+
+        if (estatusNorm.equals("CANCELADO") || estatusNorm.equals("CANCELADO SIN PAGO")) {
+            // Generar 3 documentos
+            UUID original = generador.generarYCargarPdfRecibo(datosRecibo, "ORIGINAL", postProceso.generarCadenaSeguridad(datosRecibo, "ORIGINAL"));
+            UUID reimpresion = generador.generarYCargarPdfRecibo(datosRecibo, "REIMPRESION", postProceso.generarCadenaSeguridad(datosRecibo, "REIMPRESION"));
+            UUID cancelado = generador.generarYCargarPdfRecibo(datosRecibo, "CANCELACION", postProceso.generarCadenaSeguridad(datosRecibo, "CANCELACION"));
+
+            // Actualizar metadatos digitales para Original y Reimpresión
+            recibosRepository.spCobranzaActualizarMetadatosDigitales(
+                    membresia,
+                    numeroRecibo,
+                    idSerieRecibo,
+                    String.valueOf(original),
+                    String.valueOf(reimpresion),
+                    postProceso.generarCadenaSeguridad(datosRecibo, "ORIGINAL"),
+                    usuario
+            );
+
+            // Actualizar metadatos digitales para Cancelación
+            recibosRepository.spCobranzaActualizarCancelacionReciboDigital(
+                    membresia,
+                    numeroRecibo,
+                    idSerieRecibo,
+                    String.valueOf(cancelado)
+            );
+
+            businessLogger.info(usuario, "Generación y registro digital de los 3 recibos (Original, Reimpresión, Cancelación) completado para folio: " + datosRecibo.getFolio() + ", estatus: " + estatus);
+
+        } else {
+            // Generar solo 2 documentos (Original y Reimpresión)
+            UUID original = generador.generarYCargarPdfRecibo(datosRecibo, "ORIGINAL", postProceso.generarCadenaSeguridad(datosRecibo, "ORIGINAL"));
+            UUID reimpresion = generador.generarYCargarPdfRecibo(datosRecibo, "REIMPRESION", postProceso.generarCadenaSeguridad(datosRecibo, "REIMPRESION"));
+
+            // Actualizar metadatos digitales para Original y Reimpresión
+            recibosRepository.spCobranzaActualizarMetadatosDigitales(
+                    membresia,
+                    numeroRecibo,
+                    idSerieRecibo,
+                    String.valueOf(original),
+                    String.valueOf(reimpresion),
+                    postProceso.generarCadenaSeguridad(datosRecibo, "ORIGINAL"),
+                    usuario
+            );
+
+            businessLogger.info(usuario, "Generación y registro digital de los 2 recibos (Original, Reimpresión) completado para folio: " + datosRecibo.getFolio() + ", estatus: " + estatus);
+        }
+
+        return recibosRepository.spCobranzaObtenerReciboDigital(membresia, numeroRecibo, idSerieRecibo)
+                .orElseThrow(() -> new IllegalStateException("No se pudo obtener el recibo digital después de su generación."));
+    }
+
+    public ApiResponse<ArchivoDescarga> obtenerUrlDescargaReciboDigital(
+            String membresia,
+            Integer numeroRecibo,
+            Integer idSerieRecibo
+    ) {
+        UUID uuidActivo = obtenerReciboDigital(membresia, numeroRecibo, idSerieRecibo).activo();
+        ArchivoDescarga archivo = storageClient.obtenerUrlDescargaYNombre(uuidActivo, "inline");
+        return ApiResponse.success("URL de descarga del recibo digital obtenida correctamente.", archivo);
+    }
 }
-

@@ -504,6 +504,7 @@ public class ReservacionesService {
 
     public UUID generarOrdenSaldosPendientes(String membresia, Integer folio) {
         List<GenerarOrdenCobranzaMovimientoRequest> movimientos = repository.obtenerCargosReservacion(membresia, folio).stream()
+                .filter(cargo -> cargo.importePendiente().compareTo(BigDecimal.ZERO) > 0) // Solo cargos con saldo pendiente
                 .map(cargo -> GenerarOrdenCobranzaMovimientoRequest.builder()
                         .idMovimiento(cargo.idMovimiento())
                         .montoCapital(cargo.importePendiente())

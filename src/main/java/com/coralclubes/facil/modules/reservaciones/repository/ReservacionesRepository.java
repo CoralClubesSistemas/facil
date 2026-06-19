@@ -133,7 +133,9 @@ public class ReservacionesRepository {
             rs.getBigDecimal("ImportePendiente"),
             rs.getTimestamp("FechaRegistro") != null ? rs.getTimestamp("FechaRegistro").toLocalDateTime() : null,
             rs.getTimestamp("fechaPagoRecibo") != null ? rs.getTimestamp("fechaPagoRecibo").toLocalDateTime() : null,
-            rs.getString("recibo")
+            rs.getString("recibo"),
+            rs.getInt("numeroRecibo"),
+            rs.getInt("serieRecibo")
     );
 
     // =========================================================================

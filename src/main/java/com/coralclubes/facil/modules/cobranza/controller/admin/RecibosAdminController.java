@@ -10,6 +10,7 @@ import com.coralclubes.facil.modules.cobranza.service.RecibosService;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaDto;
+import com.coralclubes.facil.shared.domain.dto.ArchivoDescarga;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/admin/recibos")
@@ -99,6 +101,16 @@ public class RecibosAdminController {
             @Valid @RequestBody RegistarEvidenciaReciboCancelado request
     ) {
         return ResponseEntity.ok(recibosService.registrarEvidenciaReciboCancelado(request));
+    }
+
+    @GetMapping("/digital")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<ArchivoDescarga>> obtenerReciboDigital(
+            @RequestParam String membresia,
+            @RequestParam Integer numeroRecibo,
+            @RequestParam Integer idSerieRecibo
+    ) {
+        return ResponseEntity.ok(recibosService.obtenerUrlDescargaReciboDigital(membresia, numeroRecibo, idSerieRecibo));
     }
 }
 

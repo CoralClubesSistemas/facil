@@ -10,5 +10,7 @@ public record CargoHabitacionDto(
         BigDecimal importePendiente,
         LocalDateTime fechaRegistro,
         LocalDateTime fechaPagoRecibo,
-        String recibo
+        String recibo,
+        Integer numeroRecibo,
+        Integer serieRecibo
 ) {}

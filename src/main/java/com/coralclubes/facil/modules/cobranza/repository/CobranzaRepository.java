@@ -57,9 +57,6 @@ public class CobranzaRepository {
         return uuidStr != null ? UUID.fromString(uuidStr) : null;
     };
 
-    private final RowMapper<UUID> uuidMapper = (rs, rowNum) ->
-            UUID.fromString(rs.getString("RCD_UUID"));
-
     private final RowMapper<RecibosCancelados> recibosCanceladosMapper = (rs, rowNum) ->
             new RecibosCancelados(
                     rs.getString("membresia"),
@@ -189,27 +186,6 @@ public class CobranzaRepository {
                         "Monto", monto
                 ),
                 depositoCobranzaMapper);
-    }
-
-    // Modificación en CobranzaRepository.java
-    public Optional<UUID> spCobranzaActualizarMetadatosDigitales(
-            Integer numeroRecibo,
-            Integer serieReciboId,
-            String fileId,
-            String cadenaSeguridad,
-            String usuario
-    ) {
-        return spExecutor.querySingle(
-                "spCobranzaActualizarMetadatosDigitales",
-                Map.of(
-                        "NumeroRecibo", numeroRecibo,
-                        "SerieReciboId", serieReciboId,
-                        "FileId", fileId,
-                        "CadenaSeguridad", cadenaSeguridad,
-                        "Usuario", usuario
-                ),
-                uuidMapper
-        );
     }
 
     public void spCobranzaCancelarOrdenCobranzaSinPago(String uuid, String usuario) {

@@ -1,16 +1,14 @@
 package com.coralclubes.facil.modules.cobranza.repository;
 
 import com.coralclubes.facil.modules.cobranza.dto.response.BuscarRecibosResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.ReciboDigitalDto;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Repository
 @RequiredArgsConstructor
@@ -37,6 +35,22 @@ public class RecibosRepository {
                     rs.getString("DesarrolloDescripcion"),
                     rs.getString("TipoMembresia")
             );
+
+    private final RowMapper<UUID> uuidMapper = (rs, rowNum) ->
+            UUID.fromString(rs.getString("UuidReciboDigital"));
+
+    private final RowMapper<ReciboDigitalDto> reciboDigitalMapper = (rs, rowNum) -> {
+        String origStr = rs.getString("original");
+        String reimpStr = rs.getString("reimpresion");
+        String cancStr = rs.getString("cancelado");
+        String actStr = rs.getString("activo");
+        return new ReciboDigitalDto(
+                (origStr != null && !origStr.isBlank()) ? UUID.fromString(origStr) : null,
+                (reimpStr != null && !reimpStr.isBlank()) ? UUID.fromString(reimpStr) : null,
+                (cancStr != null && !cancStr.isBlank()) ? UUID.fromString(cancStr) : null,
+                (actStr != null && !actStr.isBlank()) ? UUID.fromString(actStr) : null
+        );
+    };
 
     /**
      * Busca recibos de cobranza con múltiples filtros opcionales.
@@ -129,16 +143,57 @@ public class RecibosRepository {
     }
 
     public void spCobranzaActualizarCancelacionReciboDigital(
+            String membresia,
+            Integer numeroRecibo,
+            Integer serieReciboId,
+            String fileId
+    ) {
+        spExecutor.execute("spCobranzaActualizarCancelacionReciboDigital", Map.of(
+                "Membresia", membresia,
+                "NumeroRecibo", numeroRecibo,
+                "SerieReciboId", serieReciboId,
+                "FileId", fileId
+        ));
+    }
+
+    public Optional<UUID> spCobranzaActualizarMetadatosDigitales(
+            String membresia,
             Integer numeroRecibo,
             Integer serieReciboId,
             String fileId,
-            String Usuario
+            String fileIdReimpresion,
+            String cadenaSeguridad,
+            String usuario
     ) {
-        spExecutor.execute("spCobranzaActualizarCancelacionReciboDigital", Map.of(
-                "NumeroRecibo", numeroRecibo,
-                "SerieReciboId", serieReciboId,
-                "FileId", fileId,
-                "Usuario", Usuario
-        ));
+        return spExecutor.querySingle(
+                "spCobranzaActualizarMetadatosDigitales",
+                Map.of(
+                        "Membresia", membresia,
+                        "NumeroRecibo", numeroRecibo,
+                        "SerieReciboId", serieReciboId,
+                        "FileId", fileId,
+                        "FileIdReimpresion", fileIdReimpresion,
+                        "CadenaSeguridad", cadenaSeguridad,
+                        "Usuario", usuario
+                ),
+                uuidMapper
+        );
+    }
+
+    public Optional<ReciboDigitalDto> spCobranzaObtenerReciboDigital(
+            String membresia,
+            Integer numeroRecibo,
+            Integer serieReciboId
+    ) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("Membresia", membresia);
+        params.put("Recibo", numeroRecibo);
+        params.put("SerieRecibo", serieReciboId);
+
+        return spExecutor.querySingle(
+                "spCobranzaObtenerReciboDigital",
+                params,
+                reciboDigitalMapper
+        );
     }
 }
