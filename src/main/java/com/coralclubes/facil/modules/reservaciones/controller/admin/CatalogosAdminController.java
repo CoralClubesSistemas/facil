@@ -4,6 +4,7 @@ import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
 import com.coralclubes.facil.modules.reservaciones.service.CatalogosService;
 import com.coralclubes.facil.modules.reservaciones.dto.request.GuardarCaracteristicaRequest;
+import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import java.util.List;
 public class CatalogosAdminController {
 
     private final CatalogosService service;
+    private final UserContext userContext;
 
     // =========================================================================
     // CATÁLOGOS COMERCIALES (admin, equivalente a public)
@@ -30,7 +32,9 @@ public class CatalogosAdminController {
 
     @GetMapping("/hoteles")
     public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerHoteles() {
-        return ResponseEntity.ok(service.obtenerHoteles());
+        Integer idDesarrollo = userContext.getIdDesarrollo();
+
+        return ResponseEntity.ok(service.obtenerHoteles(idDesarrollo));
     }
 
     @GetMapping("/tipos-habitacion")

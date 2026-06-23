@@ -18,9 +18,7 @@ public class CatalogosService {
     private final CatalogosRepository repo;
     private final UserContext userContext;
 
-    public ApiResponse<List<SelectGenerico<Integer>>> obtenerHoteles() {
-        Integer idDesarrollo = userContext.getIdDesarrollo();
-
+    public ApiResponse<List<SelectGenerico<Integer>>> obtenerHoteles(Integer idDesarrollo) {
         return ApiResponse.success(repo.spResvCatalogoHoteles(idDesarrollo));
     }
 

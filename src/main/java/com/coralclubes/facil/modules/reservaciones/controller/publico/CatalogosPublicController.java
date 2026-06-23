@@ -22,8 +22,9 @@ public class CatalogosPublicController {
     private final CatalogosService service;
 
     @GetMapping("/hoteles")
-    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerHoteles() {
-        return ResponseEntity.ok(service.obtenerHoteles());
+    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerHoteles(
+            @RequestParam (required = false) Integer idDesarrollo) {
+        return ResponseEntity.ok(service.obtenerHoteles(idDesarrollo));
     }
 
     @GetMapping("/tipos-habitacion")

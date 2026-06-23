@@ -42,7 +42,9 @@ public class CatalogosRepository {
     // =========================================================================
 
     public List<SelectGenerico<Integer>> spResvCatalogoHoteles(Integer idDesarrollo) {
-        return spExecutor.queryList("spResvCatalogoHoteles", Map.of("ID_DESARROLLO", idDesarrollo), selectGenericoMapper);
+        HashMap<String, Object> params = new HashMap<>();
+        params.put("ID_DESARROLLO", idDesarrollo);
+        return spExecutor.queryList("spResvCatalogoHoteles", params, selectGenericoMapper);
     }
 
     public List<SelectGenerico<Integer>> spResvCatalogoTiposHabitaciones(Integer idDesarrollo) {
