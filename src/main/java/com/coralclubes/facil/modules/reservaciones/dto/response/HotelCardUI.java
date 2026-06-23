@@ -11,6 +11,7 @@ public record HotelCardUI(
         String descripcionCorta,
         BigDecimal calificacion,
         String imagenUrl,
-        List<CaracteristicaDto> caracteristicas
+        List<CaracteristicaDto> caracteristicas,
+        BigDecimal tarifaMinima
 ) {
 }

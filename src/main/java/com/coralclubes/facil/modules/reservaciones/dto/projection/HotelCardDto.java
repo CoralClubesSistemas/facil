@@ -18,5 +18,6 @@ public record HotelCardDto(
         String descripcionCorta,
         BigDecimal calificacion,
         UUID uuidPortada,
-        String imagenUrl
+        String imagenUrl,
+        BigDecimal tarifaMinima
 ) {}

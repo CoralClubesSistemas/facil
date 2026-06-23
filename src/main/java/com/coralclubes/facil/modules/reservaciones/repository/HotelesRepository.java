@@ -41,6 +41,8 @@ public class HotelesRepository {
             .descripcionCorta(rs.getString("DESCRIPCION_CORTA"))
             .calificacion(rs.getBigDecimal("CALIFICACION"))
             .uuidPortada(rs.getString("UUID_PORTADA") != null ? UUID.fromString(rs.getString("UUID_PORTADA")) : null)
+            .tarifaMinima(rs.getBigDecimal("TARIFA_MINIMA") != null ? rs.getBigDecimal("TARIFA_MINIMA") : null)
+
             .build();
 
     private final RowMapper<HotelDetalleDto> hotelDetalleMapper = (rs, rowNum) -> HotelDetalleDto.builder()

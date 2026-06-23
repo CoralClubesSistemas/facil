@@ -98,7 +98,7 @@ public class PortalService {
 
         SolicitudNotificacionDto notificacion = SolicitudNotificacionDto.builder()
                 .aliasConfig(aliasNotificaciones)
-                .destinatarios(List.of("lvivar@coralclubes.com"))
+                .destinatarios(List.of("reservaciones@coralclubes.com"))
                 .asunto("Nuevo contacto desde el portal - " + request.nombre())
                 .codigoPlantilla("contacto-portal-v1")
                 .variables(variables)

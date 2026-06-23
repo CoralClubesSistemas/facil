@@ -146,7 +146,8 @@ public class HotelesService {
                     hotel.descripcionCorta(),
                     hotel.calificacion(),
                     urlPortada,
-                    caracteristicas
+                    caracteristicas,
+                    hotel.tarifaMinima()
             );
         }).toList();
 

@@ -4,6 +4,7 @@ import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleDto;
 import com.coralclubes.facil.modules.cobranza.dto.response.ConfirmacionReservaResponse;
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
 import com.coralclubes.facil.modules.reservaciones.dto.response.DisponibilidadUnidadDto;
+import com.coralclubes.facil.modules.reservaciones.dto.response.DisponibilidadUnidadUI;
 import com.coralclubes.facil.modules.reservaciones.dto.response.ResumenCheckoutResponse;
 import com.coralclubes.facil.modules.reservaciones.service.ReservacionesService;
 import com.coralclubes.facil.shared.domain.dto.ArchivoDescarga;
@@ -30,7 +31,7 @@ public class ReservacionesPublicController {
     private final UserContext userContext;
 
     @PostMapping("/buscar-disponibilidad")
-    public ResponseEntity<ApiResponse<List<DisponibilidadUnidadDto>>> buscarDisponibilidad(
+    public ResponseEntity<ApiResponse<List<DisponibilidadUnidadUI>>> buscarDisponibilidad(
             @Valid @RequestBody BusquedaDisponibilidadRequest request) {
         return ResponseEntity.ok(service.buscarDisponibilidad(request));
     }
@@ -61,13 +62,6 @@ public class ReservacionesPublicController {
     @GetMapping("/cupones/{groupId}")
     public ResponseEntity<ApiResponse<List<CuponDisponibleDto>>> obtenerCuponesDisponibles(@PathVariable UUID groupId) {
         return ResponseEntity.ok(service.obtenerCuponesDisponibles(groupId));
-    }
-
-    @PostMapping("/confirmar")
-    public ResponseEntity<ApiResponse<List<Integer>>> confirmarReservacion(
-            @Valid @RequestBody ConfirmarReservaRequest request) {
-
-        return ResponseEntity.ok(service.confirmarReservacion(request));
     }
 
     @PostMapping("/confirmar-orden")

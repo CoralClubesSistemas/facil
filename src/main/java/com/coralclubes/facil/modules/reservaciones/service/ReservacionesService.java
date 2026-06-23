@@ -3,10 +3,12 @@ package com.coralclubes.facil.modules.reservaciones.service;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleDto;
 import com.coralclubes.facil.modules.clientes.dto.response.PuntosMembresia;
 import com.coralclubes.facil.modules.clientes.service.PuntosService;
+import com.coralclubes.facil.modules.reservaciones.repository.UnidadesRepository;
 import com.coralclubes.facil.shared.domain.dto.ArchivoDescarga;
 import com.coralclubes.facil.shared.events.dto.ConsumoPuntosReservacionEvent;
 import com.coralclubes.facil.shared.events.dto.ReservacionConfirmadaEvent;
 import io.lettuce.core.ScriptOutputType;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaMovimientoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaRequest;
@@ -48,6 +50,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReservacionesService {
@@ -68,6 +71,7 @@ public class ReservacionesService {
     private final CobranzaService cobranzaService;
     private final StorageClient storageClient;
     private final PdfGeneratorService pdfGeneratorService;
+    private final UnidadesRepository unidadesRepo;
 
     @Value("${app.clients.notifications.aliases.aws-ses}")
     private String aliasConfigNotificaciones;
@@ -85,16 +89,16 @@ public class ReservacionesService {
     // 1. GESTIÓN DE INVENTARIO Y DISPONIBILIDAD
     // =========================================================================
 
-    public ApiResponse<List<DisponibilidadUnidadDto>> buscarDisponibilidad(BusquedaDisponibilidadRequest request) {
+    public ApiResponse<List<DisponibilidadUnidadUI>> buscarDisponibilidad(BusquedaDisponibilidadRequest request) {
         validarFechas(request.fechaEntrada(), request.fechaSalida());
 
         List<DisponibilidadUnidadProjection> resultados = repository.buscarDisponibilidad(
                 request.destinoId(), request.fechaEntrada(), request.fechaSalida(), request.personas(), request.membresia()
         );
 
-        List<DisponibilidadUnidadDto> disponibilidadDtos = resultados.stream().map(projection -> {
+        List<DisponibilidadUnidadUI> disponibilidadDtos = resultados.stream().map(projection -> {
             String imagenUrl = projection.uuidImagen() != null ? storageCache.obtenerUrlImagen(projection.uuidImagen()) : null;
-            return DisponibilidadUnidadDto.builder()
+            return DisponibilidadUnidadUI.builder()
                     .idTipoUnidad(projection.idTipoUnidad())
                     .nombreUnidad(projection.nombreUnidad())
                     .descripcionCorta(projection.descripcionCorta())
@@ -102,6 +106,7 @@ public class ReservacionesService {
                     .stockDisponible(projection.stockDisponible())
                     .costoEstancia(projection.costoEstancia())
                     .urlImagen(imagenUrl)
+                    .caracteristicas(unidadesRepo.spResvObtenerCaracteristicasXTipoUnidad(projection.idTipoUnidad()))
                     .build();
         }).toList();
 
@@ -134,6 +139,9 @@ public class ReservacionesService {
     }
 
     public ApiResponse<ResumenCheckoutResponse> calcularCheckout(CalcularCheckoutRequest request) {
+        log.info("Calculando checkout para groupId: {}, cupon: {}, promo: {}, rrtIdsPagoPuntos: {}",
+                request.groupId(), request.cupon(), request.codigoPromocion(), request.rrtIdsPagoPuntos());
+
         // 1. Obtener Desglose Base
         String jsonDesglose = repository.obtenerDesgloseFinancieroJson(request.groupId());
         if (jsonDesglose == null) throw new IllegalArgumentException("El carrito expiró o no existe.");
@@ -172,7 +180,7 @@ public class ReservacionesService {
         ResultadoBeneficio beneficio = new ResultadoBeneficio(BigDecimal.ZERO, false, null, null, null);
 
         if (request.cupon() != null || (request.codigoPromocion() != null && !request.codigoPromocion().isBlank())) {
-            // Evaluamos y aplicamos (Tu método interno actual)
+            // Evaluamos y aplicamos
             beneficio = evaluarBeneficios(request.cupon(), request.codigoPromocion(), contexto, habitaciones);
         }
 
@@ -194,6 +202,8 @@ public class ReservacionesService {
                 .cuponValido(beneficio.esValido())
                 .mensajeCupon(beneficio.mensaje())
                 .build();
+
+        log.debug("resultado despues de calcularCheckout: {}", JsonUtils.toJson(resumen));
 
         return ApiResponse.success("Desglose calculado correctamente",
                 ResumenCheckoutResponse.builder()
