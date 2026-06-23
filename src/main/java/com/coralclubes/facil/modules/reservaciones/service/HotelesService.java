@@ -157,8 +157,7 @@ public class HotelesService {
      * Obtiene el detalle completo de un hotel para el formulario de edición.
      */
     public ApiResponse<HotelDetalleDto> obtenerHotelDetalles(Integer idDesarrollo) {
-        HotelDetalleDto detalle = repo.spResvObtenerHotelDetalles(idDesarrollo)
-                .orElse(null);
+        HotelDetalleDto detalle = repo.spResvObtenerHotelDetalles(idDesarrollo);
 
         if (detalle == null) {
             return ApiResponse.error(GeneralResponseCode.NOT_FOUND, "El hotel solicitado no existe o está inactivo.");

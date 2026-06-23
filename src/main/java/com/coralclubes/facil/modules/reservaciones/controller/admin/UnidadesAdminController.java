@@ -7,6 +7,7 @@ import com.coralclubes.facil.modules.reservaciones.service.UnidadesService;
 import com.coralclubes.facil.shared.domain.dto.ImagenResponse;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
+import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import java.util.List;
 public class UnidadesAdminController {
 
     private final UnidadesService service;
+    private final UserContext userContext;
 
     // =========================================================================
     // TIPOS LÓGICOS DE UNIDAD (PLANTILLAS) - ESCRITURA
@@ -93,7 +95,9 @@ public class UnidadesAdminController {
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse<List<TipoUnidadUI>>> obtenerTiposUnidadCard() {
-        return ResponseEntity.ok(service.obtenerTiposUnidadCard());
+        Integer idDesarrollo = userContext.getIdDesarrollo();
+
+        return ResponseEntity.ok(service.obtenerTiposUnidadCard(idDesarrollo));
     }
 
     @GetMapping("/info")

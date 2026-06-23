@@ -112,9 +112,7 @@ public class UnidadesService {
     // MÉTODOS DE LECTURA (Read) - TIPOS DE UNIDAD
     // =========================================================================
 
-    public ApiResponse<List<TipoUnidadUI>> obtenerTiposUnidadCard() {
-        Integer idDesarrollo = userContext.getIdDesarrollo();
-
+    public ApiResponse<List<TipoUnidadUI>> obtenerTiposUnidadCard(Integer idDesarrollo) {
         List<TipoUnidadCardDto> lista = tipoUnidadRepo.spResvObtenerTiposUnidadCard(idDesarrollo);
 
         List<TipoUnidadUI> ui = lista.stream().map(unidad -> {

@@ -25,8 +25,10 @@ public class UnidadesPublicController {
     private final UnidadesService service;
 
     @GetMapping("/all")
-    public ResponseEntity<ApiResponse<List<TipoUnidadUI>>> obtenerTiposUnidadCard() {
-        return ResponseEntity.ok(service.obtenerTiposUnidadCard());
+    public ResponseEntity<ApiResponse<List<TipoUnidadUI>>> obtenerTiposUnidadCard(
+            @RequestParam(required = false) Integer idDesarrollo
+    ) {
+        return ResponseEntity.ok(service.obtenerTiposUnidadCard(idDesarrollo));
     }
 
     @GetMapping("/info")

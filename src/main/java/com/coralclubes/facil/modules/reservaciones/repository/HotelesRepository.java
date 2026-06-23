@@ -202,9 +202,9 @@ public class HotelesRepository {
         return spExecutor.queryList("spResvObtenerHotelesCard", params, hotelCardMapper);
     }
 
-    @Cacheable(value = "hotel_detalles", key = "#idDesarrollo")
-    public Optional<HotelDetalleDto> spResvObtenerHotelDetalles(Integer idDesarrollo) {
-        return spExecutor.querySingle("spResvObtenerHotelDetalles", Map.of("IdDesarrollo", idDesarrollo), hotelDetalleMapper);
+    public HotelDetalleDto spResvObtenerHotelDetalles(Integer idDesarrollo) {
+        return spExecutor.querySingle("spResvObtenerHotelDetalles", Map.of("IdDesarrollo", idDesarrollo), hotelDetalleMapper)
+                .orElse(null);
     }
 
     @Cacheable(value = "hotel_imagenes", key = "#idDesarrollo")
