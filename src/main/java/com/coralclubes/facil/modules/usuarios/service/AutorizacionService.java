@@ -1,10 +1,10 @@
-package com.coralclubes.facil.shared.infrastructure.security.service;
+package com.coralclubes.facil.modules.usuarios.service;
 
 import com.coralclubes.facil.shared.infrastructure.codes.LoginResponseCode;
-import com.coralclubes.facil.shared.infrastructure.security.dto.projection.SimpleLoginResult;
-import com.coralclubes.facil.shared.infrastructure.security.dto.request.ValidacionAutorizacion;
-import com.coralclubes.facil.shared.infrastructure.security.enums.TipoAutorizacion;
-import com.coralclubes.facil.shared.infrastructure.security.repository.LoginRepository;
+import com.coralclubes.facil.modules.usuarios.dto.projection.SimpleLoginResult;
+import com.coralclubes.facil.modules.usuarios.dto.request.ValidacionAutorizacion;
+import com.coralclubes.facil.modules.usuarios.enums.TipoAutorizacion;
+import com.coralclubes.facil.modules.usuarios.repository.LoginRepository;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;

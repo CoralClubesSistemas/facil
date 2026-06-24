@@ -4,7 +4,7 @@ import com.coralclubes.facil.modules.reportes.dto.request.EjecutarReporteRequest
 import com.coralclubes.facil.modules.reportes.dto.response.*;
 import com.coralclubes.facil.modules.reportes.enums.ClavesModulosReportes;
 import com.coralclubes.facil.modules.reportes.repository.ReportesMotorRepository;
-import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
+import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;

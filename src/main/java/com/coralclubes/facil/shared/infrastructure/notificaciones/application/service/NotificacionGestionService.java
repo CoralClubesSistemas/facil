@@ -3,7 +3,7 @@ package com.coralclubes.facil.shared.infrastructure.notificaciones.application.s
 import com.coralclubes.facil.shared.infrastructure.notificaciones.application.dto.NotificacionDto;
 import com.coralclubes.facil.shared.infrastructure.notificaciones.domain.model.Notificacion;
 import com.coralclubes.facil.shared.infrastructure.notificaciones.domain.repository.NotificacionRepository;
-import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
+import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;

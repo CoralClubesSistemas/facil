@@ -11,9 +11,9 @@ import com.coralclubes.facil.modules.reservaciones.dto.response.TareaDashboardDt
 import com.coralclubes.facil.modules.reservaciones.repository.AmaDeLlavesRepository;
 import com.coralclubes.facil.shared.infrastructure.notificaciones.application.dto.PeticionNotificacionDto;
 import com.coralclubes.facil.shared.infrastructure.notificaciones.application.service.NotificacionEmisorService;
-import com.coralclubes.facil.shared.infrastructure.security.enums.ClavesModulos;
-import com.coralclubes.facil.shared.infrastructure.security.service.SeguridadService;
-import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
+import com.coralclubes.facil.shared.infrastructure.codes.ClavesModulos;
+import com.coralclubes.facil.modules.usuarios.service.SeguridadService;
+import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

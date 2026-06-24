@@ -1,4 +1,4 @@
-package com.coralclubes.facil.shared.infrastructure.security.service;
+package com.coralclubes.facil.modules.usuarios.service;
 
 import com.coralclubes.facil.shared.infrastructure.gateway.dto.UserInfo;
 import com.coralclubes.facil.shared.infrastructure.gateway.service.GatewayAttributes;

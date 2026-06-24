@@ -1,7 +1,7 @@
-package com.coralclubes.facil.shared.infrastructure.security.repository;
+package com.coralclubes.facil.modules.usuarios.repository;
 
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
-import com.coralclubes.facil.shared.infrastructure.security.dto.response.PasswordResetToken;
+import com.coralclubes.facil.modules.usuarios.dto.response.PasswordResetToken;
 import com.coralclubes.logging.SqlLogger;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -91,6 +91,22 @@ public class PasswordResetRepository {
             return rows == 1;
         } catch (Exception e) {
             sqlLogger.logError("deletePasswordResetToken", e);
+            return false;
+        }
+    }
+
+    /**
+     * Elimina todos los tokens de restablecimiento asociados a un usuario/membresía.
+     */
+    @Transactional
+    public boolean deletePasswordResetTokenByUsername(String username) {
+        String sql = "DELETE FROM password_reset_tokens WHERE username = ?";
+
+        try {
+            jdbcTemplate.update(sql, username);
+            return true;
+        } catch (Exception e) {
+            sqlLogger.logError("deletePasswordResetTokenByUsername", e);
             return false;
         }
     }

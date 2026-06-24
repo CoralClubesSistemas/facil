@@ -1,4 +1,4 @@
-package com.coralclubes.facil.shared.infrastructure.security.repository;
+package com.coralclubes.facil.modules.usuarios.repository;
 
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import lombok.RequiredArgsConstructor;

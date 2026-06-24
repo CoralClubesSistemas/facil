@@ -3,7 +3,7 @@ package com.coralclubes.facil.modules.usuarios.controller;
 import com.coralclubes.facil.modules.usuarios.dto.request.ActualizarPreferenciasRequest;
 import com.coralclubes.facil.modules.usuarios.dto.response.PreferenciasResponse;
 import com.coralclubes.facil.modules.usuarios.service.UsuarioService;
-import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
+import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

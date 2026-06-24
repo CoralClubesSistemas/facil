@@ -1,9 +1,9 @@
-package com.coralclubes.facil.shared.infrastructure.security.repository;
+package com.coralclubes.facil.modules.usuarios.repository;
 
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
-import com.coralclubes.facil.shared.infrastructure.security.dto.projection.SimpleLoginResult;
-import com.coralclubes.facil.shared.infrastructure.security.dto.projection.UserAutorizacionesResult;
-import com.coralclubes.facil.shared.infrastructure.security.dto.projection.UserLoginResult;
+import com.coralclubes.facil.modules.usuarios.dto.projection.SimpleLoginResult;
+import com.coralclubes.facil.modules.usuarios.dto.projection.UserAutorizacionesResult;
+import com.coralclubes.facil.modules.usuarios.dto.projection.UserLoginResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;

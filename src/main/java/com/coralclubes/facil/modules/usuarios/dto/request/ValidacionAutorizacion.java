@@ -1,4 +1,4 @@
-package com.coralclubes.facil.shared.infrastructure.security.dto.request;
+package com.coralclubes.facil.modules.usuarios.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 

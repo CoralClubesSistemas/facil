@@ -3,9 +3,9 @@ package com.coralclubes.facil.shared.infrastructure.gateway.service;
 import com.coralclubes.facil.modules.sistema.dto.projection.ModuloDtoResult;
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.NoWebRegistrationException;
 import com.coralclubes.facil.shared.infrastructure.gateway.dto.UserInfo;
-import com.coralclubes.facil.shared.infrastructure.security.dto.projection.UserAutorizacionesResult;
-import com.coralclubes.facil.shared.infrastructure.security.dto.projection.UserLoginResult;
-import com.coralclubes.facil.shared.infrastructure.security.repository.LoginRepository;
+import com.coralclubes.facil.modules.usuarios.dto.projection.UserAutorizacionesResult;
+import com.coralclubes.facil.modules.usuarios.dto.projection.UserLoginResult;
+import com.coralclubes.facil.modules.usuarios.repository.LoginRepository;
 import com.coralclubes.facil.modules.usuarios.repository.UsuariosRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +62,7 @@ public class InternalAuthService {
         ).distinct().toList();
 
         // 7. Determinar source type
-        String source = determinarSourceType(userData);
+        String source = "INTERNAL";
 
         log.info("Autenticación interna exitosa para usuario: {} [{}]", userData.usuario(), source);
 
@@ -80,17 +80,6 @@ public class InternalAuthService {
                 .permissions(permissions)
                 .nombreCompleto(userData.nombreCompleto())
                 .build();
-    }
-
-    private String determinarSourceType(UserLoginResult userData) {
-        if (userData.rolDescripcion() == null) {
-            return "SYSTEM";
-        }
-        String rol = userData.rolDescripcion().toUpperCase();
-        if (rol.contains("SOCIO") || rol.contains("CLIENTE")) {
-            return "EXTERNAL";
-        }
-        return "INTERNAL";
     }
 
     /**
@@ -117,7 +106,7 @@ public class InternalAuthService {
                 .username(userData.usuario())
                 .email(userData.email())
                 .role(userData.rolDescripcion())
-                .source(determinarSourceType(userData))
+                .source("INTERNAL")
                 .legacyId(userData.idDesarrollo() != null ? String.valueOf(userData.idDesarrollo()) : null)
                 .status("REGISTERED")
                 .idDesarrollo(userData.idDesarrollo())

@@ -3,7 +3,7 @@ package com.coralclubes.facil.modules.cobranza.service;
 import com.coralclubes.facil.modules.cobranza.dto.request.EstadoCuentaAdeudoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.EstadoCuentaAdeudoDto;
 import com.coralclubes.facil.modules.cobranza.repository.MovimientosClienteRepository;
-import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
+import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

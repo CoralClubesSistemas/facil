@@ -4,7 +4,7 @@ import com.coralclubes.facil.shared.infrastructure.notificaciones.application.dt
 import com.coralclubes.facil.shared.infrastructure.notificaciones.application.dto.NotificacionDto;
 import com.coralclubes.facil.shared.infrastructure.notificaciones.application.service.NotificacionEmisorService;
 import com.coralclubes.facil.shared.infrastructure.notificaciones.application.service.NotificacionGestionService;
-import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
+import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

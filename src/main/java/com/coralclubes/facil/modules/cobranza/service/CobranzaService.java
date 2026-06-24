@@ -13,7 +13,7 @@ import com.coralclubes.facil.shared.events.dto.ReciboPagadoEvent;
 import com.coralclubes.facil.shared.infrastructure.integration.ia.analisis.AnalisisDeInformacion;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.NotificationClient;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.dto.SolicitudNotificacionDto;
-import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
+import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
 import com.coralclubes.responses.codes.GeneralResponseCode;

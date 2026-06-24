@@ -3,7 +3,7 @@ package com.coralclubes.facil.modules.reservaciones.service;
 import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.reservaciones.dto.response.CaracteristicaDto;
 import com.coralclubes.facil.modules.reservaciones.repository.CatalogosRepository;
-import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
+import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.facil.modules.reservaciones.dto.request.GuardarCaracteristicaRequest;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;

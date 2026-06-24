@@ -9,7 +9,7 @@ import com.coralclubes.facil.modules.cobranza.model.pagos.engine.PaymentStrategy
 import com.coralclubes.facil.modules.cobranza.model.pagos.enums.EstatusIntentoPago;
 import com.coralclubes.facil.modules.cobranza.model.pagos.interfaces.PaymentStrategy;
 import com.coralclubes.facil.modules.cobranza.repository.IntentoPagoRepository;
-import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
+import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;

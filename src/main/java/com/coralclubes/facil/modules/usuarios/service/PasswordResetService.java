@@ -1,14 +1,14 @@
-package com.coralclubes.facil.shared.infrastructure.security.service;
+package com.coralclubes.facil.modules.usuarios.service;
 
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.UsernameNotFound;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.NotificationClient;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.dto.SolicitudNotificacionDto;
-import com.coralclubes.facil.shared.infrastructure.security.dto.projection.UserLoginResult;
-import com.coralclubes.facil.shared.infrastructure.security.dto.request.PasswordResetConfirmRequest;
-import com.coralclubes.facil.shared.infrastructure.security.dto.request.PasswordResetRequest;
-import com.coralclubes.facil.shared.infrastructure.security.dto.response.PasswordResetToken;
-import com.coralclubes.facil.shared.infrastructure.security.repository.LoginRepository;
-import com.coralclubes.facil.shared.infrastructure.security.repository.PasswordResetRepository;
+import com.coralclubes.facil.modules.usuarios.dto.projection.UserLoginResult;
+import com.coralclubes.facil.modules.usuarios.dto.request.PasswordResetConfirmRequest;
+import com.coralclubes.facil.modules.usuarios.dto.request.PasswordResetRequest;
+import com.coralclubes.facil.modules.usuarios.dto.response.PasswordResetToken;
+import com.coralclubes.facil.modules.usuarios.repository.LoginRepository;
+import com.coralclubes.facil.modules.usuarios.repository.PasswordResetRepository;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
 import com.coralclubes.responses.codes.AuthResponseCode;

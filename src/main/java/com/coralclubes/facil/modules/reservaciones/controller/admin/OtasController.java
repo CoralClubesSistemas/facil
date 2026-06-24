@@ -8,7 +8,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.response.ConfiguracionOta
 import com.coralclubes.facil.modules.reservaciones.dto.response.GenerarReservacionOtaResponse;
 import com.coralclubes.facil.modules.reservaciones.dto.response.UnidadOtaResponse;
 import com.coralclubes.facil.modules.reservaciones.service.OtasService;
-import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
+import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

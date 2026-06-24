@@ -1,7 +1,7 @@
-package com.coralclubes.facil.shared.infrastructure.security.controller;
+package com.coralclubes.facil.modules.usuarios.controller;
 
-import com.coralclubes.facil.shared.infrastructure.security.dto.request.ValidacionAutorizacion;
-import com.coralclubes.facil.shared.infrastructure.security.service.AutorizacionService;
+import com.coralclubes.facil.modules.usuarios.dto.request.ValidacionAutorizacion;
+import com.coralclubes.facil.modules.usuarios.service.AutorizacionService;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

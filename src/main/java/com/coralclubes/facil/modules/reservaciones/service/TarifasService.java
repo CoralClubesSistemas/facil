@@ -4,7 +4,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.request.TarifaRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.response.TarifaDto;
 import com.coralclubes.facil.modules.reservaciones.repository.TarifasRepository;
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.ServiceUnavailableException;
-import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
+import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import com.coralclubes.responses.codes.GeneralResponseCode;
 import lombok.RequiredArgsConstructor;

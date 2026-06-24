@@ -6,7 +6,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.response.TemporadaDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.TemporadaFechaResponse;
 import com.coralclubes.facil.modules.reservaciones.repository.TemporadasRepository;
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.ServiceUnavailableException;
-import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
+import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import com.coralclubes.responses.codes.GeneralResponseCode;
 import lombok.RequiredArgsConstructor;

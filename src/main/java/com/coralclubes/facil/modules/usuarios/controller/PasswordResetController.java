@@ -1,8 +1,8 @@
-package com.coralclubes.facil.shared.infrastructure.security.controller;
+package com.coralclubes.facil.modules.usuarios.controller;
 
-import com.coralclubes.facil.shared.infrastructure.security.dto.request.PasswordResetConfirmRequest;
-import com.coralclubes.facil.shared.infrastructure.security.dto.request.PasswordResetRequest;
-import com.coralclubes.facil.shared.infrastructure.security.service.PasswordResetService;
+import com.coralclubes.facil.modules.usuarios.dto.request.PasswordResetConfirmRequest;
+import com.coralclubes.facil.modules.usuarios.dto.request.PasswordResetRequest;
+import com.coralclubes.facil.modules.usuarios.service.PasswordResetService;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -1,4 +1,4 @@
-package com.coralclubes.facil.shared.infrastructure.security.enums;
+package com.coralclubes.facil.modules.usuarios.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

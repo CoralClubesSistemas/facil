@@ -1,6 +1,6 @@
-package com.coralclubes.facil.shared.infrastructure.security.service;
+package com.coralclubes.facil.modules.usuarios.service;
 
-import com.coralclubes.facil.shared.infrastructure.security.repository.SeguridadRepository;
+import com.coralclubes.facil.modules.usuarios.repository.SeguridadRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

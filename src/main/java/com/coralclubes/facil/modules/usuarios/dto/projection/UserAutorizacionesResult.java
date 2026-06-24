@@ -1,4 +1,4 @@
-package com.coralclubes.facil.shared.infrastructure.security.dto.projection;
+package com.coralclubes.facil.modules.usuarios.dto.projection;
 
 import lombok.Builder;
 

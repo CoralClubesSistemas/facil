@@ -1,4 +1,4 @@
-package com.coralclubes.facil.shared.infrastructure.security.dto.response;
+package com.coralclubes.facil.modules.usuarios.dto.response;
 
 import lombok.Builder;
 

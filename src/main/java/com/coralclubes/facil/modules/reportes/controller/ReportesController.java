@@ -9,7 +9,7 @@ import com.coralclubes.facil.modules.reportes.service.ReportesCatalogoService;
 import com.coralclubes.facil.modules.reportes.service.ReportesMotorService;
 import com.coralclubes.facil.shared.domain.dto.ArchivoDescarga;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
-import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
+import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

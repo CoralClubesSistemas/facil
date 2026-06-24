@@ -83,5 +83,8 @@ logging:
   level:
     com.coralclubes.facil: DEBUG
 
+firebase:
+  project-id: facil-7d1fe
+
   #pattern:
     #console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %clr(%-5level) %msg%n"

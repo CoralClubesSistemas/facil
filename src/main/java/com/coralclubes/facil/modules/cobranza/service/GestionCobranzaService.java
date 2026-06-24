@@ -4,7 +4,7 @@ import com.coralclubes.facil.modules.cobranza.dto.request.GenerarGestionCobranza
 import com.coralclubes.facil.modules.cobranza.dto.projection.GenerarGestionCobranzaResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.GestionCobranzaLink;
 import com.coralclubes.facil.modules.cobranza.repository.GestionCobranzaRepository;
-import com.coralclubes.facil.shared.infrastructure.security.service.UserContext;
+import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

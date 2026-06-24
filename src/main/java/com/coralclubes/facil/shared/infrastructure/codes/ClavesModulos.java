@@ -1,4 +1,4 @@
-package com.coralclubes.facil.shared.infrastructure.security.enums;
+package com.coralclubes.facil.shared.infrastructure.codes;
 
 public enum ClavesModulos {
     AMADELLAVES("smnuHousekeeping");
