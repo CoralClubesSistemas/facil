@@ -315,7 +315,6 @@ public class UnidadesRepository {
         return spExecutor.queryList("spResvObtenerCatalogoPosiblesPadres", params, posiblesPadresMapper);
     }
 
-    @Cacheable(value = "detalle_tipo_unidad", key = "#idTipoUnidad")
     public TipoUnidadDetalles spResvObtenerDetalleTipoUnidad(Integer idTipoUnidad) {
         return spExecutor.querySingle("spResvObtenerDetalleTipoUnidad", Map.of("RhdtId", idTipoUnidad), detallesUIRowMapper).orElse(null);
     }
