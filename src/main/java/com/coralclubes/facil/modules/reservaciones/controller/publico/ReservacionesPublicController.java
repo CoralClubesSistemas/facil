@@ -3,6 +3,7 @@ package com.coralclubes.facil.modules.reservaciones.controller.publico;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleDto;
 import com.coralclubes.facil.modules.cobranza.dto.response.ConfirmacionReservaResponse;
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
+import com.coralclubes.facil.modules.reservaciones.dto.response.DisponibilidadUnidadDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.DisponibilidadUnidadUI;
 import com.coralclubes.facil.modules.reservaciones.dto.response.ResumenCheckoutResponse;
 import com.coralclubes.facil.modules.reservaciones.service.ReservacionesService;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -92,5 +94,15 @@ public class ReservacionesPublicController {
     ) {
         service.reenviarCartaOcupacion(membresia, consecutivo, correos);
         return ResponseEntity.ok(ApiResponse.success("Carta de ocupación reenviada correctamente", true));
+    }
+    
+    @GetMapping("/disponibilidad-unidad")
+    public ResponseEntity<ApiResponse<DisponibilidadUnidadDto>> obtenerDisponibilidadUnidad(
+            @RequestParam(required = true) Integer tipoUnidad,
+            @RequestParam LocalDate fechaInicio,
+            @RequestParam LocalDate fechaFin,
+            @RequestParam String membresia
+    ) {
+        return ResponseEntity.ok(service.obtenerDisponibilidadUnidad(tipoUnidad, membresia, fechaInicio, fechaFin));
     }
 }

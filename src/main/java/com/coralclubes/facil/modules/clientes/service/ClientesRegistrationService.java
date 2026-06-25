@@ -108,7 +108,7 @@ public class ClientesRegistrationService {
 
         String passwordHash = null;
         // 3. Hashear contraseña
-        if (request.password() != null || !request.password().isBlank()) {
+        if (request.password() != null && !request.password().isBlank()) {
             passwordHash = passwordEncoder.encode(request.password());
         }
 

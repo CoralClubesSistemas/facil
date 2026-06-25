@@ -138,6 +138,25 @@ public class ReservacionesRepository {
             rs.getInt("serieRecibo")
     );
 
+    private final RowMapper<ReservacionMembresiaDto> reservacionMembresiaMapper = (rs, rowNum) -> new ReservacionMembresiaDto(
+            rs.getString("membresia"),
+            rs.getInt("folio"),
+            rs.getDate("fecha_entrada") != null ? rs.getDate("fecha_entrada").toLocalDate() : null,
+            rs.getDate("fecha_salida") != null ? rs.getDate("fecha_salida").toLocalDate() : null,
+            rs.getInt("personas"),
+            rs.getString("nombre_reserva"),
+            rs.getString("email_contacto"),
+            rs.getString("telefono_contacto"),
+            rs.getString("estatus_reservacion"),
+            rs.getInt("id_tipo_unidad"),
+            rs.getString("tipo_unidad"),
+            rs.getInt("capacidad"),
+            rs.getInt("id_desarrollo"),
+            rs.getString("desarrollo"),
+            rs.getBigDecimal("ImporteTotal"),
+            rs.getBigDecimal("ImportePendiente")
+    );
+
     // =========================================================================
     // MAPPERS PARA CONSULTA GENERAL Y RECEPCION REFACTOR
     // =========================================================================
@@ -360,7 +379,7 @@ public class ReservacionesRepository {
         params.put("FechaSalida", fechaSalida);
         params.put("Membresia", membresia);
 
-        return spExecutor.querySingleLog("spResvCotizarTipoUnidadEspecifica", params, disponibilidadMapper)
+        return spExecutor.querySingle("spResvCotizarTipoUnidadEspecifica", params, disponibilidadMapper)
                 .orElse(null);
     }
 
@@ -617,5 +636,12 @@ public class ReservacionesRepository {
         );
         RowMapper<String> mapper = (rs, rowNum) -> rs.getString(1);
         return spExecutor.querySingle("spResvObtenerUuidCartaOcupacion", params, mapper);
+    }
+
+    public List<ReservacionMembresiaDto> spResvConsultaReservacionesMembresia(String membresia) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("Membresia", membresia);
+
+        return spExecutor.queryList("spResvConsultaReservacionesMembresia", params, reservacionMembresiaMapper);
     }
 }

@@ -408,10 +408,6 @@ public class ReservacionesService {
     }
 
     public ApiResponse<DisponibilidadUnidadDto> obtenerDisponibilidadUnidad(Integer rhdtId, String membresia, LocalDate fechaEntrada, LocalDate fechaSalida) {
-        if (rhdtId == null || rhdtId <= 0) {
-            throw new IllegalArgumentException("El ID del tipo de unidad es obligatorio.");
-        }
-
         DisponibilidadUnidadProjection projection = repository.obtenerDisponibilidadUnidadEspecifica(rhdtId, fechaEntrada, fechaSalida, membresia);
 
         if (projection == null) {
@@ -687,6 +683,14 @@ public class ReservacionesService {
     public ApiResponse<String> crearMembresiaExterno(CrearMembresiaExternoRequest request, String usuario) {
         String membresia = repository.spResvCrearMembresiaExterno(request, usuario);
         return ApiResponse.success("Membresía externa creada exitosamente", membresia);
+    }
+
+    public ApiResponse<List<ReservacionMembresiaDto>> consultarReservacionesMembresia(String membresia) {
+        if (membresia == null || membresia.isBlank()) {
+            throw new IllegalArgumentException("La membresía es obligatoria.");
+        }
+        List<ReservacionMembresiaDto> reservaciones = repository.spResvConsultaReservacionesMembresia(membresia);
+        return ApiResponse.success("Reservaciones de membresía obtenidas con éxito.", reservaciones);
     }
 
     // =========================================================================
