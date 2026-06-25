@@ -1,5 +1,6 @@
 package com.coralclubes.facil.shared.infrastructure.gateway.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2Error;
@@ -8,7 +9,10 @@ import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Component;
 
+import java.time.*;
+
 @Component
+@Slf4j
 public class FirebaseTokenValidator {
 
     private final JwtDecoder jwtDecoder;
@@ -20,8 +24,11 @@ public class FirebaseTokenValidator {
         OAuth2TokenValidator<Jwt> audienceValidator = new JwtAudienceValidator(projectId);
         OAuth2TokenValidator<Jwt> issuerValidator = new JwtIssuerValidator("https://securetoken.google.com/" + projectId);
 
+        // Se pasa la tolerancia de tiempo (Clock Skew) directamente en el constructor
+        OAuth2TokenValidator<Jwt> timestampValidator = new JwtTimestampValidator(java.time.Duration.ofMinutes(5));
+
         java.util.List<OAuth2TokenValidator<Jwt>> validators = java.util.List.of(
-                new JwtTimestampValidator(),
+                timestampValidator,
                 audienceValidator,
                 issuerValidator
         );
