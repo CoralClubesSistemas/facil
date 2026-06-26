@@ -2,6 +2,7 @@ package com.coralclubes.facil.modules.clientes.controller.admin;
 
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioBusqueda;
+import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioPortales;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioTabla;
 import com.coralclubes.facil.modules.clientes.service.SociosService;
 import com.coralclubes.responses.ApiResponse;
@@ -26,6 +27,13 @@ public class SociosAdminController {
             @PathVariable String membresia
     ) {
         return ResponseEntity.ok(service.obtenerSocios(membresia));
+    }
+
+    @GetMapping("/portal/{membresia}")
+    public ResponseEntity<ApiResponse<InformacionSocioPortales>> obtenerSocioPortal(
+            @PathVariable String membresia
+    ) {
+        return ResponseEntity.ok(service.obtenerSocioPortales(membresia));
     }
 
     @GetMapping("/busqueda/{busqueda}")

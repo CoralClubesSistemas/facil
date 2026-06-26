@@ -2,7 +2,10 @@ package com.coralclubes.facil.modules.clientes.controller.publico;
 
 import com.coralclubes.facil.modules.clientes.dto.projection.ClienteValidacionMembresiaResult;
 import com.coralclubes.facil.modules.clientes.dto.request.ClienteRegistroRequest;
+import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
+import com.coralclubes.facil.modules.clientes.dto.response.ValidacionCorreoDto;
 import com.coralclubes.facil.modules.clientes.service.ClientesRegistrationService;
+import com.coralclubes.facil.modules.clientes.service.SociosService;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class ClientesAuthController {
 
     private final ClientesRegistrationService clientesRegistrationService;
+    private final SociosService service;
 
     @GetMapping("/validar-membresia")
     public ResponseEntity<ApiResponse<Boolean>> validarMembresia(
@@ -47,5 +51,13 @@ public class ClientesAuthController {
     ) {
         Boolean resultado = clientesRegistrationService.reenviarCodigo(membresia, email);
         return ResponseEntity.ok(ApiResponse.success("Código reenviado exitosamente", resultado));
+    }
+
+    @GetMapping("/validar-correo")
+    public ResponseEntity<ApiResponse<ValidacionCorreoDto>> validarCorreoExistente(
+            @RequestParam String correo
+    ) {
+        ValidacionCorreoDto resultado = clientesRegistrationService.validarCorreoExistente(correo);
+        return ResponseEntity.ok(ApiResponse.success("Validación de correo completada", resultado));
     }
 }

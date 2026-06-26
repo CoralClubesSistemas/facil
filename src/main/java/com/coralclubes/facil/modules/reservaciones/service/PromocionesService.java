@@ -6,6 +6,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.request.EnlazarImagenRequ
 import com.coralclubes.facil.modules.reservaciones.dto.request.PromocionIntegralRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.response.Promocion;
 import com.coralclubes.facil.modules.reservaciones.dto.response.PromocionListResponse;
+import com.coralclubes.facil.modules.reservaciones.dto.response.PromocionPortalDto;
 import com.coralclubes.facil.modules.reservaciones.repository.PromocionesRepository;
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.ServiceUnavailableException;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
@@ -152,5 +153,29 @@ public class PromocionesService {
         repository.spResvEnlazarImagenPromocion(request.idPromocion(), request.uuidImagen(), usuario);
 
         return ApiResponse.success("Imagen enlazada correctamente.", true);
+    }
+
+    public ApiResponse<List<PromocionPortalDto>> obtenerPromocionesPortal(String membresia) {
+        List<PromocionPortalDto> promociones = repository.spResvOBtenerPromocionesPortal(membresia);
+
+        List<PromocionPortalDto> resultado = promociones.stream()
+                .map(p -> {
+                    String url = p.uuidImagen() != null
+                            ? storageClient.obtenerUrlDescarga(p.uuidImagen()).urlDescarga()
+                            : null;
+                    return PromocionPortalDto.builder()
+                            .id(p.id())
+                            .nombre(p.nombre())
+                            .descripcion(p.descripcion())
+                            .fechaInicio(p.fechaInicio())
+                            .fechaFin(p.fechaFin())
+                            .codigo(p.codigo())
+                            .uuidImagen(p.uuidImagen())
+                            .urlImagen(url)
+                            .build();
+                })
+                .toList();
+
+        return ApiResponse.success("Promociones del portal obtenidas correctamente", resultado);
     }
 }

@@ -115,6 +115,10 @@ public class CatalogosRepository {
         return spExecutor.queryList("spResvCatalogoTipoCaracteristica", Map.of(), selectGenericoMapper);
     }
 
+    public List<SelectGenerico<Integer>> spResvCatalogoTarifasOriginales() {
+        return spExecutor.queryList("spResvCatalogoTarifasOriginales", Map.of(), selectGenericoMapper);
+    }
+
     public void spResvGuardarCaracteristica(GuardarCaracteristicaRequest request, String usuario) {
         Map<String, Object> params = new HashMap<>();
         params.put("id", request.id());

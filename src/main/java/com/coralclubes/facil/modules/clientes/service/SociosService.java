@@ -3,6 +3,7 @@ package com.coralclubes.facil.modules.clientes.service;
 import com.coralclubes.facil.modules.clientes.dto.projection.InformacionSocioDb;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioBusqueda;
+import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioPortales;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioTabla;
 import com.coralclubes.facil.modules.clientes.repository.SociosRepository;
 import com.coralclubes.facil.shared.infrastructure.integration.banco.service.BbvaService;
@@ -55,6 +56,27 @@ public class SociosService {
                 .alertaConsultaNota(socio.alertaConsultaNota())
                 .alertaConsultaFechaRegistro(socio.alertaConsultaFechaRegistro())
                 .convenioCie(obtenerConvenioCIECadena(socio.membresia()))
+                .build();
+
+        return ApiResponse.success("Socio obtenido exitosamente", socioFinal);
+    }
+
+    public ApiResponse<InformacionSocioPortales> obtenerSocioPortales(String membresia) {
+        InformacionSocioDb socio = repo.spClientesObtenerDatosSocio(membresia)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró información para la membresía: " + membresia));
+
+        InformacionSocioPortales socioFinal = InformacionSocioPortales.builder()
+                .membresia(socio.membresia())
+                .nombreCompleto(socio.nombreCompleto())
+                .nombre(socio.nombre())
+                .segundoNombre(socio.segundoNombre())
+                .apellidoPaterno(socio.apellidoPaterno())
+                .apellidoMaterno(socio.apellidoMaterno())
+                .correo(socio.correo())
+                .correoAlternativo(socio.correoAlternativo())
+                .telefono(socio.telefono())
+                .telefonoAlternativo(socio.telefonoAlternativo())
+                .fechaNacimiento(socio.fechaNacimiento())
                 .build();
 
         return ApiResponse.success("Socio obtenido exitosamente", socioFinal);

@@ -97,6 +97,10 @@ public class CatalogosService {
         return ApiResponse.success(repo.spResvCatalogoTipoCaracteristica());
     }
 
+    public ApiResponse<List<SelectGenerico<Integer>>> obtenerTarifasOriginales() {
+        return ApiResponse.success(repo.spResvCatalogoTarifasOriginales());
+    }
+
     public ApiResponse<Boolean> guardarCaracteristica(GuardarCaracteristicaRequest request) {
         String usuario = userContext.getUsername();
         repo.spResvGuardarCaracteristica(request, usuario);

@@ -4,6 +4,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.projection.PromocionListP
 import com.coralclubes.facil.modules.reservaciones.dto.request.ConsumoOfertaRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.request.PromocionIntegralRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.response.Promocion;
+import com.coralclubes.facil.modules.reservaciones.dto.response.PromocionPortalDto;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import com.coralclubes.utils.json.JsonUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,6 +36,16 @@ public class PromocionesRepository {
             .esGlobal(rs.getBoolean("ES_GLOBAL"))
             .fechaVisible(rs.getTimestamp("FECHA_VISIBLE") != null ? rs.getTimestamp("FECHA_VISIBLE").toLocalDateTime() : null)
             .uuidImagen(rs.getString("UUID_IMAGEN") != null ? UUID.fromString(rs.getString("UUID_IMAGEN")) : null)
+            .build();
+
+    private final RowMapper<PromocionPortalDto> portalMapper = (rs, rowNum) -> PromocionPortalDto.builder()
+            .id(rs.getInt("id"))
+            .nombre(rs.getString("nombre"))
+            .descripcion(rs.getString("descripcion"))
+            .fechaInicio(rs.getTimestamp("fecha_inicio") != null ? rs.getTimestamp("fecha_inicio").toLocalDateTime() : null)
+            .fechaFin(rs.getTimestamp("fecha_fin") != null ? rs.getTimestamp("fecha_fin").toLocalDateTime() : null)
+            .codigo(rs.getString("codigo"))
+            .uuidImagen(rs.getString("uuid_imagen") != null ? UUID.fromString(rs.getString("uuid_imagen")) : null)
             .build();
 
     // =========================================================================
@@ -118,5 +129,11 @@ public class PromocionesRepository {
         }
 
         return Optional.of(UUID.fromString(results.getFirst()));
+    }
+
+    public List<PromocionPortalDto> spResvOBtenerPromocionesPortal(String membresia) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("Membresia", membresia);
+        return spExecutor.queryList("spResvOBtenerPromocionesPortal", params, portalMapper);
     }
 }

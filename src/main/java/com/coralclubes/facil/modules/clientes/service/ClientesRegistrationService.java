@@ -2,6 +2,7 @@ package com.coralclubes.facil.modules.clientes.service;
 
 import com.coralclubes.facil.modules.clientes.dto.projection.ClienteValidacionMembresiaResult;
 import com.coralclubes.facil.modules.clientes.dto.request.ClienteRegistroRequest;
+import com.coralclubes.facil.modules.clientes.dto.response.ValidacionCorreoDto;
 import com.coralclubes.facil.modules.clientes.repository.ClientesRepository;
 import com.coralclubes.facil.modules.usuarios.dto.response.PasswordResetToken;
 import com.coralclubes.facil.modules.usuarios.repository.PasswordResetRepository;
@@ -163,5 +164,13 @@ public class ClientesRegistrationService {
         log.info("Código de verificación reenviado y guardado para la membresía: {}", membresia);
 
         return true;
+    }
+
+    public ValidacionCorreoDto validarCorreoExistente(String correo) {
+        if (correo == null || correo.isBlank()) {
+            throw new IllegalArgumentException("El correo es obligatorio.");
+        }
+        return clientesRepository.spUsuariosValidarCorreoExistente(correo.trim())
+                .orElse(new ValidacionCorreoDto(false, false, false));
     }
 }

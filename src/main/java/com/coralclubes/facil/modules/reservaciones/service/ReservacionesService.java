@@ -71,7 +71,7 @@ public class ReservacionesService {
     private final PdfGeneratorService pdfGeneratorService;
     private final UnidadesRepository unidadesRepo;
 
-    @Value("${app.clients.notifications.aliases.aws-ses}")
+    @Value("${app.clients.notifications.aliases.default}")
     private String aliasConfigNotificaciones;
 
     @Value("${app.clients.notifications.templates.reserva-cancelada}")

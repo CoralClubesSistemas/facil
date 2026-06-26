@@ -2,6 +2,7 @@ package com.coralclubes.facil.modules.clientes.repository;
 
 import com.coralclubes.facil.modules.clientes.dto.projection.ClienteLoginResult;
 import com.coralclubes.facil.modules.clientes.dto.projection.ClienteValidacionMembresiaResult;
+import com.coralclubes.facil.modules.clientes.dto.response.ValidacionCorreoDto;
 import com.coralclubes.facil.modules.usuarios.dto.response.PasswordResetToken;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import com.coralclubes.logging.SqlLogger;
@@ -57,6 +58,12 @@ public class ClientesRepository {
             .expiryDate(rs.getTimestamp("expiry_date").toLocalDateTime())
             .build();
 
+    private final RowMapper<ValidacionCorreoDto> validacionCorreoMapper = (rs, rowNum) -> new ValidacionCorreoDto(
+            rs.getInt("correo_empleado") == 1,
+            rs.getInt("correo_cliente_sin_registro") == 1,
+            rs.getInt("correo_cliente_con_registro") == 1
+    );
+
     public Optional<ClienteValidacionMembresiaResult> spClientesValidarMembresia(String membresia, String email) {
         Map<String, Object> params = Map.of("membresia", membresia, "correo", email);
         return executor.querySingle("spClientesValidarMembresia", params, validacionMembresiaMapper);
@@ -84,5 +91,10 @@ public class ClientesRepository {
         } catch (org.springframework.dao.EmptyResultDataAccessException e) {
             return Optional.empty();
         }
+    }
+
+    public Optional<ValidacionCorreoDto> spUsuariosValidarCorreoExistente(String correo) {
+        Map<String, Object> params = Map.of("correo", correo);
+        return executor.querySingle("spUsuariosValidarCorreoExistente", params, validacionCorreoMapper);
     }
 }

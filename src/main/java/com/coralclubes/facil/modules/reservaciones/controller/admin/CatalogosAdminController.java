@@ -70,6 +70,11 @@ public class CatalogosAdminController {
         return ResponseEntity.ok(service.obtenerTiposTarifas());
     }
 
+    @GetMapping("/tarifas-originales")
+    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerTiposTarifasOriginales() {
+        return ResponseEntity.ok(service.obtenerTarifasOriginales());
+    }
+
     @GetMapping("/origenes-reserva")
     public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerOrigenesReservas() {
         return ResponseEntity.ok(service.obtenerOrigenesReservas());
