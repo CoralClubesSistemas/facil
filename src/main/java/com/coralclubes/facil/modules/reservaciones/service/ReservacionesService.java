@@ -252,6 +252,11 @@ public class ReservacionesService {
         return ApiResponse.success(new ConfirmacionReservaResponse(foliosGenerados, uuidOrden));
     }
 
+    public ApiResponse<String> confirmarReservacionPortalConPago(ConfirmarReservaRequest request) {
+        // Por ahora, devolvemos un error para validar la lógica del proyecto antes de la integración
+        throw new UnsupportedOperationException("La confirmación con pago a través del microservicio de pagos no está implementada en esta fase.");
+    }
+
     @Transactional
     public ApiResponse<List<Integer>> confirmarReservacion(ConfirmarReservaRequest request) {
         String usuario = userContext.getUsername();

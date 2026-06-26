@@ -105,4 +105,16 @@ public class ReservacionesPublicController {
     ) {
         return ResponseEntity.ok(service.obtenerDisponibilidadUnidad(tipoUnidad, membresia, fechaInicio, fechaFin));
     }
+
+    @PostMapping("/confirmar-con-pago")
+    public ResponseEntity<ApiResponse<String>> confirmarReservacionPortalConPago(
+            @Valid @RequestBody ConfirmarReservaRequest request) {
+        return ResponseEntity.ok(service.confirmarReservacionPortalConPago(request));
+    }
+
+    @PostMapping("/confirmar-sin-pago")
+    public ResponseEntity<ApiResponse<List<Integer>>> confirmarReservacion(
+            @Valid @RequestBody ConfirmarReservaRequest request) {
+        return ResponseEntity.ok(service.confirmarReservacion(request));
+    }
 }
