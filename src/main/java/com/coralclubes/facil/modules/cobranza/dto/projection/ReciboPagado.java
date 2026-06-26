@@ -12,5 +12,6 @@ public record ReciboPagado(
         String usuario,
         Integer desarrolloId,
         BigDecimal totalPagado,
-        List<MovimientosReciboPagado> movimientosAfectados
+        List<MovimientosReciboPagado> movimientosAfectados,
+        String estatusRecibo
 ) {}

@@ -109,7 +109,7 @@ public class CobranzaService {
     }
 
     public ReciboPagado finalizarOrdenDeCobranza(String ordenUuid, Integer tipoSerieRecibo, String usuario) {
-        String response =  repository.spCobranzaFinalizarOrdenYGenerarRecibo(ordenUuid, tipoSerieRecibo, usuario)
+        String response = repository.spCobranzaFinalizarOrdenYGenerarRecibo(ordenUuid, tipoSerieRecibo, usuario)
                 .orElseThrow(() -> new IllegalArgumentException("Error en el cierre de la orden de cobranza, intente más tarde"));
 
         try {
@@ -129,7 +129,7 @@ public class CobranzaService {
             throw new IllegalStateException("No se pudo interpretar el JSON de los datos del recibo.");
         }
     }
-    
+
     @Transactional
     public ApiResponse<FinalizarOrdenCobranzaResponse> finalizarOrdenYGenerarRecibo(
             String ordenUuid,
@@ -139,30 +139,33 @@ public class CobranzaService {
     ) {
         String correoAuditoria = usuarioService.obtenerCorreoUsuario(usuario).orElse("facil@coralclubes.com");
 
-        try {
-            // 1. Ejecutar transacción CORE en SQL (Genera Recibo y Movimientos)
-            ReciboPagado r = finalizarOrdenDeCobranza(ordenUuid, tipoSerieRecibo, usuario);
-            FinalizarOrdenCobranzaResponse orden = new FinalizarOrdenCobranzaResponse(r.numeroRecibo(), r.serieReciboId(), r.membresia(), r.totalPagado());
+        // 1. Ejecutar transacción CORE en SQL (Genera Recibo y Movimientos)
+        ReciboPagado r = finalizarOrdenDeCobranza(ordenUuid, tipoSerieRecibo, usuario);
+        FinalizarOrdenCobranzaResponse orden = new FinalizarOrdenCobranzaResponse(r.numeroRecibo(), r.serieReciboId(), r.membresia(), r.totalPagado());
 
-            // =================================================================================
-            // 2. FASE DE POST-PROCESAMIENTO POR ESTRATEGIA (FORMAS DE PAGO)
-            // =================================================================================
-            List<IntentoPagoDto> intentos = intentoPagoRepository.spCobranzaObtenerIntentosPagoPorOrden(UUID.fromString(ordenUuid));
+        // =================================================================================
+        // 2. FASE DE POST-PROCESAMIENTO POR ESTRATEGIA (FORMAS DE PAGO)
+        // =================================================================================
+        List<IntentoPagoDto> intentos = intentoPagoRepository.spCobranzaObtenerIntentosPagoPorOrden(UUID.fromString(ordenUuid));
 
-            for (IntentoPagoDto intento : intentos) {
-                // Solo procesamos los que fueron exitosos
-                if ("APROBADO".equalsIgnoreCase(intento.estatus())) {
-                    try {
-                        PaymentStrategy strategy = strategyFactory.getStrategy(intento.formaPagoClave());
-                        strategy.postProcesarFinalizacion(intento.intentoPagoId());
-                    } catch (Exception e) {
-                        log.error(usuario, "Error en post-procesamiento de forma de pago ID {}: {}", intento.intentoPagoId(), e.getMessage());
-                    }
+        for (IntentoPagoDto intento : intentos) {
+            // Solo procesamos los que fueron exitosos
+            if ("APROBADO".equalsIgnoreCase(intento.estatus())) {
+                try {
+                    PaymentStrategy strategy = strategyFactory.getStrategy(intento.formaPagoClave());
+                    strategy.postProcesarFinalizacion(intento.intentoPagoId());
+                } catch (Exception e) {
+                    log.error(usuario, "Error en post-procesamiento de forma de pago ID {}: {}", intento.intentoPagoId(), e.getMessage());
                 }
             }
-            // =================================================================================
+        }
+        // =================================================================================
 
-            // 3. Obtener datos procesados para los PDFs
+        // 3. Obtener datos procesados para los PDFs
+        // SOLO SI EL ESTATUS DEL RECIBO ES 'PAGADO'
+        if (r.estatusRecibo().equalsIgnoreCase("PAGADO")) {
+            log.info(usuario, "Recibo {}-{} para membresía {} finalizado con estatus PAGADO. Iniciando generación de documentos y notificaciones.", orden.serieReciboId(), orden.numeroRecibo(), orden.membresia());
+
             DatosReciboResponse recibo = datosRecibo(orden.numeroRecibo(), orden.serieReciboId(), orden.membresia());
 
             // 4. Delegar la generación del PDF, metadatos y correos al hilo en SEGUNDO PLANO
@@ -173,51 +176,38 @@ public class CobranzaService {
                     correos,
                     correoAuditoria
             );
-
-            // publicacion de evento de recibo pagado
-            ReciboPagadoEvent reciboPagadoEvent = ReciboPagadoEvent.builder()
-                    .membresia(r.membresia())
-                    .numeroRecibo(r.numeroRecibo())
-                    .serieReciboId(r.serieReciboId())
-                    .tipoMembresia(r.tipoMembresia())
-                    .clasificacionMembresia(r.clasificacionMembresia())
-                    .usuario(r.usuario())
-                    .desarrolloId(r.desarrolloId())
-                    .totalPagado(r.totalPagado())
-                    .movimientosAfectados(
-                            r.movimientosAfectados().stream()
-                                    .map(m -> new ReciboPagadoEvent.MovimientosReciboPagado(
-                                            m.idMovimiento(),
-                                            m.tipoMovimiento(),
-                                            m.montoPagado(),
-                                            m.estatusId(),
-                                            m.estatus()
-                                    ))
-                                    .toList()
-                    )
-                    .build();
-
-            eventPublisher.publishEvent(reciboPagadoEvent);
-
-            log.info(usuario, "Orden de cobranza finalizada y evento de recibo pagado publicado para membresía: {}, recibo: {}-{}", orden.membresia(), orden.serieReciboId(), orden.numeroRecibo());
-
-            return ApiResponse.success("El cobro se procesó correctamente. Los recibos se están generando y enviando en segundo plano.", orden);
-        } catch (Exception e) {
-            log.error(usuario, "Error general finalizando la orden: {}", e.getMessage());
-            return ApiResponse.error(GeneralResponseCode.SERVICE_UNAVAILABLE, "Ocurrió un error al procesar el pago o generar los documentos.");
+        } else {
+            log.info(usuario, "Recibo {}-{} para membresía {} finalizado con estatus {}. No se generarán documentos ni notificaciones.", orden.serieReciboId(), orden.numeroRecibo(), orden.membresia(), r.estatusRecibo());
         }
-    }
 
-    // Método auxiliar de envío
-    private void enviarEmail(String destinatario, String asunto, UUID fileId) {
-        SolicitudNotificacionDto solicitud = SolicitudNotificacionDto.builder()
-                .aliasConfig("SMTP_GENERAL")
-                .destinatarios(List.of(destinatario))
-                .cuerpo(asunto)
-                .prioridad(10)
-                .adjuntos(List.of(fileId.toString()))
+        // publicacion de evento de recibo pagado
+        ReciboPagadoEvent reciboPagadoEvent = ReciboPagadoEvent.builder()
+                .membresia(r.membresia())
+                .numeroRecibo(r.numeroRecibo())
+                .serieReciboId(r.serieReciboId())
+                .tipoMembresia(r.tipoMembresia())
+                .clasificacionMembresia(r.clasificacionMembresia())
+                .usuario(r.usuario())
+                .desarrolloId(r.desarrolloId())
+                .totalPagado(r.totalPagado())
+                .movimientosAfectados(
+                        r.movimientosAfectados().stream()
+                                .map(m -> new ReciboPagadoEvent.MovimientosReciboPagado(
+                                        m.idMovimiento(),
+                                        m.tipoMovimiento(),
+                                        m.montoPagado(),
+                                        m.estatusId(),
+                                        m.estatus()
+                                ))
+                                .toList()
+                )
                 .build();
-        notificationClient.enviarNotificacion(solicitud);
+
+        eventPublisher.publishEvent(reciboPagadoEvent);
+
+        log.info(usuario, "Orden de cobranza finalizada y evento de recibo pagado publicado para membresía: {}, recibo: {}-{}", orden.membresia(), orden.serieReciboId(), orden.numeroRecibo());
+
+        return ApiResponse.success("El cobro se procesó correctamente. Los recibos se están generando y enviando en segundo plano.", orden);
     }
 
     public void cancelarOrdenCobranzaSinPago(String uuid) {
@@ -238,22 +228,20 @@ public class CobranzaService {
     }
 
 
-
-
     public ApiResponse<AnalisisCobranzaResponse> analizarClienteParaCobranza(String membresia) {
         String dataJsonCliente = repository.spClientesObtenerDataParaAnalisis(membresia)
                 .orElseThrow(() -> new IllegalStateException("No se encontró información para la membresía proporcionada."));
 
         // 2. Definir el System Prompt específico para este caso de uso
         String systemPrompt = """
-            Eres un experto analista financiero. Analiza el JSON del cliente.
-            Debes devolver la respuesta ESTRICTAMENTE en formato JSON con la siguiente estructura, sin formato Markdown ni texto antes o después:
-            {
-              "clasificacionRiesgo": "Excelente | Regular | Moroso | Riesgo de Abandono",
-              "justificacionAnalisis": "Breve explicación del por qué de la clasificación basada en sus pagos y notas",
-              "mensajeWhatsappRecomendado": "El mensaje de cobranza persuasivo y empático listo para enviar"
-            }
-            """;
+                Eres un experto analista financiero. Analiza el JSON del cliente.
+                Debes devolver la respuesta ESTRICTAMENTE en formato JSON con la siguiente estructura, sin formato Markdown ni texto antes o después:
+                {
+                  "clasificacionRiesgo": "Excelente | Regular | Moroso | Riesgo de Abandono",
+                  "justificacionAnalisis": "Breve explicación del por qué de la clasificación basada en sus pagos y notas",
+                  "mensajeWhatsappRecomendado": "El mensaje de cobranza persuasivo y empático listo para enviar"
+                }
+                """;
 
         // 3. Solicitar el análisis a Bedrock
         String respuestaIa = bedrockClient.analizarData(systemPrompt, dataJsonCliente);
