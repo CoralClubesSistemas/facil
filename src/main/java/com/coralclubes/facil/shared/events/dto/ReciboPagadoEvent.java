@@ -7,6 +7,7 @@ import java.util.List;
 
 @Builder
 public record ReciboPagadoEvent(
+        String ordenUuid,
         String membresia,
         Integer numeroRecibo,
         Integer serieReciboId,

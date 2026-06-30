@@ -64,13 +64,6 @@ public class ReservacionesPublicController {
         return ResponseEntity.ok(service.obtenerCuponesDisponibles(groupId));
     }
 
-    @PostMapping("/confirmar-orden")
-    public ResponseEntity<ApiResponse<ConfirmacionReservaResponse>> confirmarReservacionConOrden(
-            @Valid @RequestBody ConfirmarReservaRequest request) {
-
-        return ResponseEntity.ok(service.confirmarReservacionConOrden(request));
-    }
-
     @PostMapping("/crear-membresia-externo")
     public ResponseEntity<ApiResponse<String>> crearMembresiaExterno(
             @Valid @RequestBody CrearMembresiaExternoRequest request) {
@@ -109,12 +102,14 @@ public class ReservacionesPublicController {
     @PostMapping("/confirmar-con-pago")
     public ResponseEntity<ApiResponse<String>> confirmarReservacionPortalConPago(
             @Valid @RequestBody ConfirmarReservaRequest request) {
-        return ResponseEntity.ok(service.confirmarReservacionPortalConPago(request));
+        String usuario = "INTERNET";
+        return ResponseEntity.ok(service.confirmarReservacionPortalConPago(request, usuario));
     }
 
     @PostMapping("/confirmar-sin-pago")
     public ResponseEntity<ApiResponse<List<Integer>>> confirmarReservacion(
             @Valid @RequestBody ConfirmarReservaRequest request) {
-        return ResponseEntity.ok(service.confirmarReservacion(request));
+        String usuario = "INTERNET";
+        return ResponseEntity.ok(service.confirmarReservacion(request, usuario));
     }
 }

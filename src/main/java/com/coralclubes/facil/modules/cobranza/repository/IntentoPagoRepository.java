@@ -103,4 +103,8 @@ public class IntentoPagoRepository {
     public void spCobranzaRegistrarPagoDeposito(Integer IdIntentoPago) {
         spExecutor.execute("spCobranzaRegistrarPagoDeposito", Map.of("IdIntentoPago", IdIntentoPago));
     }
+
+    public void spCobranzaRegistrarPagoLink(Integer IdIntentoPago) {
+        spExecutor.execute("spCobranzaRegistrarPagoLink", Map.of("IdIntentoPago", IdIntentoPago));
+    }
 }

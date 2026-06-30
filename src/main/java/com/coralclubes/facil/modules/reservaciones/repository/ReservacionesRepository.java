@@ -320,6 +320,51 @@ public class ReservacionesRepository {
         return spExecutor.queryListLog("spResvGuardarReservacion", params, mapper, usuario, true, false);
     }
 
+    public List<CargoCheckoutCreado> generarCargosCheckout(UUID groupId, String nombreReserva, String usuario, String detalleJson) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("GroupId", groupId.toString());
+        params.put("NombreReserva", nombreReserva);
+        params.put("Usuario", usuario);
+        params.put("DetalleJson", detalleJson);
+
+        RowMapper<CargoCheckoutCreado> mapper = (rs, rowNum) -> new CargoCheckoutCreado(
+                rs.getInt("RrtId"),
+                rs.getInt("MovimientoId")
+        );
+
+        return spExecutor.queryList("spResvGenerarCargosCheckout", params, mapper);
+    }
+
+    public List<ReservacionCreadaDetalle> confirmarYCrearReservacion(
+            UUID groupId,
+            String email,
+            String email2,
+            String telefono1,
+            String telefono2,
+            String nombreReserva,
+            String peticionEspecial,
+            String usuario,
+            String detallePagoJson
+    ) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("GroupId", groupId.toString());
+        params.put("Email", email);
+        params.put("Email2", email2);
+        params.put("Telefono1", telefono1);
+        params.put("Telefono2", telefono2);
+        params.put("NombreReserva", nombreReserva);
+        params.put("PeticionEspecial", peticionEspecial);
+        params.put("Usuario", usuario);
+        params.put("DetallePagoJson", detallePagoJson);
+
+        RowMapper<ReservacionCreadaDetalle> mapper = (rs, rowNum) -> new ReservacionCreadaDetalle(
+                rs.getInt("MovimientoId"),
+                rs.getInt("ReservacionConsecutivo")
+        );
+
+        return spExecutor.queryList("spResvConfirmarYCrearReservacion", params, mapper);
+    }
+
     // 2. Quemar Promoción
     public void registrarConsumoPromocion(String membresia, Integer consecutivo, String codigoPromocion, String usuario) {
         Map<String, Object> params = new HashMap<>();

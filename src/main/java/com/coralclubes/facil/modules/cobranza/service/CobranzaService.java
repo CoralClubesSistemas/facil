@@ -182,6 +182,7 @@ public class CobranzaService {
 
         // publicacion de evento de recibo pagado
         ReciboPagadoEvent reciboPagadoEvent = ReciboPagadoEvent.builder()
+                .ordenUuid(ordenUuid)
                 .membresia(r.membresia())
                 .numeroRecibo(r.numeroRecibo())
                 .serieReciboId(r.serieReciboId())

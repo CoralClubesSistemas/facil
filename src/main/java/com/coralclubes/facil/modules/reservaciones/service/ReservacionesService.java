@@ -11,8 +11,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaMovimientoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaRequest;
+import com.coralclubes.facil.modules.cobranza.dto.request.ProcesarPagoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.ConfirmacionReservaResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.ProcesarPagoResponse;
 import com.coralclubes.facil.modules.cobranza.service.CobranzaService;
+import com.coralclubes.facil.modules.cobranza.service.IntentoPagoService;
 import com.coralclubes.facil.modules.reservaciones.dto.projection.DisponibilidadUnidadProjection;
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
 import com.coralclubes.facil.modules.reservaciones.dto.response.*;
@@ -70,6 +73,7 @@ public class ReservacionesService {
     private final StorageClient storageClient;
     private final PdfGeneratorService pdfGeneratorService;
     private final UnidadesRepository unidadesRepo;
+    private final IntentoPagoService intentoPagoService;
 
     @Value("${app.clients.notifications.aliases.default}")
     private String aliasConfigNotificaciones;
@@ -216,8 +220,8 @@ public class ReservacionesService {
     // =========================================================================
 
     @Transactional
-    public ApiResponse<ConfirmacionReservaResponse> confirmarReservacionConOrden(ConfirmarReservaRequest request) {
-        List<Integer> foliosGenerados = confirmarReservacion(request).data();
+    public ApiResponse<ConfirmacionReservaResponse> confirmarReservacionConOrden(ConfirmarReservaRequest request, String usuario) {
+        List<Integer> foliosGenerados = confirmarReservacion(request, usuario).data();
         String mensaje = "Esta orden de cobranza corresponde a la creación de una reservación la cual se encuentra en estatus PENDIENTE. Procede con el pago de la orden para confirmar la reservación. O elimina la oden de cobranza si aun no se pagará, esto no cancelara la reservación. Folios de reservación generados: " + foliosGenerados;
 
         // consultamos el listado de movimientos generados para estos folios
@@ -252,14 +256,142 @@ public class ReservacionesService {
         return ApiResponse.success(new ConfirmacionReservaResponse(foliosGenerados, uuidOrden));
     }
 
-    public ApiResponse<String> confirmarReservacionPortalConPago(ConfirmarReservaRequest request) {
-        // Por ahora, devolvemos un error para validar la lógica del proyecto antes de la integración
-        throw new UnsupportedOperationException("La confirmación con pago a través del microservicio de pagos no está implementada en esta fase.");
+    @Transactional
+    public ApiResponse<String> confirmarReservacionPortalConPago(ConfirmarReservaRequest request, String usuario) {
+        ReservacionContexto contexto = obtenerContextoHidratado(request.groupId());
+
+        validarOcupantesVsHabitaciones(request.totalPersonas(), contexto.getItems().size());
+
+        // 1. Evaluar si hay beneficios tradicionales (Solo si no hay pagos con puntos)
+        ResultadoBeneficio beneficio = new ResultadoBeneficio(BigDecimal.ZERO, false, null, null, null);
+        if (request.rrtIdsPagoPuntos() == null || request.rrtIdsPagoPuntos().isEmpty()) {
+            beneficio = evaluarBeneficiosSobreContexto(request.cupon(), request.codigoPromocion(), contexto);
+        }
+
+        // 2. Construir la lista de cargos para spResvGenerarCargosCheckout
+        List<DetalleCargoCheckoutRequest> listaCargos = new ArrayList<>();
+        for (int i = 0; i < contexto.getItems().size(); i++) {
+            var item = contexto.getItems().get(i);
+            int personas = (request.totalPersonas() != null && i < request.totalPersonas().size()) ? request.totalPersonas().get(i) : 2;
+            BigDecimal importeOriginal = item.getCostoEstancia();
+            BigDecimal descuentoItem = BigDecimal.ZERO;
+            String observacionPagoPuntos = null;
+
+            if (request.rrtIdsPagoPuntos() != null && request.rrtIdsPagoPuntos().contains(item.getRrtId())) {
+                descuentoItem = importeOriginal;
+                observacionPagoPuntos = "PAGO_CON_PUNTOS";
+            } else if (item.equals(contexto.getUnidadElegidaParaDescuento())) {
+                descuentoItem = beneficio.montoDescuento();
+            }
+
+            listaCargos.add(new DetalleCargoCheckoutRequest(
+                    item.getRrtId(),
+                    personas,
+                    importeOriginal,
+                    descuentoItem,
+                    null,
+                    observacionPagoPuntos != null ? observacionPagoPuntos : (beneficio.mensajeMotivoVisual() != null ? beneficio.mensajeMotivoVisual() : "Tarifa normal")
+            ));
+        }
+
+        // 3. Generar cargos checkout en base de datos
+        List<CargoCheckoutCreado> cargosCreados = generarCargosCheckout(request.groupId(), request.nombreReserva(), usuario, listaCargos);
+
+        if (cargosCreados == null || cargosCreados.isEmpty()) {
+            throw new RuntimeException("Error al generar movimientos para el checkout en base de datos.");
+        }
+
+        // 4. Mapear a DetallePagoCheckoutRequest que se guardará en los metadatos para la confirmación posterior
+        List<DetallePagoCheckoutRequest> detallePago = cargosCreados.stream().map(c -> {
+            DetalleCargoCheckoutRequest cargoReq = listaCargos.stream()
+                    .filter(req -> req.rrtId().equals(c.rrtId()))
+                    .findFirst()
+                    .orElseThrow();
+            return new DetallePagoCheckoutRequest(
+                    c.rrtId(),
+                    c.movimientoId(),
+                    cargoReq.personas(),
+                    cargoReq.importeOriginal(),
+                    cargoReq.descuento()
+            );
+        }).toList();
+
+        // 5. Construir los movimientos para la Orden de Cobranza
+        List<GenerarOrdenCobranzaMovimientoRequest> movimientos = detallePago.stream().map(dp -> {
+            BigDecimal capital = dp.importeOriginal().subtract(dp.descuento());
+            if (capital.compareTo(BigDecimal.ZERO) < 0) {
+                capital = BigDecimal.ZERO;
+            }
+            return GenerarOrdenCobranzaMovimientoRequest.builder()
+                    .idMovimiento(dp.movimientoId())
+                    .montoCapital(capital)
+                    .montoInteres(BigDecimal.ZERO)
+                    .interesPago(BigDecimal.ZERO)
+                    .interesesBonificados(BigDecimal.ZERO)
+                    .totalDescuento(BigDecimal.ZERO)
+                    .usuarioAutoriza(usuario)
+                    .build();
+        }).toList();
+
+        String mensaje = "Orden de cobranza para pago inmediato de reservación portal. Membresía: " + request.membresia();
+
+        var ordenRequest = GenerarOrdenCobranzaRequest.builder()
+                .membresia(request.membresia())
+                .movimientos(movimientos)
+                .agregarIva(false)
+                .ivaIncluido(false)
+                .mensajeAdicional(mensaje)
+                .build();
+
+        // 6. Registrar la orden de cobranza
+        UUID uuidOrden = cobranzaService.generarOrdenCobranza(ordenRequest, usuario).data().ordenUuid();
+
+        // 7. Preparar los metadatos que guardaremos en el intento de pago
+        Map<String, Object> intentoMetadata = new HashMap<>();
+        intentoMetadata.put("request", request);
+        intentoMetadata.put("detallePago", detallePago);
+
+        BigDecimal totalPagar = movimientos.stream()
+                .map(GenerarOrdenCobranzaMovimientoRequest::montoCapital)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        ProcesarPagoRequest pagoRequest = ProcesarPagoRequest.builder()
+                .formaPagoClave("LINK")
+                .monto(totalPagar)
+                .metadata(JsonUtils.toJson(intentoMetadata))
+                .build();
+
+        // 8. Iniciar el intento de pago (esto llamará a LinkPaymentStrategy, registrará el intento PENDIENTE e iniciará el Checkout)
+        ProcesarPagoResponse pagoResponse = intentoPagoService.iniciarPago(uuidOrden, pagoRequest).data();
+
+        // 9. Devolvemos la urlPago para redirección
+        return ApiResponse.success("Sesión de pago iniciada correctamente.", pagoResponse.urlPago());
+    }
+
+    public List<CargoCheckoutCreado> generarCargosCheckout(UUID groupId, String nombreReserva, String usuario, List<DetalleCargoCheckoutRequest> detalle) {
+        String json = JsonUtils.toJson(detalle);
+        return repository.generarCargosCheckout(groupId, nombreReserva, usuario, json);
+    }
+
+    public List<ReservacionCreadaDetalle> confirmarYCrearReservacion(
+            UUID groupId,
+            String email,
+            String email2,
+            String telefono1,
+            String telefono2,
+            String nombreReserva,
+            String peticionEspecial,
+            String usuario,
+            List<DetallePagoCheckoutRequest> detallePago
+    ) {
+        String json = JsonUtils.toJson(detallePago);
+        return repository.confirmarYCrearReservacion(
+                groupId, email, email2, telefono1, telefono2, nombreReserva, peticionEspecial, usuario, json
+        );
     }
 
     @Transactional
-    public ApiResponse<List<Integer>> confirmarReservacion(ConfirmarReservaRequest request) {
-        String usuario = userContext.getUsername();
+    public ApiResponse<List<Integer>> confirmarReservacion(ConfirmarReservaRequest request, String usuario) {
         ReservacionContexto contexto = obtenerContextoHidratado(request.groupId());
 
         validarOcupantesVsHabitaciones(request.totalPersonas(), contexto.getItems().size());
@@ -463,6 +595,10 @@ public class ReservacionesService {
     public ResumenReservacionDto obtenerResumenReservacionXMovimiento(String membresia, Integer movimiento) {
         return repository.spResvObtenerReservacionXMovimiento(membresia, movimiento)
                 .orElseThrow(() -> new IllegalArgumentException("No se encontró información para la reservación solicitada."));
+    }
+
+    public Optional<ResumenReservacionDto> buscarResumenReservacionXMovimiento(String membresia, Integer movimiento) {
+        return repository.spResvObtenerReservacionXMovimiento(membresia, movimiento);
     }
 
     public ApiResponse<List<MapaUnidadDto>> obtenerMapaUnidades() {

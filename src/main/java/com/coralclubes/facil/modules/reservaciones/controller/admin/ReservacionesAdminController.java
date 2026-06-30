@@ -72,16 +72,16 @@ public class ReservacionesAdminController {
     @PreAuthorize("hasAuthority('MOD_SMNURESERVACIONES')")
     public ResponseEntity<ApiResponse<List<Integer>>> confirmarReservacion(
             @Valid @RequestBody ConfirmarReservaRequest request) {
-
-        return ResponseEntity.ok(service.confirmarReservacion(request));
+        String usuario = userContext.getUsername();
+        return ResponseEntity.ok(service.confirmarReservacion(request, usuario));
     }
 
     @PostMapping("/confirmar-orden")
     @PreAuthorize("hasAuthority('MOD_SMNURESERVACIONES')")
     public ResponseEntity<ApiResponse<ConfirmacionReservaResponse>> confirmarReservacionConOrden(
             @Valid @RequestBody ConfirmarReservaRequest request) {
-
-        return ResponseEntity.ok(service.confirmarReservacionConOrden(request));
+        String usuario = userContext.getUsername();
+        return ResponseEntity.ok(service.confirmarReservacionConOrden(request, usuario));
     }
 
     @PostMapping("/crear-membresia-externo")
