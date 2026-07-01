@@ -1,7 +1,9 @@
 package com.coralclubes.facil.modules.cobranza.controller.admin;
 
 import com.coralclubes.facil.modules.cobranza.dto.request.EstadoCuentaAdeudoRequest;
+import com.coralclubes.facil.modules.cobranza.dto.request.HistoricoMovimientosRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.EstadoCuentaAdeudoDto;
+import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoHistoricoDto;
 import com.coralclubes.facil.modules.cobranza.service.MovimientosClienteService;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -36,5 +38,27 @@ public class MovimientosClienteAdminController {
 
         return ResponseEntity.ok(service.obtenerEstadoCuentaAdeudo(request));
     }
-}
 
+    @GetMapping("/historico-movimientos")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<List<MovimientoHistoricoDto>>> obtenerHistoricoMovimientos(
+            @RequestParam String membresia,
+            @RequestParam(required = false) List<String> tipoMovimientos,
+            @RequestParam(required = false) Integer estatusMovimientos,
+            @RequestParam(required = false) Integer desarrolloConsumo,
+            @RequestParam(required = false) Integer idPadre) {
+
+        HistoricoMovimientosRequest request = HistoricoMovimientosRequest.builder()
+                .membresia(membresia)
+                .tipoMovimientos(tipoMovimientos)
+                .estatusMovimientos(estatusMovimientos)
+                .desarrolloConsumo(desarrolloConsumo)
+                .idPadre(idPadre)
+                .build();
+
+        return ResponseEntity.ok(ApiResponse.success(
+                "Histórico de movimientos obtenido con éxito.",
+                service.obtenerHistoricoMovimientos(request)
+        ));
+    }
+}

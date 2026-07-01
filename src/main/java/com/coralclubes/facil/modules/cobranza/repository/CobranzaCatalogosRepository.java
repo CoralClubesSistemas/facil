@@ -19,6 +19,9 @@ public class CobranzaCatalogosRepository {
     private final RowMapper<SelectGenerico<Integer>> selectGenericoMapper = (rs, rowNum) ->
             new SelectGenerico<>(rs.getInt(1), rs.getString(2));
 
+    private final RowMapper<SelectGenerico<String>> selectGenericoStringMapper = (rs, rowNum) ->
+            new SelectGenerico<>(rs.getString(1), rs.getString(2));
+
     private final RowMapper<BigDecimal> porcentaje = (rs, rowNum) ->
             new BigDecimal(rs.getString(1));
 
@@ -40,5 +43,17 @@ public class CobranzaCatalogosRepository {
 
     public List<SelectGenerico<Integer>> spCobranzaCatalogoBancos() {
         return spExecutor.queryList("spCobranzaCatalogoBancos", Collections.emptyMap(), selectGenericoMapper);
+    }
+
+    public List<SelectGenerico<Integer>> spCobranzaCatalogoTiposMovimientos() {
+        return spExecutor.queryList("spCobranzaCatalogoTiposMovimientos", Collections.emptyMap(), selectGenericoMapper);
+    }
+
+    public List<SelectGenerico<Integer>> spCobranzaCatalogoEstatusMovimientos() {
+        return spExecutor.queryList("spCobranzaCatalogoEstatusMovimientos", Collections.emptyMap(), selectGenericoMapper);
+    }
+
+    public List<SelectGenerico<Integer>> spCobranzaCatalogoDesarrollos() {
+        return spExecutor.queryList("spCobranzaCatalogoDesarrollos", Collections.emptyMap(), selectGenericoMapper);
     }
 }

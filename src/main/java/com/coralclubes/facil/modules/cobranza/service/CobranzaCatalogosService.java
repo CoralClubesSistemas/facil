@@ -29,4 +29,16 @@ public class CobranzaCatalogosService {
     public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogoBancos() {
         return ApiResponse.success("Bancos obtenidos correctamente.", repository.spCobranzaCatalogoBancos());
     }
+
+    public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogoTiposMovimientos() {
+        return ApiResponse.success("Catálogo de tipos de movimientos obtenido correctamente.", repository.spCobranzaCatalogoTiposMovimientos());
+    }
+
+    public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogoEstatusMovimientos() {
+        return ApiResponse.success("Catálogo de estatus de movimientos obtenido correctamente.", repository.spCobranzaCatalogoEstatusMovimientos());
+    }
+
+    public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogoDesarrollos() {
+        return ApiResponse.success("Catálogo de desarrollos obtenido correctamente.", repository.spCobranzaCatalogoDesarrollos());
+    }
 }

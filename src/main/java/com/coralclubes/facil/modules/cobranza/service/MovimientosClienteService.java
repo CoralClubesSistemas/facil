@@ -1,7 +1,9 @@
 package com.coralclubes.facil.modules.cobranza.service;
 
 import com.coralclubes.facil.modules.cobranza.dto.request.EstadoCuentaAdeudoRequest;
+import com.coralclubes.facil.modules.cobranza.dto.request.HistoricoMovimientosRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.EstadoCuentaAdeudoDto;
+import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoHistoricoDto;
 import com.coralclubes.facil.modules.cobranza.repository.MovimientosClienteRepository;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
@@ -25,5 +27,8 @@ public class MovimientosClienteService {
                 repository.spFacilObtenerEstadoCuentaAdeudo(request, idDesarrolloUsuario)
         );
     }
-}
 
+    public List<MovimientoHistoricoDto> obtenerHistoricoMovimientos(HistoricoMovimientosRequest request) {
+        return repository.spCobranzaObtenerHistoricoMovimientos(request);
+    }
+}

@@ -46,4 +46,22 @@ public class CobranzaCatalogosController {
     public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerCatalogoBancos() {
         return ResponseEntity.ok(service.obtenerCatalogoBancos());
     }
+
+    @GetMapping("/tipos-movimientos")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerCatalogoTiposMovimientos() {
+        return ResponseEntity.ok(service.obtenerCatalogoTiposMovimientos());
+    }
+
+    @GetMapping("/estatus-movimientos")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerCatalogoEstatusMovimientos() {
+        return ResponseEntity.ok(service.obtenerCatalogoEstatusMovimientos());
+    }
+
+    @GetMapping("/desarrollos")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerCatalogoDesarrollos() {
+        return ResponseEntity.ok(service.obtenerCatalogoDesarrollos());
+    }
 }
