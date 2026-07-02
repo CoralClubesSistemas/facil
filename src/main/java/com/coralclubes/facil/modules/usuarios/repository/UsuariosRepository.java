@@ -1,5 +1,6 @@
 package com.coralclubes.facil.modules.usuarios.repository;
 
+import com.coralclubes.facil.modules.usuarios.dto.response.DatosCorreoUsuarioDto;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import com.coralclubes.facil.shared.infrastructure.repository.rowmappers.ModuloMapper;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,14 @@ public class UsuariosRepository {
     private final RowMapper<String> campoString = (rs, rowNum) -> rs.getString(1);
 
     private final RowMapper<ModuloDtoResult> moduloMapper = new ModuloMapper();
+
+    private final RowMapper<DatosCorreoUsuarioDto> datosCorreoUsuarioMapper = (rs, rowNum) -> DatosCorreoUsuarioDto.builder()
+            .usuario(rs.getString("Usuario"))
+            .imagenFirma(rs.getString("ImagenFirma"))
+            .correoAutorizado(rs.getString("CorreoAutorizado"))
+            .contrasenaCorreo(rs.getString("ContrasenaCorreo"))
+            .telefono(rs.getString("Telefono"))
+            .build();
 
     public List<ModuloDtoResult> spLoginModulosUsuarios(String usuario) {
         return executor.queryList("spLoginModulosUsuarios", Map.of("USUARIO", usuario), moduloMapper);
@@ -45,5 +54,11 @@ public class UsuariosRepository {
                         "Usuario", usuario,
                         "preferencias_json", preferenciasJson
                 ));
+    }
+
+    public Optional<DatosCorreoUsuarioDto> spCobranzaObtenerDatosCorreoUsuario(String usuario) {
+        return executor.querySingle("spCobranzaObtenerDatosCorreoUsuario",
+                Map.of("Usuario", usuario),
+                datosCorreoUsuarioMapper);
     }
 }

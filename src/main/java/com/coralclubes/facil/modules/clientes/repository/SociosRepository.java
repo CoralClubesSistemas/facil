@@ -48,7 +48,8 @@ public class SociosRepository {
                     rs.getString("AlertaConsultaNota"),
                     rs.getTimestamp("AlertaConsultaFechaRegistro") != null
                             ? rs.getTimestamp("AlertaConsultaFechaRegistro").toLocalDateTime()
-                            : null
+                            : null,
+                    rs.getString("direccion")
             );
 
     private final RowMapper<InformacionSocioBusqueda> informacionSocioBusquedaRowMapper = (rs, rowNum) ->

@@ -1,5 +1,6 @@
 package com.coralclubes.facil.modules.usuarios.service;
 
+import com.coralclubes.facil.modules.usuarios.dto.response.DatosCorreoUsuarioDto;
 import com.coralclubes.facil.modules.usuarios.repository.UsuariosRepository;
 import com.coralclubes.facil.modules.sistema.dto.response.ModuloApiResponse;
 import com.coralclubes.facil.modules.sistema.mapper.ModuloResponseMapper;
@@ -59,5 +60,9 @@ public class UsuarioService {
                 ModuloDtoResult::id,
                 ModuloDtoResult::idPadre
         );
+    }
+
+    public Optional<DatosCorreoUsuarioDto> obtenerDatosCorreoUsuario(String usuario) {
+        return repo.spCobranzaObtenerDatosCorreoUsuario(usuario);
     }
 }

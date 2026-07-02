@@ -11,6 +11,9 @@ public record EmailRequestDto(
         @NotEmpty List<String> destinatarios,
         @NotBlank String asunto,
         @NotBlank String cuerpo,
+        String nombreImagen,
+        byte[] contenidoImagen,
+        String linkImagenEmbebida,
         List<AdjuntoDto> adjuntos
 ) {
 }

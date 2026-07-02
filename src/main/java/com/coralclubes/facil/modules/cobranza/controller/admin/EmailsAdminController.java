@@ -2,6 +2,7 @@ package com.coralclubes.facil.modules.cobranza.controller.admin;
 
 import com.coralclubes.facil.modules.cobranza.dto.request.EmailRequestDto;
 import com.coralclubes.facil.modules.cobranza.service.EmailService;
+import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,11 +19,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class EmailsAdminController {
 
     private final EmailService emailService;
+    private final UserContext userContext;
 
     @PostMapping("/enviar")
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
     public ResponseEntity<ApiResponse<Boolean>> enviarCorreo(@Valid @RequestBody EmailRequestDto request) {
-        emailService.enviarCorreo(request);
+        String username = userContext.getUsername();
+        emailService.enviarCorreo(request, username);
         return ResponseEntity.ok(ApiResponse.success("Correo enviado correctamente.", true));
     }
 }

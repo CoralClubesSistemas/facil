@@ -28,6 +28,7 @@ public record SolicitudNotificacionDto(
         String remitenteOverride,
         Map<String, Object> metadatos,
         Integer prioridad,
-        List<String> adjuntos
+        List<String> adjuntos,
+        String password
 ) {
 }

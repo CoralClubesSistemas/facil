@@ -33,5 +33,6 @@ public record InformacionSocioDb (
         Integer alertaConsultaActiva,
         Integer alertaConsultaConsecutivo,
         String alertaConsultaNota,
-        LocalDateTime alertaConsultaFechaRegistro
+        LocalDateTime alertaConsultaFechaRegistro,
+        String direccion
 ){}

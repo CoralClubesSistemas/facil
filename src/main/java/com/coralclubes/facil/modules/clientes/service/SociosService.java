@@ -56,6 +56,7 @@ public class SociosService {
                 .alertaConsultaNota(socio.alertaConsultaNota())
                 .alertaConsultaFechaRegistro(socio.alertaConsultaFechaRegistro())
                 .convenioCie(obtenerConvenioCIECadena(socio.membresia()))
+                .direccion(socio.direccion())
                 .build();
 
         return ApiResponse.success("Socio obtenido exitosamente", socioFinal);

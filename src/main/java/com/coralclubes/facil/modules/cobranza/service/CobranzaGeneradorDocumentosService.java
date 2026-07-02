@@ -1,20 +1,17 @@
 package com.coralclubes.facil.modules.cobranza.service;
 
 import com.coralclubes.facil.modules.cobranza.dto.projection.DatosReciboResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.DatosEstadoCuentaDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.InfoArchivoDto;
-import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
-import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaLegacyDto;
 import com.coralclubes.facil.shared.infrastructure.pdf.service.PdfGeneratorService;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
-import java.time.Year;
 import java.util.*;
 
 @Service
@@ -99,5 +96,47 @@ public class CobranzaGeneradorDocumentosService {
                 .build();
 
         return storageClient.cargarArchivoSincrono(file, nombreArchivo,"application/pdf", solicitud);
+    }
+
+    public byte[] generarPdfEstadoCuenta(DatosEstadoCuentaDto datos) {
+        List<Map<String, Object>> movimientosFormateados = new ArrayList<>();
+        if (datos.movimientos() != null) {
+            for (var mov : datos.movimientos()) {
+                Map<String, Object> m = new HashMap<>();
+                m.put("fecha", mov.fecha() != null ? mov.fecha() : "");
+                m.put("fechaVencimiento", mov.fechaVencimiento() != null ? mov.fechaVencimiento() : "");
+                m.put("concepto", mov.concepto() != null ? mov.concepto() : "");
+                m.put("montoCargo", mov.montoCargo() != null ? mov.montoCargo() : "");
+                m.put("montoInteres", mov.montoInteres() != null ? mov.montoInteres() : "");
+                m.put("montoPendiente", mov.montoPendiente() != null ? mov.montoPendiente() : "");
+                movimientosFormateados.add(m);
+            }
+        }
+
+        Map<String, Object> resumenMap = new HashMap<>();
+        if (datos.resumenTotales() != null) {
+            resumenMap.put("totalCargos", datos.resumenTotales().totalCargos() != null ? datos.resumenTotales().totalCargos() : "");
+            resumenMap.put("totalIntereses", datos.resumenTotales().totalIntereses() != null ? datos.resumenTotales().totalIntereses() : "");
+            resumenMap.put("totalNetoExigible", datos.resumenTotales().totalNetoExigible() != null ? datos.resumenTotales().totalNetoExigible() : "");
+        }
+
+        Map<String, Object> variables = Map.ofEntries(
+                Map.entry("razonSocial", datos.razonSocial() != null ? datos.razonSocial() : ""),
+                Map.entry("slogan", datos.slogan() != null ? datos.slogan() : ""),
+                Map.entry("periodoInicio", datos.periodoInicio() != null ? datos.periodoInicio() : ""),
+                Map.entry("periodoFin", datos.periodoFin() != null ? datos.periodoFin() : ""),
+                Map.entry("fechaEmision", datos.fechaEmision() != null ? datos.fechaEmision() : ""),
+                Map.entry("fechaLimitePago", datos.fechaLimitePago() != null ? datos.fechaLimitePago() : ""),
+                Map.entry("titular", datos.titular() != null ? datos.titular() : ""),
+                Map.entry("membresia", datos.membresia() != null ? datos.membresia() : ""),
+                Map.entry("tipoMembresia", datos.tipoMembresia() != null ? datos.tipoMembresia() : ""),
+                Map.entry("telefonoContacto", datos.telefonoContacto() != null ? datos.telefonoContacto() : ""),
+                Map.entry("correoContacto", datos.correoContacto() != null ? datos.correoContacto() : ""),
+                Map.entry("domicilioSocio", datos.domicilioSocio() != null ? datos.domicilioSocio() : ""),
+                Map.entry("movimientos", movimientosFormateados),
+                Map.entry("resumenTotales", resumenMap)
+        );
+
+        return pdfGenerator.generarPdfDesdeHtml("ESTADO_CUENTA", variables);
     }
 }
