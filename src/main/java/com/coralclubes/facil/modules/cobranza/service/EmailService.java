@@ -1,6 +1,13 @@
 package com.coralclubes.facil.modules.cobranza.service;
 
+import com.coralclubes.facil.modules.clientes.service.SociosService;
 import com.coralclubes.facil.modules.cobranza.dto.request.EmailRequestDto;
+import com.coralclubes.facil.modules.cobranza.dto.request.EstadoCuentaAdeudoRequest;
+import com.coralclubes.facil.modules.cobranza.dto.request.SintetizarCuerpoCorreoRequest;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuerpoCorreoResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.EstadoCuentaAdeudoDto;
+import com.coralclubes.responses.ApiResponse;
+import com.coralclubes.facil.modules.sistema.service.PlantillasCuerpoCorreoService;
 import com.coralclubes.facil.modules.usuarios.service.UsuarioService;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.NotificationClient;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.dto.SolicitudNotificacionDto;
@@ -11,8 +18,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import java.math.BigDecimal;
 import java.net.URI;
+import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -24,6 +37,9 @@ public class EmailService {
     private final NotificationClient notificationClient;
     private final UsuarioService usuarioService;
     private final StorageClient storageClient;
+    private final PlantillasCuerpoCorreoService plantillasService;
+    private final SociosService sociosService;
+    private final MovimientosClienteService movimientosClienteService;
 
     @Value("${app.clients.notifications.aliases.default}")
     private String aliasConfig;
@@ -95,5 +111,73 @@ public class EmailService {
         }
 
         notificationClient.enviarNotificacionConAdjuntos(solicitud, archivos);
+    }
+
+    public CuerpoCorreoResponse sintetizarCuerpoCorreo(String membresia, SintetizarCuerpoCorreoRequest request) {
+        Map<String, Object> variables = new HashMap<>();
+
+        // 1. Consultar información del socio si es requerida por los campos
+        if (request.nombre() || request.desarrollo() || request.membresia() || request.correo() || request.convenioCie()) {
+            var apiResponseSocio = sociosService.obtenerSocios(membresia);
+            var socio = apiResponseSocio != null ? apiResponseSocio.data() : null;
+            if (socio != null) {
+                if (request.nombre()) {
+                    variables.put("socio", true);
+                    variables.put("nombreSocio", socio.nombreCompleto());
+                }
+                if (request.desarrollo()) {
+                    variables.put("desarrollo", socio.desarrollo());
+                }
+                if (request.membresia()) {
+                    variables.put("membresia", socio.membresia());
+                }
+                if (request.correo()) {
+                    variables.put("correoCliente", socio.correo());
+                }
+                if (request.convenioCie()) {
+                    variables.put("convenioCie", socio.convenioCie());
+                }
+            }
+        }
+
+        // 2. Consultar adeudos y realizar sumas si se requieren adeudos o intereses
+        if (request.totalAdeudo() || request.intereses()) {
+            LocalDate finMes = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+            LocalDateTime finMesTime = finMes.atTime(23, 59, 59);
+
+            var requestAdeudo = EstadoCuentaAdeudoRequest.builder()
+                    .membresia(membresia)
+                    .fechaCorte(finMesTime)
+                    .build();
+
+            ApiResponse<List<EstadoCuentaAdeudoDto>> apiResponseAdeudo = movimientosClienteService.obtenerEstadoCuentaAdeudo(requestAdeudo, 0);
+            List<EstadoCuentaAdeudoDto> list = (apiResponseAdeudo != null && apiResponseAdeudo.data() != null) ? apiResponseAdeudo.data() : List.of();
+
+            BigDecimal sumInteres = BigDecimal.ZERO;
+            BigDecimal sumNeto = BigDecimal.ZERO;
+
+            for (var mov : list) {
+                sumInteres = sumInteres.add(mov.interesMoratorio());
+                sumNeto = sumNeto.add(mov.totalAPagar());
+            }
+
+            DecimalFormat moneyFormat = new DecimalFormat("$#,##0.00");
+
+            if (request.totalAdeudo()) {
+                variables.put("totalAdeudo", moneyFormat.format(sumNeto));
+            }
+            if (request.intereses() && sumInteres.compareTo(BigDecimal.ZERO) > 0) {
+                variables.put("intereses", moneyFormat.format(sumInteres));
+            }
+        }
+
+        // 3. Renderizar asunto y cuerpo
+        String asunto = plantillasService.renderizarAsunto("CUERPO_POR_CAMPOS", variables);
+        String cuerpo = plantillasService.renderizarCuerpo("CUERPO_POR_CAMPOS", variables);
+
+        return CuerpoCorreoResponse.builder()
+                .asunto(asunto)
+                .cuerpo(cuerpo)
+                .build();
     }
 }
