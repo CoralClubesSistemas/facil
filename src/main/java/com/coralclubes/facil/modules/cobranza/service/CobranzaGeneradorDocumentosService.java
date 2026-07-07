@@ -42,8 +42,10 @@ public class CobranzaGeneradorDocumentosService {
             }
         }
 
+        String estatusDocumento = "CANCELACION".equalsIgnoreCase(tipo) ? "CANCELADO" : tipo;
+
         Map<String, Object> variables = Map.ofEntries(
-                Map.entry("estatus", tipo), // 'ORIGINAL', 'REIMPRESIÓN' o 'CANCELADO'
+                Map.entry("estatus", estatusDocumento), // 'ORIGINAL', 'REIMPRESIÓN' o 'CANCELADO'
                 // Datos de la Empresa
                 Map.entry("empresa", recibo.getEmpresa() != null ? recibo.getEmpresa() : ""),
                 Map.entry("rfcEmpresa", recibo.getRfcEmpresa() != null ? recibo.getRfcEmpresa() : ""),
