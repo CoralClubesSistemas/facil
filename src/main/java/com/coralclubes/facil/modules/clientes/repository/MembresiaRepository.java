@@ -1,5 +1,6 @@
 package com.coralclubes.facil.modules.clientes.repository;
 
+import com.coralclubes.facil.modules.clientes.dto.response.BeneficiarioDto;
 import com.coralclubes.facil.modules.clientes.dto.response.MembresiaDatosDto;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import lombok.RequiredArgsConstructor;
@@ -7,6 +8,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -45,6 +47,19 @@ public class MembresiaRepository {
             .fechaProcesable(rs.getTimestamp("fechaProcesable") != null ? rs.getTimestamp("fechaProcesable").toLocalDateTime() : null)
             .build();
 
+    private final RowMapper<BeneficiarioDto> beneficiarioRowMapper = (rs, rowNum) -> BeneficiarioDto.builder()
+            .numeroBeneficiario(rs.getObject("numero_beneficiario") != null ? rs.getInt("numero_beneficiario") : null)
+            .nombreCompleto(rs.getString("nombre_completo"))
+            .fechaNacimiento(rs.getTimestamp("fecha_nacimiento") != null ? rs.getTimestamp("fecha_nacimiento").toLocalDateTime() : null)
+            .fechaRegistro(rs.getTimestamp("fecha_registro") != null ? rs.getTimestamp("fecha_registro").toLocalDateTime() : null)
+            .correoElectronico(rs.getString("correo_electronico"))
+            .genero(rs.getString("genero"))
+            .parentesco(rs.getString("parentesco"))
+            .tipoCliente(rs.getString("tipo_cliente"))
+            .estatusCliente(rs.getString("estatus_cliente"))
+            .estadoCivil(rs.getString("estado_civil"))
+            .build();
+
     public Optional<MembresiaDatosDto> spCobranzaOntenerDatosMembresia(String membresia, Integer plan) {
         Map<String, Object> params = new HashMap<>();
         params.put("Membresia", membresia);
@@ -54,6 +69,17 @@ public class MembresiaRepository {
                 "spCobranzaOntenerDatosMembresia",
                 params,
                 rowMapper
+        );
+    }
+
+    public List<BeneficiarioDto> spClienteObtenerBeneficiariosMembresia(String membresia) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("Membresia", membresia);
+
+        return spExecutor.queryList(
+                "spClienteObtenerBeneficiariosMembresia",
+                params,
+                beneficiarioRowMapper
         );
     }
 }

@@ -5,12 +5,14 @@ import com.coralclubes.facil.modules.sistema.repository.PlantillasCuerpoCorreoRe
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PlantillasCuerpoCorreoService {
@@ -28,6 +30,7 @@ public class PlantillasCuerpoCorreoService {
             template.evaluate(writer, variables);
             return writer.toString();
         } catch (Exception e) {
+            log.error("Error:{}", String.valueOf(e));
             throw new RuntimeException("Error al renderizar la plantilla de correo con Pebble: " + codigo, e);
         }
     }

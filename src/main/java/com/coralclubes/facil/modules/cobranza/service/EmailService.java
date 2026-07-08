@@ -1,5 +1,7 @@
 package com.coralclubes.facil.modules.cobranza.service;
 
+import com.coralclubes.facil.modules.clientes.service.PuntosService;
+import com.coralclubes.facil.modules.clientes.dto.response.PuntosMembresia;
 import com.coralclubes.facil.modules.clientes.service.SociosService;
 import com.coralclubes.facil.modules.cobranza.dto.request.EmailRequestDto;
 import com.coralclubes.facil.modules.cobranza.dto.request.EstadoCuentaAdeudoRequest;
@@ -40,6 +42,7 @@ public class EmailService {
     private final PlantillasCuerpoCorreoService plantillasService;
     private final SociosService sociosService;
     private final MovimientosClienteService movimientosClienteService;
+    private final PuntosService puntosService;
 
     @Value("${app.clients.notifications.aliases.default}")
     private String aliasConfig;
@@ -135,7 +138,8 @@ public class EmailService {
                     variables.put("correoCliente", socio.correo());
                 }
                 if (request.convenioCie()) {
-                    variables.put("convenioCie", socio.convenioCie());
+                    variables.put("convenioCie", sociosService.getBankNumberCie());
+                    variables.put("referenciaCie", sociosService.calcularCIE(membresia));
                 }
             }
         }
@@ -171,7 +175,24 @@ public class EmailService {
             }
         }
 
-        // 3. Renderizar asunto y cuerpo
+        // 3. Consultar saldo de puntos si es requerido
+        if (request.saldoPuntos()) {
+            try {
+                PuntosMembresia puntos = puntosService.obtenerPuntosMembresia(membresia);
+                if (puntos != null) {
+                    variables.put("saldoPuntosDisponibles", puntos.saldoPuntosNeto());
+                    variables.put("saldoPuntosUsados", puntos.puntosConsumidos());
+                    variables.put("SaldoPuntosTotales", puntos.totalPuntosLiberados());
+
+                    java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+                    variables.put("fechaReporte", java.time.LocalDateTime.now().format(formatter));
+                }
+            } catch (Exception e) {
+                log.error("Error al obtener saldo de puntos para membresia: {}", membresia, e);
+            }
+        }
+
+        // 4. Renderizar asunto y cuerpo
         String asunto = plantillasService.renderizarAsunto("CUERPO_POR_CAMPOS", variables);
         String cuerpo = plantillasService.renderizarCuerpo("CUERPO_POR_CAMPOS", variables);
 

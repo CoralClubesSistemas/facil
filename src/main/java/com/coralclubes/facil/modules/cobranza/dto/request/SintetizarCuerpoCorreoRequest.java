@@ -10,6 +10,8 @@ public record SintetizarCuerpoCorreoRequest(
         boolean correo,
         boolean totalAdeudo,
         boolean intereses,
-        boolean convenioCie
+        boolean convenioCie,
+        boolean propuestaCreditoAnios,
+        boolean saldoPuntos
 ) {
 }

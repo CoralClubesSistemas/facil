@@ -73,4 +73,16 @@ public class MovimientosClienteAdminController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=estado-cuenta-" + membresia + ".pdf")
                 .body(pdf);
     }
+
+    @GetMapping("/estado-cuenta-historico-pdf")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<byte[]> obtenerEstadoCuentaHistoricoPdf(
+            @RequestParam String membresia,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaCorte) {
+        byte[] pdf = service.generarPdfEstadoCuentaHistoricoSocio(membresia, fechaCorte);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=estado-cuenta-historico-" + membresia + ".pdf")
+                .body(pdf);
+    }
 }

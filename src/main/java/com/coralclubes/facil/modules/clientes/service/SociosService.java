@@ -148,6 +148,10 @@ public class SociosService {
         return parcial + digitoVerificador;
     }
 
+    public String getBankNumberCie() {
+        return bankNumberCie;
+    }
+
     public String obtenerConvenioCIECadena(String membresia) {
         String cie = calcularCIE(membresia);
         return bankNumberCie + "  REF " + cie;

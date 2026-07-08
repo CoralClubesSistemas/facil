@@ -4,6 +4,7 @@ import com.coralclubes.facil.modules.cobranza.dto.request.EstadoCuentaAdeudoRequ
 import com.coralclubes.facil.modules.cobranza.dto.request.HistoricoMovimientosRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.EstadoCuentaAdeudoDto;
 import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoHistoricoDto;
+import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoHistoricoPdfDto;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import com.coralclubes.utils.json.JsonUtils;
 import lombok.RequiredArgsConstructor;
@@ -66,6 +67,23 @@ public class MovimientosClienteRepository {
 			.cantidadMovimientosFamilia(rs.getObject("cantidad_movimientos_familia") != null ? rs.getInt("cantidad_movimientos_familia") : null)
 			.build();
 
+	private final RowMapper<MovimientoHistoricoPdfDto> movimientoHistoricoPdfRowMapper = (rs, rowNum) -> MovimientoHistoricoPdfDto.builder()
+			.id(rs.getObject("id") != null ? rs.getLong("id") : null)
+			.familiaId(rs.getObject("familia_id") != null ? rs.getInt("familia_id") : null)
+			.padreId(rs.getObject("padre_id") != null ? rs.getInt("padre_id") : null)
+			.tipoMovimiento(rs.getString("tipo_movimiento"))
+			.fechaGeneracion(rs.getTimestamp("fecha_generacion") != null ? rs.getTimestamp("fecha_generacion").toLocalDateTime() : null)
+			.fechaVencimiento(rs.getTimestamp("fecha_vencimiento") != null ? rs.getTimestamp("fecha_vencimiento").toLocalDateTime() : null)
+			.importeCargo(rs.getBigDecimal("importe_cargo") != null ? rs.getBigDecimal("importe_cargo") : BigDecimal.ZERO)
+			.importeAbono(rs.getBigDecimal("importe_abono") != null ? rs.getBigDecimal("importe_abono") : BigDecimal.ZERO)
+			.importePendiente(rs.getBigDecimal("importe_pendiente") != null ? rs.getBigDecimal("importe_pendiente") : BigDecimal.ZERO)
+			.interesMoratorio(rs.getBigDecimal("interes_moratorio") != null ? rs.getBigDecimal("interes_moratorio") : BigDecimal.ZERO)
+			.conceptoDescripcion(rs.getString("concepto_descripcion"))
+			.descripcionMovimiento(rs.getString("descripcion_movimiento"))
+			.folioRecibo(rs.getString("folio_recibo"))
+			.fechaPagoRecibo(rs.getTimestamp("fecha_pago_recibo") != null ? rs.getTimestamp("fecha_pago_recibo").toLocalDateTime() : null)
+			.build();
+
 	public List<EstadoCuentaAdeudoDto> spFacilObtenerEstadoCuentaAdeudo(EstadoCuentaAdeudoRequest request, Integer idDesarrolloUsuario) {
 		Map<String, Object> params = new HashMap<>();
 		params.put("Membresia", request.membresia());
@@ -90,5 +108,13 @@ public class MovimientosClienteRepository {
 		params.put("IdPadre", request.idPadre());
 
 		return executor.queryList("spCobranzaObtenerHistoricoMovimientos", params, movimientoHistoricoRowMapper);
+	}
+
+	public List<MovimientoHistoricoPdfDto> spCobranzaObtenerHistoricoMovimientosPdf(String membresia, LocalDateTime fechaCorte) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("Membresia", membresia);
+		params.put("FechaCorte", fechaCorte);
+
+		return executor.queryList("spCobranzaObtenerHistoricoMovimientosPdf", params, movimientoHistoricoPdfRowMapper);
 	}
 }

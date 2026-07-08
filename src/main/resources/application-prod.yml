@@ -65,6 +65,17 @@ app:
         reserva-creada: ${APP_CLIENTS_NOTIFICATIONS_TEMPLATES_RESERVA_CREADA}
         reserva-cancelada: ${APP_CLIENTS_NOTIFICATIONS_TEMPLATES_RESERVA_CANCELADA}
 
+    checkout:
+      url: http://10.10.3.154:8083
+      api-key: FACIL_4dkQZoLmzOZ2Ynob6GnIeYbPR3O0yyEq
+      urls:
+        portal-resv:
+          redirect-success: http://localhost:4200/reserva/exito
+          redirect-failure: http://localhost:4200/reserva/fallo
+          redirect-cancel: http://localhost:4200/reserva/detalle
+      is-sandbox: true
+      default-tipo-serie-recibo: 1235
+
     gotenberg:
       url: ${GOTENBERG_URL}
 
