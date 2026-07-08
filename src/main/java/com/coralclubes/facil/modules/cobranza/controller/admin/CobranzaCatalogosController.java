@@ -64,4 +64,12 @@ public class CobranzaCatalogosController {
     public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerCatalogoDesarrollos() {
         return ResponseEntity.ok(service.obtenerCatalogoDesarrollos());
     }
+
+    @GetMapping("/tipos-membresias")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerCatalogoTiposMembresias(
+            @RequestParam(required = false) Integer idClasificacion
+    ) {
+        return ResponseEntity.ok(service.obtenerCatalogoTiposMembresias(idClasificacion));
+    }
 }

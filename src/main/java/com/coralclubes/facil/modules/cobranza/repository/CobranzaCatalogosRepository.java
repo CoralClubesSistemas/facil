@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -55,5 +56,12 @@ public class CobranzaCatalogosRepository {
 
     public List<SelectGenerico<Integer>> spCobranzaCatalogoDesarrollos() {
         return spExecutor.queryList("spCobranzaCatalogoDesarrollos", Collections.emptyMap(), selectGenericoMapper);
+    }
+
+    public List<SelectGenerico<Integer>> spRepoCatalogoTiposMembresias(Integer clasificacion) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("Clasificacion", clasificacion);
+
+        return spExecutor.queryList("spRepoCatalogoTiposMembresias", params, selectGenericoMapper);
     }
 }
