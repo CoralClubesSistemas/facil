@@ -14,6 +14,7 @@ public record EmailRequestDto(
         String nombreImagen,
         byte[] contenidoImagen,
         String linkImagenEmbebida,
-        List<AdjuntoDto> adjuntos
+        List<AdjuntoDto> adjuntos,
+        List<String> adjuntosUrl
 ) {
 }

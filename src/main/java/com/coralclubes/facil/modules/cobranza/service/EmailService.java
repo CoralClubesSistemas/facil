@@ -91,6 +91,7 @@ public class EmailService {
                 .variables(variables)
                 .remitenteOverride(datosCorreo.correoAutorizado())
                 .password(datosCorreo.contrasenaCorreo())
+                .adjuntos(request.adjuntosUrl())
                 .build();
 
         Map<String, byte[]> archivos = new HashMap<>();

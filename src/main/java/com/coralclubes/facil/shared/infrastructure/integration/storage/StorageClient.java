@@ -128,7 +128,7 @@ public class StorageClient {
                     });
 
             if (response != null && response.data() != null) {
-                return new ArchivoDescarga(response.data().nombreOriginal(), response.data().urlDescarga());
+                return new ArchivoDescarga(response.data().nombreOriginal(), response.data().urlDescarga(), response.data().uuid());
             }
 
             throw new IllegalStateException("El microservicio de storage devolvió una respuesta vacía.");
@@ -195,7 +195,7 @@ public class StorageClient {
                     });
 
             if (response != null && response.data() != null) {
-                ArchivoDescarga resultado = new ArchivoDescarga(response.data().nombreOriginal(), response.data().urlDescarga());
+                ArchivoDescarga resultado = new ArchivoDescarga(response.data().nombreOriginal(), response.data().urlDescarga(), response.data().uuid());
                 return resultado;
             }
 
