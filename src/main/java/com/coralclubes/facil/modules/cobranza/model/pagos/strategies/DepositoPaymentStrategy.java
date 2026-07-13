@@ -5,6 +5,7 @@ import com.coralclubes.facil.modules.cobranza.dto.response.ProcesarPagoResponse;
 import com.coralclubes.facil.modules.cobranza.model.pagos.enums.EstatusIntentoPago;
 import com.coralclubes.facil.modules.cobranza.model.pagos.interfaces.PaymentStrategy;
 import com.coralclubes.facil.modules.cobranza.repository.IntentoPagoRepository;
+import com.coralclubes.utils.json.JsonUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,8 +26,10 @@ public class DepositoPaymentStrategy implements PaymentStrategy {
     public ProcesarPagoResponse procesar(UUID ordenUuid, ProcesarPagoRequest request) {
         String estatus = EstatusIntentoPago.APROBADO.toString();
 
+        String metadata = request.metadata() != null ? JsonUtils.toJson(request.metadata()) : null;
+
         Integer intentoId = intentoPagoRepository.spCobranzaRegistrarIntentoPago(
-                ordenUuid, request.formaPagoClave(), request.monto(), estatus, request.metadata()
+                ordenUuid, request.formaPagoClave(), request.monto(), estatus, metadata
         ).orElseThrow();
 
         // 2. Al ser aprobado directo, actualizamos fecha de aprobación
@@ -44,5 +47,10 @@ public class DepositoPaymentStrategy implements PaymentStrategy {
     @Override
     public void postProcesarFinalizacion(Integer idIntentoPago) {
         intentoPagoRepository.spCobranzaRegistrarPagoDeposito(idIntentoPago);
+    }
+
+    @Override
+    public void eliminarIntento(UUID ordenUuid, Integer intentoPagoId, com.coralclubes.facil.modules.cobranza.dto.response.IntentoPagoDto intento) {
+        intentoPagoRepository.spCobranzaEliminarIntentoPago(ordenUuid, intentoPagoId);
     }
 }

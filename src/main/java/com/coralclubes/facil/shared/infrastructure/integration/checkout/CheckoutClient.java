@@ -45,4 +45,17 @@ public class CheckoutClient {
             throw new ServiceUnavailableException("El servicio de pagos (checkout) no está disponible en este momento.");
         }
     }
+
+    public void cancelarSesionPago(String uuid) {
+        try {
+            restClient.post()
+                    .uri(serviceUrl + "/api/v1/checkout/cancel/" + uuid)
+                    .header("X-API-KEY", apiKey)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception e) {
+            logger.error("CHECKOUT_CLIENT", "Error al cancelar sesión de pago: " + e.getMessage(), e);
+            throw new ServiceUnavailableException("El servicio de pagos (checkout) no está disponible en este momento.");
+        }
+    }
 }

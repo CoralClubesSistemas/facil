@@ -5,6 +5,8 @@ import com.coralclubes.facil.modules.cobranza.dto.request.HistoricoMovimientosRe
 import com.coralclubes.facil.modules.cobranza.dto.response.EstadoCuentaAdeudoDto;
 import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoHistoricoDto;
 import com.coralclubes.facil.modules.cobranza.service.MovimientosClienteService;
+import com.coralclubes.facil.modules.usuarios.service.UserContext;
+import com.coralclubes.facil.modules.cobranza.dto.request.GenerarExcelHistoricoRequest;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -12,11 +14,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -26,19 +26,21 @@ import java.util.List;
 public class MovimientosClienteAdminController {
 
     private final MovimientosClienteService service;
+    private final UserContext context;
 
     @GetMapping("/estado-cuenta-adeudo")
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
     public ResponseEntity<ApiResponse<List<EstadoCuentaAdeudoDto>>> obtenerEstadoCuentaAdeudo(
             @RequestParam String membresia,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaCorte) {
+        Integer idDesarrollo = context.getIdDesarrollo();
 
         EstadoCuentaAdeudoRequest request = EstadoCuentaAdeudoRequest.builder()
                 .membresia(membresia)
                 .fechaCorte(fechaCorte)
                 .build();
 
-        return ResponseEntity.ok(service.obtenerEstadoCuentaAdeudo(request, 0));
+        return ResponseEntity.ok(service.obtenerEstadoCuentaAdeudo(request, idDesarrollo));
     }
 
     @GetMapping("/historico-movimientos")
@@ -48,7 +50,11 @@ public class MovimientosClienteAdminController {
             @RequestParam(required = false) List<String> tipoMovimientos,
             @RequestParam(required = false) Integer estatusMovimientos,
             @RequestParam(required = false) Integer desarrolloConsumo,
-            @RequestParam(required = false) Integer idPadre) {
+            @RequestParam(required = false) Integer idPadre,
+            @RequestParam(required = false) Integer numeroRecibo,
+            @RequestParam(required = false) Integer serieRecibo,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaPago
+    ) {
 
         HistoricoMovimientosRequest request = HistoricoMovimientosRequest.builder()
                 .membresia(membresia)
@@ -56,6 +62,9 @@ public class MovimientosClienteAdminController {
                 .estatusMovimientos(estatusMovimientos)
                 .desarrolloConsumo(desarrolloConsumo)
                 .idPadre(idPadre)
+                .numeroRecibo(numeroRecibo)
+                .serieRecibo(serieRecibo)
+                .fechaPago(fechaPago)
                 .build();
 
         return ResponseEntity.ok(ApiResponse.success(
@@ -84,5 +93,24 @@ public class MovimientosClienteAdminController {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=estado-cuenta-historico-" + membresia + ".pdf")
                 .body(pdf);
+    }
+
+    @GetMapping("/historico-movimientos/excel/columnas")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<List<String>>> obtenerColumnasExcel(@RequestParam String membresia) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "Listado de columnas de Excel obtenido con éxito.",
+                service.obtenerColumnasExcel(membresia)
+        ));
+    }
+
+    @PostMapping("/historico-movimientos/excel")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<byte[]> descargarExcelHistorico(@RequestBody GenerarExcelHistoricoRequest request) throws IOException {
+        byte[] excelBytes = service.generarExcelHistorico(request);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=historico-movimientos-" + request.membresia() + ".xlsx")
+                .body(excelBytes);
     }
 }

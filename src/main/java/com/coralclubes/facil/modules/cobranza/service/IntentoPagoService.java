@@ -54,13 +54,18 @@ public class IntentoPagoService {
                 .map(IntentoPagoDto::monto)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        // Sumamos el total de dinero acumulado
+        BigDecimal totalAcumulado = intentos.stream()
+                .map(IntentoPagoDto::monto)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         // 3. Consultamos el total de la orden
         ConsultarOrdenCobranzaResponse orden = cobranzaService.consultarOrdenCobranza(ordenUuid).data();
         BigDecimal totalEsperado = orden.totalPagar();
 
         // 4. Cálculos finales
         BigDecimal saldoPendiente = totalEsperado.subtract(totalAprobado).max(BigDecimal.ZERO);
-        boolean isCompletado = totalAprobado.compareTo(totalEsperado) >= 0;
+        boolean isCompletado = totalAcumulado.compareTo(totalEsperado) >= 0;
 
         EstadoCumplimientoDto respuesta = EstadoCumplimientoDto.builder()
                 .isCompletado(isCompletado)
@@ -80,10 +85,18 @@ public class IntentoPagoService {
     public ApiResponse<EstadoCumplimientoDto> eliminarPago(UUID ordenUuid, Integer intentoPagoId) {
         String usuario = userContext.getUsername();
 
-        // 1. Eliminamos el registro (El SP valida las reglas de negocio)
-        intentoPagoRepository.spCobranzaEliminarIntentoPago(ordenUuid, intentoPagoId);
+        // 1. Obtener los intentos de pago asociados a la orden
+        List<IntentoPagoDto> intentos = intentoPagoRepository.spCobranzaObtenerIntentosPagoPorOrden(ordenUuid);
+        IntentoPagoDto intento = intentos.stream()
+                .filter(i -> i.intentoPagoId().equals(intentoPagoId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró el intento de pago con ID: " + intentoPagoId));
 
-        // 2. Re-evaluamos la orden para devolver los nuevos totales actualizados
+        // 2. Resolver estrategia y delegar eliminación
+        PaymentStrategy strategy = factory.getStrategy(intento.formaPagoClave());
+        strategy.eliminarIntento(ordenUuid, intentoPagoId, intento);
+
+        // 3. Re-evaluamos la orden para devolver los nuevos totales actualizados
         ApiResponse<EstadoCumplimientoDto> nuevoEstado = evaluarCumplimientoDeOrden(ordenUuid);
 
         logger.info("Pago eliminado por {}: orden={}, intentoPagoId={}", usuario, ordenUuid, intentoPagoId);

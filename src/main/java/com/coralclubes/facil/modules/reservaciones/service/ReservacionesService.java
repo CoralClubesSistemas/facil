@@ -87,6 +87,10 @@ public class ReservacionesService {
     @Value("${app.clients.storage.aliases.default}")
     private String aliasStorageDefault;
 
+    @Value("${app.clients.checkout.urls.portal-resv.redirect-success}") private String urlCheckoutSuccess;
+    @Value("${app.clients.checkout.urls.portal-resv.redirect-failure}") private String urlCheckoutFailure;
+    @Value("${app.clients.checkout.urls.portal-resv.redirect-cancel}") private String urlCheckoutCancel;
+
     // =========================================================================
     // 1. GESTIÓN DE INVENTARIO Y DISPONIBILIDAD
     // =========================================================================
@@ -348,8 +352,9 @@ public class ReservacionesService {
 
         // 7. Preparar los metadatos que guardaremos en el intento de pago
         Map<String, Object> intentoMetadata = new HashMap<>();
-        intentoMetadata.put("request", request);
-        intentoMetadata.put("detallePago", detallePago);
+        intentoMetadata.put("redirectSuccess", urlCheckoutSuccess);
+        intentoMetadata.put("redirectFailure", urlCheckoutFailure);
+        intentoMetadata.put("redirectCancel", urlCheckoutCancel);
 
         BigDecimal totalPagar = movimientos.stream()
                 .map(GenerarOrdenCobranzaMovimientoRequest::montoCapital)
@@ -358,14 +363,14 @@ public class ReservacionesService {
         ProcesarPagoRequest pagoRequest = ProcesarPagoRequest.builder()
                 .formaPagoClave("LINK")
                 .monto(totalPagar)
-                .metadata(JsonUtils.toJson(intentoMetadata))
+                .metadata(intentoMetadata)
                 .build();
 
         // 8. Iniciar el intento de pago (esto llamará a LinkPaymentStrategy, registrará el intento PENDIENTE e iniciará el Checkout)
         ProcesarPagoResponse pagoResponse = intentoPagoService.iniciarPago(uuidOrden, pagoRequest).data();
 
         // 9. Devolvemos la urlPago para redirección
-        return ApiResponse.success("Sesión de pago iniciada correctamente.", pagoResponse.urlPago());
+        return ApiResponse.success("Sesión de pago iniciada correctamente.", pagoResponse.datosAdicionales().get("checkoutUrl").toString());
     }
 
     public List<CargoCheckoutCreado> generarCargosCheckout(UUID groupId, String nombreReserva, String usuario, List<DetalleCargoCheckoutRequest> detalle) {

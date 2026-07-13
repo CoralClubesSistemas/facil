@@ -1,5 +1,7 @@
 package com.coralclubes.facil.modules.cobranza.listener;
 
+import com.coralclubes.facil.modules.clientes.service.MembresiaService;
+import com.coralclubes.facil.modules.cobranza.dto.response.ConsultarOrdenCobranzaResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.IntentoPagoDto;
 import com.coralclubes.facil.modules.cobranza.repository.IntentoPagoRepository;
 import com.coralclubes.facil.modules.cobranza.service.CobranzaService;
@@ -48,6 +50,7 @@ public class CheckoutPaymentListener {
 
         // 1. Obtener los intentos de pago asociados a la orden
         List<IntentoPagoDto> intentos = intentoPagoRepository.spCobranzaObtenerIntentosPagoPorOrden(ordenUuid);
+        ConsultarOrdenCobranzaResponse ordenInfo = cobranzaService.consultarOrdenCobranza(ordenUuid).data();
 
         // 2. Buscar el intento de pago correspondiente por checkoutUuid
         Optional<IntentoPagoDto> intentoOpt = intentos.stream()
@@ -77,29 +80,24 @@ public class CheckoutPaymentListener {
             // 3. Actualizar el estatus del intento a APROBADO en la base de datos
             intentoPagoRepository.spCobranzaActualizarEstatusIntentoPago(intento.intentoPagoId(), "APROBADO", LocalDateTime.now());
 
-            // 4. Finalizar la orden de cobranza y generar el recibo (esto publicará ReciboPagadoEvent)
-            String emailCliente = event.metadata() != null ? (String) event.metadata().get("payerEmail") : null;
-            if (emailCliente == null) {
-                try {
-                    var ordenInfo = cobranzaService.consultarOrdenCobranza(ordenUuid).data();
-                    emailCliente = ordenInfo.correo();
-                } catch (Exception ex) {
-                    log.warn("[COBRANZA] No se pudo consultar la orden de cobranza para extraer el correo del cliente: {}", ex.getMessage());
-                }
+            // 4. Finalizar la orden de cobranza y generar el recibo (esto publicará ReciboPagadoEvent) solo si el pago es suficiente para cubrir la orden
+            if (ordenInfo.totalPagar().compareTo(intento.monto()) <= 0) {
+                String emailCliente = ordenInfo.correo();
+                List<String> correos = emailCliente != null && !emailCliente.isBlank() ? List.of(emailCliente) : List.of();
+
+                log.info("[COBRANZA] Finalizando orden de cobranza {} y generando recibo con tipo de serie {}", ordenUuid, defaultTipoSerieRecibo);
+                cobranzaService.finalizarOrdenYGenerarRecibo(
+                        ordenUuid.toString(),
+                        defaultTipoSerieRecibo,
+                        "INTERNET",
+                        correos
+                );
+
+                log.info("[COBRANZA] Orden de cobranza {} finalizada y pagada con éxito tras la confirmación de Checkout.", ordenUuid);
+
+            } else {
+                log.info("[COBRANZA] El pago no cubre el total de la orden. No se finalizará la orden ni se generará recibo.");
             }
-
-            List<String> correos = emailCliente != null && !emailCliente.isBlank() ? List.of(emailCliente) : List.of();
-
-            log.info("[COBRANZA] Finalizando orden de cobranza {} y generando recibo con tipo de serie {}", ordenUuid, defaultTipoSerieRecibo);
-            cobranzaService.finalizarOrdenYGenerarRecibo(
-                    ordenUuid.toString(),
-                    defaultTipoSerieRecibo,
-                    "INTERNET",
-                    correos
-            );
-
-            log.info("[COBRANZA] Orden de cobranza {} finalizada y pagada con éxito tras la confirmación de Checkout.", ordenUuid);
-
         } catch (Exception e) {
             log.error("[COBRANZA] Error al finalizar la orden de cobranza " + ordenUuid, e);
             throw e;

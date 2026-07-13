@@ -8,12 +8,15 @@ import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoHistoricoPd
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import com.coralclubes.utils.json.JsonUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.sql.ResultSetMetaData;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +25,18 @@ import java.util.Map;
 public class MovimientosClienteRepository {
 
 	private final StoredProcedureExecutor executor;
+	private final JdbcTemplate jdbcTemplate;
+
+	private final RowMapper<Map<String, Object>> dynamicRowMapper = (rs, rowNum) -> {
+		Map<String, Object> map = new LinkedHashMap<>();
+		ResultSetMetaData metaData = rs.getMetaData();
+		int columnCount = metaData.getColumnCount();
+		for (int i = 1; i <= columnCount; i++) {
+			String columnLabel = metaData.getColumnLabel(i);
+			map.put(columnLabel, rs.getObject(i));
+		}
+		return map;
+	};
 
 	private final RowMapper<EstadoCuentaAdeudoDto> estadoCuentaAdeudoRowMapper = (rs, rowNum) -> EstadoCuentaAdeudoDto.builder()
 			.id(rs.getInt("id"))
@@ -106,6 +121,9 @@ public class MovimientosClienteRepository {
 		params.put("EstatusMovimientos", request.estatusMovimientos());
 		params.put("DesarrolloConsumo", request.desarrolloConsumo());
 		params.put("IdPadre", request.idPadre());
+		params.put("NumeroRecibo", request.numeroRecibo());
+		params.put("SerieRecibo", request.serieRecibo());
+		params.put("FechaPago", request.fechaPago());
 
 		return executor.queryList("spCobranzaObtenerHistoricoMovimientos", params, movimientoHistoricoRowMapper);
 	}
@@ -116,5 +134,35 @@ public class MovimientosClienteRepository {
 		params.put("FechaCorte", fechaCorte);
 
 		return executor.queryList("spCobranzaObtenerHistoricoMovimientosPdf", params, movimientoHistoricoPdfRowMapper);
+	}
+
+	public List<Map<String, Object>> spCobranzaObtenerHistoricoMovimientosExcel(String membresia) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("Membresia", membresia);
+
+		return executor.queryList("spCobranzaObtenerHistoricoMovimientosExcel", params, dynamicRowMapper);
+	}
+
+	public List<String> spCobranzaObtenerColumnasExcel(String membresia) {
+		String callString = "{call spCobranzaObtenerHistoricoMovimientosExcel(?)}";
+		return jdbcTemplate.execute(
+				(java.sql.Connection con) -> {
+					try (java.sql.CallableStatement cs = con.prepareCall(callString)) {
+						cs.setString(1, membresia);
+						boolean hasResult = cs.execute();
+						if (hasResult) {
+							try (java.sql.ResultSet rs = cs.getResultSet()) {
+								ResultSetMetaData metaData = rs.getMetaData();
+								List<String> columnas = new java.util.ArrayList<>();
+								for (int i = 1; i <= metaData.getColumnCount(); i++) {
+									columnas.add(metaData.getColumnLabel(i));
+								}
+								return columnas;
+							}
+						}
+						return java.util.Collections.emptyList();
+					}
+				}
+		);
 	}
 }

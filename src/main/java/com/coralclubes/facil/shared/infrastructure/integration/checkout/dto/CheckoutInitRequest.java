@@ -1,8 +1,11 @@
 package com.coralclubes.facil.shared.infrastructure.integration.checkout.dto;
 
+import lombok.Builder;
+
 import java.math.BigDecimal;
 import java.util.List;
 
+@Builder
 public record CheckoutInitRequest(
         String externalReference,
         BigDecimal amount,
@@ -17,6 +20,7 @@ public record CheckoutInitRequest(
         String urlRedirectOnCancel,
         String expirationDate
 ) {
+    @Builder
     public record CheckoutItem(
             Integer id,
             String title,
