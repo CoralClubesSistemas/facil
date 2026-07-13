@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.cobranza.model.pagos.strategies;
 
 import com.coralclubes.facil.modules.cobranza.dto.request.ProcesarPagoRequest;
+import com.coralclubes.facil.modules.cobranza.dto.response.IntentoPagoDto;
 import com.coralclubes.facil.modules.cobranza.dto.response.ProcesarPagoResponse;
 import com.coralclubes.facil.modules.cobranza.model.pagos.enums.EstatusIntentoPago;
 import com.coralclubes.facil.modules.cobranza.model.pagos.interfaces.PaymentStrategy;
@@ -26,7 +27,7 @@ public class EfectivoPaymentStrategy implements PaymentStrategy {
     }
 
     @Override
-    public ProcesarPagoResponse procesar(UUID ordenUuid, ProcesarPagoRequest request) {
+    public ProcesarPagoResponse procesar(UUID ordenUuid, ProcesarPagoRequest request, String usuario) {
         // 1. Efectivo se aprueba inmediatamente porque el cajero tiene el dinero en mano
         String estatus = EstatusIntentoPago.APROBADO.toString();
 
@@ -54,7 +55,7 @@ public class EfectivoPaymentStrategy implements PaymentStrategy {
     }
 
     @Override
-    public void eliminarIntento(UUID ordenUuid, Integer intentoPagoId, com.coralclubes.facil.modules.cobranza.dto.response.IntentoPagoDto intento) {
+    public void eliminarIntento(UUID ordenUuid, Integer intentoPagoId, IntentoPagoDto intento, String usuario) {
         intentoPagoRepository.spCobranzaEliminarIntentoPago(ordenUuid, intentoPagoId);
     }
 }

@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.cobranza.model.pagos.strategies;
 
 import com.coralclubes.facil.modules.cobranza.dto.request.ProcesarPagoRequest;
+import com.coralclubes.facil.modules.cobranza.dto.response.IntentoPagoDto;
 import com.coralclubes.facil.modules.cobranza.dto.response.ProcesarPagoResponse;
 import com.coralclubes.facil.modules.cobranza.model.pagos.enums.EstatusIntentoPago;
 import com.coralclubes.facil.modules.cobranza.model.pagos.interfaces.PaymentStrategy;
@@ -23,7 +24,7 @@ public class DepositoPaymentStrategy implements PaymentStrategy {
     public String getGatewayType() { return "DEPOSITO"; }
 
     @Override
-    public ProcesarPagoResponse procesar(UUID ordenUuid, ProcesarPagoRequest request) {
+    public ProcesarPagoResponse procesar(UUID ordenUuid, ProcesarPagoRequest request, String usuario) {
         String estatus = EstatusIntentoPago.APROBADO.toString();
 
         String metadata = request.metadata() != null ? JsonUtils.toJson(request.metadata()) : null;
@@ -50,7 +51,7 @@ public class DepositoPaymentStrategy implements PaymentStrategy {
     }
 
     @Override
-    public void eliminarIntento(UUID ordenUuid, Integer intentoPagoId, com.coralclubes.facil.modules.cobranza.dto.response.IntentoPagoDto intento) {
+    public void eliminarIntento(UUID ordenUuid, Integer intentoPagoId, IntentoPagoDto intento, String usuario) {
         intentoPagoRepository.spCobranzaEliminarIntentoPago(ordenUuid, intentoPagoId);
     }
 }

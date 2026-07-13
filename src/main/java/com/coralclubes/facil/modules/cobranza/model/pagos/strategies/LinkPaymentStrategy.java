@@ -48,7 +48,7 @@ public class LinkPaymentStrategy implements PaymentStrategy {
     }
 
     @Override
-    public ProcesarPagoResponse procesar(UUID ordenUuid, ProcesarPagoRequest request) {
+    public ProcesarPagoResponse procesar(UUID ordenUuid, ProcesarPagoRequest request, String usuario) {
         // 1. Consultar detalles de la orden directamente desde el JSON del repositorio para evitar dependencias circulares
         String ordenJson = cobranzaRepository.spFacilConsultarOrdenCobranzaJson(ordenUuid)
                 .orElseThrow(() -> new IllegalStateException("No se encontró información de la orden de cobranza."));
@@ -120,6 +120,10 @@ public class LinkPaymentStrategy implements PaymentStrategy {
         metadataMap.put("redirectSuccess", redirectSuccess);
         metadataMap.put("redirectFailure", redirectFailure);
         metadataMap.put("redirectCancel", redirectCancel);
+
+        // Guardamos al usuario que genera el intento de pago
+        metadataMap.put("usuario", usuario);
+
         String metadataStr = JsonUtils.toJson(metadataMap);
 
         Integer intentoId = intentoPagoRepository.spCobranzaRegistrarIntentoPago(
@@ -157,10 +161,16 @@ public class LinkPaymentStrategy implements PaymentStrategy {
     }
 
     @Override
-    public void eliminarIntento(UUID ordenUuid, Integer intentoPagoId, IntentoPagoDto intento) {
+    public void eliminarIntento(UUID ordenUuid, Integer intentoPagoId, IntentoPagoDto intento, String usuario) {
         try {
             if (intento.metadata() != null) {
                 Map<String, Object> map = objectMapper.readValue(intento.metadata(), Map.class);
+
+                // Extraemos el usuario de los metadatos, solo el usuario que creo el intento de pago puede eliminarlo
+                String usuarioIntento = getMetadataField(map, "usuario");
+                if (usuarioIntento != null && !usuarioIntento.equals(usuario)) {
+                    throw new RuntimeException("Solo el usuario que creó el intento de pago puede eliminarlo.");
+                }
 
                 if (map != null && map.get("checkoutUuid") != null) {
                     checkoutClient.cancelarSesionPago(map.get("checkoutUuid").toString());
@@ -177,7 +187,7 @@ public class LinkPaymentStrategy implements PaymentStrategy {
                     e
             );
 
-            throw new RuntimeException("No fue posible cancelar la sesión de pago en Checkout.", e);
+            throw new RuntimeException("Error al eliminar el intento de pago " + intentoPagoId + ": " + e.getMessage(), e);
         }
     }
 

@@ -367,7 +367,7 @@ public class ReservacionesService {
                 .build();
 
         // 8. Iniciar el intento de pago (esto llamará a LinkPaymentStrategy, registrará el intento PENDIENTE e iniciará el Checkout)
-        ProcesarPagoResponse pagoResponse = intentoPagoService.iniciarPago(uuidOrden, pagoRequest).data();
+        ProcesarPagoResponse pagoResponse = intentoPagoService.iniciarPago(uuidOrden, pagoRequest, usuario);
 
         // 9. Devolvemos la urlPago para redirección
         return ApiResponse.success("Sesión de pago iniciada correctamente.", pagoResponse.datosAdicionales().get("checkoutUrl").toString());

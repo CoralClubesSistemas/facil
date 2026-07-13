@@ -30,21 +30,18 @@ public class IntentoPagoService {
     private final BusinessLogger logger;
 
     @Transactional
-    public ApiResponse<ProcesarPagoResponse> iniciarPago(UUID ordenUuid, ProcesarPagoRequest request) {
-
+    public ProcesarPagoResponse iniciarPago(UUID ordenUuid, ProcesarPagoRequest request, String usuario) {
         // 1. Obtenemos la estrategia dinámica basada en el ID (Efectivo, Tarjeta, Link...)
         PaymentStrategy strategy = factory.getStrategy(request.formaPagoClave());
 
         // 2. Ejecutamos la lógica del intento de pago
-        ProcesarPagoResponse response = strategy.procesar(ordenUuid, request);
-
-        return ApiResponse.success("Intento de pago procesado", response);
+        return strategy.procesar(ordenUuid, request, usuario);
     }
 
     /**
      * Evalúa el cumplimiento de la orden y devuelve el historial de transacciones para reconstruir el UI.
      */
-    public ApiResponse<EstadoCumplimientoDto> evaluarCumplimientoDeOrden(UUID ordenUuid) {
+    public EstadoCumplimientoDto evaluarCumplimientoDeOrden(UUID ordenUuid) {
         // 1. Obtenemos todas las transacciones desde la BD
         List<IntentoPagoDto> intentos = intentoPagoRepository.spCobranzaObtenerIntentosPagoPorOrden(ordenUuid);
 
@@ -67,24 +64,20 @@ public class IntentoPagoService {
         BigDecimal saldoPendiente = totalEsperado.subtract(totalAprobado).max(BigDecimal.ZERO);
         boolean isCompletado = totalAcumulado.compareTo(totalEsperado) >= 0;
 
-        EstadoCumplimientoDto respuesta = EstadoCumplimientoDto.builder()
+        return EstadoCumplimientoDto.builder()
                 .isCompletado(isCompletado)
                 .totalEsperado(totalEsperado)
                 .totalAprobado(totalAprobado)
                 .saldoPendiente(saldoPendiente)
                 .transacciones(intentos) // Mandamos la lista para reconstruir el frontend
                 .build();
-
-        return ApiResponse.success("Estado de pagos consultado", respuesta);
     }
 
     /**
      * Elimina un pago específico y devuelve el nuevo estado de la orden.
      */
     @Transactional
-    public ApiResponse<EstadoCumplimientoDto> eliminarPago(UUID ordenUuid, Integer intentoPagoId) {
-        String usuario = userContext.getUsername();
-
+    public EstadoCumplimientoDto eliminarPago(UUID ordenUuid, Integer intentoPagoId, String usuario) {
         // 1. Obtener los intentos de pago asociados a la orden
         List<IntentoPagoDto> intentos = intentoPagoRepository.spCobranzaObtenerIntentosPagoPorOrden(ordenUuid);
         IntentoPagoDto intento = intentos.stream()
@@ -94,13 +87,13 @@ public class IntentoPagoService {
 
         // 2. Resolver estrategia y delegar eliminación
         PaymentStrategy strategy = factory.getStrategy(intento.formaPagoClave());
-        strategy.eliminarIntento(ordenUuid, intentoPagoId, intento);
+        strategy.eliminarIntento(ordenUuid, intentoPagoId, intento, usuario);
 
         // 3. Re-evaluamos la orden para devolver los nuevos totales actualizados
-        ApiResponse<EstadoCumplimientoDto> nuevoEstado = evaluarCumplimientoDeOrden(ordenUuid);
+        EstadoCumplimientoDto nuevoEstado = evaluarCumplimientoDeOrden(ordenUuid);
 
         logger.info("Pago eliminado por {}: orden={}, intentoPagoId={}", usuario, ordenUuid, intentoPagoId);
 
-        return ApiResponse.success("Pago eliminado correctamente", nuevoEstado.data());
+        return nuevoEstado;
     }
 }

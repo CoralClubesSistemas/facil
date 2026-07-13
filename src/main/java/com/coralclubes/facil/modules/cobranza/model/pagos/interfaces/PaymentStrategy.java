@@ -12,11 +12,11 @@ public interface PaymentStrategy {
     String getGatewayType();
 
     // La lógica core de ejecución
-    ProcesarPagoResponse procesar(UUID ordenUuid, ProcesarPagoRequest request);
+    ProcesarPagoResponse procesar(UUID ordenUuid, ProcesarPagoRequest request, String usuario);
 
     // Lógica que se ejecuta SOLO cuando la orden ya se facturó/cerró exitosamente
     void postProcesarFinalizacion(Integer idIntentoPago);
 
     // Lógica para eliminar un intento de pago
-    void eliminarIntento(UUID ordenUuid, Integer intentoPagoId, IntentoPagoDto intento);
+    void eliminarIntento(UUID ordenUuid, Integer intentoPagoId, IntentoPagoDto intento, String usuario);
 }

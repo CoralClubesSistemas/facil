@@ -4,6 +4,7 @@ import com.coralclubes.facil.modules.cobranza.dto.request.ProcesarPagoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.EstadoCumplimientoDto;
 import com.coralclubes.facil.modules.cobranza.dto.response.ProcesarPagoResponse;
 import com.coralclubes.facil.modules.cobranza.service.IntentoPagoService;
+import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class IntentoPagoController {
     private final IntentoPagoService service;
+    private final UserContext userContext;
 
     @PostMapping
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
@@ -25,14 +27,16 @@ public class IntentoPagoController {
             @PathVariable UUID uuid,
             @Valid @RequestBody ProcesarPagoRequest request
     ) {
-        return ResponseEntity.ok(service.iniciarPago(uuid, request));
+        String usuario = userContext.getUsername();
+
+        return ResponseEntity.ok(ApiResponse.success(service.iniciarPago(uuid, request, usuario)));
     }
 
     // Endpoint para consultar el estado actual de los pagos de una orden
     @GetMapping
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
     public ResponseEntity<ApiResponse<EstadoCumplimientoDto>> obtenerEstadoPagos(@PathVariable UUID uuid) {
-        return ResponseEntity.ok(service.evaluarCumplimientoDeOrden(uuid));
+        return ResponseEntity.ok(ApiResponse.success(service.evaluarCumplimientoDeOrden(uuid)));
     }
 
     @DeleteMapping("/{idPago}")
@@ -41,6 +45,8 @@ public class IntentoPagoController {
             @PathVariable UUID uuid,
             @PathVariable Integer idPago
     ) {
-        return ResponseEntity.ok(service.eliminarPago(uuid, idPago));
+        String usuario = userContext.getUsername();
+
+        return ResponseEntity.ok(ApiResponse.success(service.eliminarPago(uuid, idPago, usuario)));
     }
 }
