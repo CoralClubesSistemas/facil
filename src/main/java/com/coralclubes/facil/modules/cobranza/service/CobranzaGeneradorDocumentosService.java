@@ -42,6 +42,7 @@ public class CobranzaGeneradorDocumentosService {
                 m.put("importe", df.format(mov.getImporte()));
                 m.put("interes", df.format(mov.getInteres()));
                 m.put("descuento", mov.getDescuento().compareTo(BigDecimal.ZERO) > 0 ? "-" + df.format(mov.getDescuento()) : "$0.00");
+                m.put("iva", mov.getIva().compareTo(BigDecimal.ZERO) > 0 ? "-" + df.format(mov.getIva()) : "$0.00");
                 m.put("totalNeto", df.format(mov.getTotalNeto()));
                 movimientosFormateados.add(m);
             }
