@@ -72,4 +72,10 @@ public class CobranzaCatalogosController {
     ) {
         return ResponseEntity.ok(service.obtenerCatalogoTiposMembresias(idClasificacion));
     }
+
+    @GetMapping("/estatus-puntos")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerCatalogoEstatusPuntos() {
+        return ResponseEntity.ok(service.obtenerCatalogoEstatusPuntos());
+    }
 }

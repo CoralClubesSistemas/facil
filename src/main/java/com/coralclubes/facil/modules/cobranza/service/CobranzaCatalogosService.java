@@ -45,4 +45,8 @@ public class CobranzaCatalogosService {
     public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogoTiposMembresias(Integer idClasificacion) {
         return ApiResponse.success("Catálogo de desarrollos obtenido correctamente.", repository.spRepoCatalogoTiposMembresias(idClasificacion));
     }
+
+    public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogoEstatusPuntos() {
+        return ApiResponse.success("Catálogo de estatus de puntos obtenido correctamente.", repository.spCobranzaCatalogoEstatusPuntos());
+    }
 }

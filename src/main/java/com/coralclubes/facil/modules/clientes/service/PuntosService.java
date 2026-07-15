@@ -1,6 +1,9 @@
 package com.coralclubes.facil.modules.clientes.service;
 
+import com.coralclubes.facil.modules.clientes.dto.projection.DetalleCuentaPuntosProjection;
+import com.coralclubes.facil.modules.clientes.dto.projection.PaquetePuntosPlanProjection;
 import com.coralclubes.facil.modules.clientes.dto.request.ConsumoPuntosRequest;
+import com.coralclubes.facil.modules.clientes.dto.request.DetalleCuentaPuntosRequest;
 import com.coralclubes.facil.modules.clientes.dto.response.*;
 import com.coralclubes.facil.modules.clientes.repository.PuntosRepository;
 import com.coralclubes.facil.modules.cobranza.service.CobranzaGeneradorDocumentosService;
@@ -61,7 +64,37 @@ public class PuntosService {
         return repo.spClienteObtenerCuentaDePuntos(membresia, fechaCorteFinal);
     }
 
-    public List<DocumentoPdfDto> generarPdfsPuntos(String membresia, LocalDateTime fechaCorte) {
+    public PaquetesPuntosPlanResponse obtenerPaquetesPuntosPlan(String membresia) {
+        List<PaquetePuntosPlanProjection> paquetes = repo.spMembresiaObtenerPaquetesPuntosPlan(membresia);
+
+        int totalPuntosMembresia = 0;
+        int totalPuntosLiberados = 0;
+        int totalPuntosConsumidos = 0;
+
+        if (paquetes != null && !paquetes.isEmpty()) {
+            for (var p : paquetes) {
+                totalPuntosMembresia += p.puntosMembresia() != null ? p.puntosMembresia() : 0;
+                totalPuntosLiberados += p.puntosLiberados() != null ? p.puntosLiberados() : 0;
+            }
+            totalPuntosConsumidos = paquetes.getFirst().puntosConsumidos() != null ? paquetes.getFirst().puntosConsumidos() : 0;
+        }
+
+        int saldo = totalPuntosLiberados - totalPuntosConsumidos;
+
+        return PaquetesPuntosPlanResponse.builder()
+                .paquetes(paquetes != null ? paquetes : List.of())
+                .totalPuntosMembresia(totalPuntosMembresia)
+                .totalPuntosLiberados(totalPuntosLiberados)
+                .totalPuntosConsumidos(totalPuntosConsumidos)
+                .saldo(saldo)
+                .build();
+     }
+
+    public List<DetalleCuentaPuntosProjection> obtenerDetalleCuentaDePuntos(String membresia, DetalleCuentaPuntosRequest request) {
+        return repo.spMembresiaObtenerDetalleCuentaDePuntos(membresia, request);
+    }
+
+    public DocumentoPdfDto generarPdfConsumoPuntos(String membresia, LocalDateTime fechaCorte) {
         LocalDateTime fechaCorteFinal = fechaCorte != null ? fechaCorte : LocalDateTime.now();
 
         // 1. Consultar información del socio
@@ -78,7 +111,6 @@ public class PuntosService {
 
         // Obtener listas
         List<ConsumoPuntosDto> consumosRaw = repo.spClienteObtenerConsumoDePuntos(membresia, fechaCorteFinal);
-        List<PuntosLiberadosDto> liberadosRaw = repo.spClienteObtenerPuntosLiberados(membresia, fechaCorteFinal);
         List<CuentaPuntosDto> cuentaRaw = repo.spClienteObtenerCuentaDePuntos(membresia, fechaCorteFinal);
 
         // Periodo
@@ -128,6 +160,42 @@ public class PuntosService {
 
         byte[] pdfConsumo = generadorDocumentosService.generarPdfConsumoPuntos(consumoPuntosPdfDto);
 
+        return DocumentoPdfDto.builder()
+                .nombre("consumo-puntos-" + membresia + ".pdf")
+                .contenido(Base64.getEncoder().encodeToString(pdfConsumo))
+                .build();
+    }
+
+    public DocumentoPdfDto generarPdfPuntosLiberados(String membresia, LocalDateTime fechaCorte) {
+        LocalDateTime fechaCorteFinal = fechaCorte != null ? fechaCorte : LocalDateTime.now();
+
+        // 1. Consultar información del socio
+        ApiResponse<InformacionSocio> apiResponseSocio = sociosService.obtenerSocios(membresia);
+        InformacionSocio socio = apiResponseSocio != null ? apiResponseSocio.data() : null;
+        if (socio == null) {
+            throw new IllegalArgumentException("No se encontró información para el socio con membresía: " + membresia);
+        }
+
+        // Formateadores
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String fechaEmisionStr = LocalDate.now().format(dateFormatter);
+
+        // Obtener listas
+        List<PuntosLiberadosDto> liberadosRaw = repo.spClienteObtenerPuntosLiberados(membresia, fechaCorteFinal);
+        List<CuentaPuntosDto> cuentaRaw = repo.spClienteObtenerCuentaDePuntos(membresia, fechaCorteFinal);
+
+        // Periodo
+        String periodoInicio = "Inicio";
+        String periodoFin = fechaCorteFinal.format(dateFormatter);
+        if (!cuentaRaw.isEmpty()) {
+            LocalDateTime minDate = cuentaRaw.stream()
+                    .map(CuentaPuntosDto::fechaInicio)
+                    .filter(Objects::nonNull)
+                    .min(LocalDateTime::compareTo)
+                    .orElse(fechaCorteFinal);
+            periodoInicio = minDate.format(dateFormatter);
+        }
+
         // ==================== 2. PUNTOS_LIBERADOS ====================
         List<PuntosLiberadosPdfItemDto> liberadosPdfItems = new ArrayList<>();
         int totalLiberadosPeriodo = 0;
@@ -166,6 +234,41 @@ public class PuntosService {
                 .build();
 
         byte[] pdfLiberados = generadorDocumentosService.generarPdfPuntosLiberados(puntosLiberadosPdfDto);
+
+        return DocumentoPdfDto.builder()
+                .nombre("puntos-liberados-" + membresia + ".pdf")
+                .contenido(Base64.getEncoder().encodeToString(pdfLiberados))
+                .build();
+    }
+
+    public DocumentoPdfDto generarPdfEstadoCuentaPuntos(String membresia, LocalDateTime fechaCorte) {
+        LocalDateTime fechaCorteFinal = fechaCorte != null ? fechaCorte : LocalDateTime.now();
+
+        // 1. Consultar información del socio
+        ApiResponse<InformacionSocio> apiResponseSocio = sociosService.obtenerSocios(membresia);
+        InformacionSocio socio = apiResponseSocio != null ? apiResponseSocio.data() : null;
+        if (socio == null) {
+            throw new IllegalArgumentException("No se encontró información para el socio con membresía: " + membresia);
+        }
+
+        // Formateadores
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String fechaEmisionStr = LocalDate.now().format(dateFormatter);
+
+        // Obtener listas
+        List<CuentaPuntosDto> cuentaRaw = repo.spClienteObtenerCuentaDePuntos(membresia, fechaCorteFinal);
+
+        // Periodo
+        String periodoInicio = "Inicio";
+        String periodoFin = fechaCorteFinal.format(dateFormatter);
+        if (!cuentaRaw.isEmpty()) {
+            LocalDateTime minDate = cuentaRaw.stream()
+                    .map(CuentaPuntosDto::fechaInicio)
+                    .filter(Objects::nonNull)
+                    .min(LocalDateTime::compareTo)
+                    .orElse(fechaCorteFinal);
+            periodoInicio = minDate.format(dateFormatter);
+        }
 
         // ==================== 3. ESTADO_CUENTA_PUNTOS ====================
         List<EstadoCuentaPuntosPdfItemDto> cuentaPdfItems = new ArrayList<>();
@@ -245,20 +348,17 @@ public class PuntosService {
 
         byte[] pdfEstadoCuenta = generadorDocumentosService.generarPdfEstadoCuentaPuntos(estadoCuentaPuntosPdfDto);
 
-        List<DocumentoPdfDto> result = new ArrayList<>();
-        result.add(DocumentoPdfDto.builder()
-                .nombre("consumo-puntos-" + membresia + ".pdf")
-                .contenido(Base64.getEncoder().encodeToString(pdfConsumo))
-                .build());
-        result.add(DocumentoPdfDto.builder()
-                .nombre("puntos-liberados-" + membresia + ".pdf")
-                .contenido(Base64.getEncoder().encodeToString(pdfLiberados))
-                .build());
-        result.add(DocumentoPdfDto.builder()
+        return DocumentoPdfDto.builder()
                 .nombre("estado-cuenta-puntos-" + membresia + ".pdf")
                 .contenido(Base64.getEncoder().encodeToString(pdfEstadoCuenta))
-                .build());
+                .build();
+    }
 
+    public List<DocumentoPdfDto> generarPdfsPuntos(String membresia, LocalDateTime fechaCorte) {
+        List<DocumentoPdfDto> result = new ArrayList<>();
+        result.add(generarPdfConsumoPuntos(membresia, fechaCorte));
+        result.add(generarPdfPuntosLiberados(membresia, fechaCorte));
+        result.add(generarPdfEstadoCuentaPuntos(membresia, fechaCorte));
         return result;
     }
 }

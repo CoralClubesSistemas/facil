@@ -64,4 +64,8 @@ public class CobranzaCatalogosRepository {
 
         return spExecutor.queryList("spRepoCatalogoTiposMembresias", params, selectGenericoMapper);
     }
+
+    public List<SelectGenerico<Integer>> spCobranzaCatalogoEstatusPuntos() {
+        return spExecutor.queryList("spCobranzaCatalogoEstatusPuntos", Collections.emptyMap(), selectGenericoMapper);
+    }
 }

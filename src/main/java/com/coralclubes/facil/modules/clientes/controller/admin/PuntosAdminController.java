@@ -1,9 +1,12 @@
 package com.coralclubes.facil.modules.clientes.controller.admin;
 
+import com.coralclubes.facil.modules.clientes.dto.projection.DetalleCuentaPuntosProjection;
+import com.coralclubes.facil.modules.clientes.dto.request.DetalleCuentaPuntosRequest;
 import com.coralclubes.facil.modules.clientes.dto.response.ConsumoPuntosDto;
 import com.coralclubes.facil.modules.clientes.dto.response.CuentaPuntosDto;
 import com.coralclubes.facil.modules.clientes.dto.response.PuntosLiberadosDto;
 import com.coralclubes.facil.modules.clientes.dto.response.DocumentoPdfDto;
+import com.coralclubes.facil.modules.clientes.dto.response.PaquetesPuntosPlanResponse;
 import com.coralclubes.facil.modules.clientes.service.PuntosService;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -60,5 +63,63 @@ public class PuntosAdminController {
     ) {
         List<DocumentoPdfDto> pdfs = puntosService.generarPdfsPuntos(membresia, fechaCorte);
         return ResponseEntity.ok(ApiResponse.success("Listado de PDFs de puntos generado exitosamente.", pdfs));
+    }
+
+    @GetMapping("/{membresia}/pdf/consumo")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<DocumentoPdfDto>> obtenerPdfConsumoPuntos(
+            @PathVariable String membresia,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaCorte
+    ) {
+        DocumentoPdfDto pdf = puntosService.generarPdfConsumoPuntos(membresia, fechaCorte);
+        return ResponseEntity.ok(ApiResponse.success("PDF de consumo de puntos generado exitosamente.", pdf));
+    }
+
+    @GetMapping("/{membresia}/pdf/liberados")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<DocumentoPdfDto>> obtenerPdfPuntosLiberados(
+            @PathVariable String membresia,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaCorte
+    ) {
+        DocumentoPdfDto pdf = puntosService.generarPdfPuntosLiberados(membresia, fechaCorte);
+        return ResponseEntity.ok(ApiResponse.success("PDF de puntos liberados generado exitosamente.", pdf));
+    }
+
+    @GetMapping("/{membresia}/pdf/estado-cuenta")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<DocumentoPdfDto>> obtenerPdfEstadoCuentaPuntos(
+            @PathVariable String membresia,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaCorte
+    ) {
+        DocumentoPdfDto pdf = puntosService.generarPdfEstadoCuentaPuntos(membresia, fechaCorte);
+        return ResponseEntity.ok(ApiResponse.success("PDF de estado de cuenta de puntos generado exitosamente.", pdf));
+    }
+
+    @GetMapping("/{membresia}/paquetes")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<PaquetesPuntosPlanResponse>> obtenerPaquetesPuntosPlan(
+            @PathVariable String membresia
+    ) {
+        PaquetesPuntosPlanResponse response = puntosService.obtenerPaquetesPuntosPlan(membresia);
+        return ResponseEntity.ok(ApiResponse.success("Paquetes de puntos por plan obtenidos exitosamente.", response));
+    }
+
+    @GetMapping("/{membresia}/detalle-cuenta")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<List<DetalleCuentaPuntosProjection>>> obtenerDetalleCuentaDePuntos(
+            @PathVariable String membresia,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate fechaFin,
+            @RequestParam(required = false) String estatusPuntos,
+            @RequestParam(required = false) Integer numeroPlan
+    ) {
+        DetalleCuentaPuntosRequest request = DetalleCuentaPuntosRequest.builder()
+                .fechaInicio(fechaInicio)
+                .fechaFin(fechaFin)
+                .estatusPuntos(estatusPuntos)
+                .numeroPlan(numeroPlan)
+                .build();
+        List<DetalleCuentaPuntosProjection> list = puntosService.obtenerDetalleCuentaDePuntos(membresia, request);
+        return ResponseEntity.ok(ApiResponse.success("Detalle de cuenta de puntos obtenido exitosamente.", list));
     }
 }

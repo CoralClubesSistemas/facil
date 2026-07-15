@@ -1,6 +1,9 @@
 package com.coralclubes.facil.modules.clientes.repository;
 
+import com.coralclubes.facil.modules.clientes.dto.projection.DetalleCuentaPuntosProjection;
+import com.coralclubes.facil.modules.clientes.dto.projection.PaquetePuntosPlanProjection;
 import com.coralclubes.facil.modules.clientes.dto.request.ConsumoPuntosRequest;
+import com.coralclubes.facil.modules.clientes.dto.request.DetalleCuentaPuntosRequest;
 import com.coralclubes.facil.modules.clientes.dto.response.*;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import lombok.RequiredArgsConstructor;
@@ -79,6 +82,34 @@ public class PuntosRepository {
             .fechaEmision(rs.getTimestamp("fecha_emision") != null ? rs.getTimestamp("fecha_emision").toLocalDateTime() : null)
             .build();
 
+    private final RowMapper<PaquetePuntosPlanProjection> paquetePuntosPlanRowMapper = (rs, rowNum) -> PaquetePuntosPlanProjection.builder()
+            .membresia(rs.getString("membresia"))
+            .numeroPlan(rs.getObject("numeroPlan") != null ? rs.getInt("numeroPlan") : null)
+            .fechaInicio(rs.getTimestamp("fechaInicio") != null ? rs.getTimestamp("fechaInicio").toLocalDateTime() : null)
+            .finalVigencia(rs.getTimestamp("finalVigencia") != null ? rs.getTimestamp("finalVigencia").toLocalDateTime() : null)
+            .puntosMembresia(rs.getObject("puntosMembresia") != null ? rs.getInt("puntosMembresia") : null)
+            .puntosEnganche(rs.getObject("puntosEnganche") != null ? rs.getInt("puntosEnganche") : null)
+            .puntosMensualidades(rs.getObject("puntosMensualidades") != null ? rs.getInt("puntosMensualidades") : null)
+            .puntosLiberados(rs.getObject("puntosLiberados") != null ? rs.getInt("puntosLiberados") : null)
+            .puntosConsumidos(rs.getObject("puntosConsumidos") != null ? rs.getInt("puntosConsumidos") : null)
+            .estatusPlanPuntos(rs.getString("estatusPlanPuntos"))
+            .build();
+
+    private final RowMapper<DetalleCuentaPuntosProjection> detalleCuentaPuntosRowMapper = (rs, rowNum) -> DetalleCuentaPuntosProjection.builder()
+            .numeroPlan(rs.getObject("numeroPlan") != null ? rs.getInt("numeroPlan") : null)
+            .descripcionMovimiento(rs.getString("descripcionMovimiento"))
+            .puntosLiberados(rs.getObject("puntosLiberados") != null ? rs.getInt("puntosLiberados") : null)
+            .puntosConsumidos(rs.getObject("puntosConsumidos") != null ? rs.getInt("puntosConsumidos") : null)
+            .puntosHospedaje(rs.getObject("puntosHospedaje") != null ? rs.getInt("puntosHospedaje") : null)
+            .puntosInstalaciones(rs.getObject("puntosInstalaciones") != null ? rs.getInt("puntosInstalaciones") : null)
+            .puntosCampogolf(rs.getObject("puntosCampogolf") != null ? rs.getInt("puntosCampogolf") : null)
+            .saldoPuntos(rs.getObject("saldoPuntos") != null ? rs.getInt("saldoPuntos") : null)
+            .estatusPuntos(rs.getString("estatusPuntos"))
+            .numeroAutorizacion(rs.getString("numeroAutorizacion"))
+            .usuario(rs.getString("usuario"))
+            .fechaMovimiento(rs.getTimestamp("fechaMovimiento") != null ? rs.getTimestamp("fechaMovimiento").toLocalDateTime() : null)
+            .build();
+
     public Integer spCliConsumirPuntos(ConsumoPuntosRequest request) {
         Map<String, Object> params = new HashMap<>();
 
@@ -130,5 +161,21 @@ public class PuntosRepository {
         params.put("FechaCorte", fechaCorte);
 
         return executor.queryList("spClienteObtenerCuentaDePuntos", params, cuentaPuntosRowMapper);
+    }
+
+    public List<PaquetePuntosPlanProjection> spMembresiaObtenerPaquetesPuntosPlan(String membresia) {
+        Map<String, Object> params = Map.of("Membresia", membresia);
+        return executor.queryList("spMembresiaObtenerPaquetesPuntosPlan", params, paquetePuntosPlanRowMapper);
+    }
+
+    public List<DetalleCuentaPuntosProjection> spMembresiaObtenerDetalleCuentaDePuntos(String membresia, DetalleCuentaPuntosRequest request) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("Membresia", membresia);
+        params.put("FechaInicio", request.fechaInicio());
+        params.put("FechaFin", request.fechaFin());
+        params.put("EstatusPuntos", request.estatusPuntos());
+        params.put("NumeroPlan", request.numeroPlan());
+
+        return executor.queryList("spMembresiaObtenerDetalleCuentaDePuntos", params, detalleCuentaPuntosRowMapper);
     }
 }
