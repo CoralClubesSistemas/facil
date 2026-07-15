@@ -48,7 +48,7 @@ public class SustitucionPaymentStrategy implements PaymentStrategy {
 
     @Override
     public void postProcesarFinalizacion(Integer idIntentoPago) {
-
+        intentoPagoRepository.spCobranzaRegistrarPagoSustitucionRecibo(idIntentoPago);
     }
 
     @Override

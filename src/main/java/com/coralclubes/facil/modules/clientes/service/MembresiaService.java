@@ -4,7 +4,7 @@ import com.coralclubes.facil.modules.clientes.dto.response.BeneficiarioDto;
 import com.coralclubes.facil.modules.clientes.dto.response.BeneficiarioPdfItemDto;
 import com.coralclubes.facil.modules.clientes.dto.response.DatosReporteBeneficiariosDto;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
-import com.coralclubes.facil.modules.clientes.dto.response.MembresiaDatosDto;
+import com.coralclubes.facil.modules.clientes.dto.response.*;
 import com.coralclubes.facil.modules.clientes.repository.MembresiaRepository;
 import com.coralclubes.facil.modules.cobranza.service.CobranzaGeneradorDocumentosService;
 import com.coralclubes.responses.ApiResponse;
@@ -25,8 +25,28 @@ public class MembresiaService {
     private final SociosService sociosService;
     private final CobranzaGeneradorDocumentosService generadorDocumentosService;
 
-    public Optional<MembresiaDatosDto> obtenerDatosMembresia(String membresia, Integer plan) {
-        return repository.spCobranzaOntenerDatosMembresia(membresia, plan);
+    public Optional<MembresiaCancelacionDto> obtenerDatosCancelacion(String membresia) {
+        return repository.spMembresiaObtenerDatosCancelacion(membresia);
+    }
+
+    public Optional<MembresiaAfiliacionDto> obtenerAfiliacionCargoAutomatico(String membresia) {
+        return repository.spMembresiaAfiliacionCargoAutomatico(membresia);
+    }
+
+    public Optional<MembresiaVigenciaDto> obtenerVigencia(String membresia) {
+        return repository.spMembresiaObtenerVigencia(membresia);
+    }
+
+    public Optional<MembresiaAccesosFinSemanaDto> obtenerAccesosFinDeSemana(String membresia) {
+        return repository.spMembresiaObtenerAccesosFinDeSemana(membresia);
+    }
+
+    public Optional<MembresiaDetallesPlanVentaDto> obtenerDetallesPlanVenta(String membresia, Integer plan) {
+        return repository.spMembresiaObtenerDetallesPlanVenta(membresia, plan);
+    }
+
+    public Optional<MembresiaDetalleProcesableDto> obtenerDetalleProcesable(String membresia) {
+        return repository.spMembresiaObtenerDetalleProcesable(membresia);
     }
 
     public List<BeneficiarioDto> obtenerBeneficiariosMembresia(String membresia) {

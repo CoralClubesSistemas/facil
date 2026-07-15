@@ -11,6 +11,8 @@ public record RecibosCancelados(
         String tipoRecibo,
         LocalDate fechaPago,
         BigDecimal importe,
-        String estatusRecibo
+        String estatusRecibo,
+        String numeroTarjeta,
+        BigDecimal saldoDisponible
 ) {
 }

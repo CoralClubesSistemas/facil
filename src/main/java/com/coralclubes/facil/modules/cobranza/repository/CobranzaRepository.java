@@ -66,7 +66,9 @@ public class CobranzaRepository {
                     rs.getString("tipoRecibo"),
                     rs.getDate("fechaPago") != null ? rs.getDate("fechaPago").toLocalDate() : null,
                     rs.getBigDecimal("importe"),
-                    rs.getString("estatusRecibo")
+                    rs.getString("estatusRecibo"),
+                    rs.getString("numeroTarjeta"),
+                    rs.getBigDecimal("saldoDisponible")
             );
 
     private final RowMapper<CarteraEjecutivoResponse> carteraEjecutivoMapper = (rs, rowNum) ->
