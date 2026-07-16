@@ -18,6 +18,9 @@ public record BeneficiarioDto(
         String estadoCivil,
         String numeroCredencial,
         String uuidCredencial,
+        Integer anioVigencia,
+        Integer mesVigencia,
+        String mesVigenciaTexto,
         String ultimoMovimiento,
         String urlImagen
 ) {

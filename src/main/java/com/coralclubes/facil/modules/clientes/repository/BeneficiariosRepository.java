@@ -30,6 +30,8 @@ public class BeneficiariosRepository {
             .estadoCivil(rs.getString("estado_civil"))
             .numeroCredencial(rs.getString("numero_credencial"))
             .uuidCredencial(rs.getString("uuid_credencial"))
+            .anioVigencia(rs.getObject("anio_vigencia") != null ? rs.getInt("anio_vigencia") : null)
+            .mesVigencia(rs.getObject("mes_vigencia") != null ? rs.getInt("mes_vigencia") : null)
             .ultimoMovimiento(rs.getString("ultimo_movimiento"))
             .build();
 
