@@ -8,12 +8,17 @@ public record BeneficiarioDto(
         Integer numeroBeneficiario,
         String nombreCompleto,
         LocalDateTime fechaNacimiento,
+        Integer edad,
         LocalDateTime fechaRegistro,
         String correoElectronico,
         String genero,
         String parentesco,
         String tipoCliente,
         String estatusCliente,
-        String estadoCivil
+        String estadoCivil,
+        String numeroCredencial,
+        String uuidCredencial,
+        String ultimoMovimiento,
+        String urlImagen
 ) {
 }

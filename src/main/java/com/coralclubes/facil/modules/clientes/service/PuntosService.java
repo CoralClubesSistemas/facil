@@ -88,7 +88,7 @@ public class PuntosService {
                 .totalPuntosConsumidos(totalPuntosConsumidos)
                 .saldo(saldo)
                 .build();
-     }
+    }
 
     public List<DetalleCuentaPuntosProjection> obtenerDetalleCuentaDePuntos(String membresia, DetalleCuentaPuntosRequest request) {
         return repo.spMembresiaObtenerDetalleCuentaDePuntos(membresia, request);

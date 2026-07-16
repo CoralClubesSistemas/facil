@@ -78,18 +78,7 @@ public class MembresiaRepository {
             .fechaVenta(rs.getTimestamp("fechaVenta") != null ? rs.getTimestamp("fechaVenta").toLocalDateTime() : null)
             .build();
 
-    private final RowMapper<BeneficiarioDto> beneficiarioRowMapper = (rs, rowNum) -> BeneficiarioDto.builder()
-            .numeroBeneficiario(rs.getObject("numero_beneficiario") != null ? rs.getInt("numero_beneficiario") : null)
-            .nombreCompleto(rs.getString("nombre_completo"))
-            .fechaNacimiento(rs.getTimestamp("fecha_nacimiento") != null ? rs.getTimestamp("fecha_nacimiento").toLocalDateTime() : null)
-            .fechaRegistro(rs.getTimestamp("fecha_registro") != null ? rs.getTimestamp("fecha_registro").toLocalDateTime() : null)
-            .correoElectronico(rs.getString("correo_electronico"))
-            .genero(rs.getString("genero"))
-            .parentesco(rs.getString("parentesco"))
-            .tipoCliente(rs.getString("tipo_cliente"))
-            .estatusCliente(rs.getString("estatus_cliente"))
-            .estadoCivil(rs.getString("estado_civil"))
-            .build();
+
 
     public Optional<MembresiaCancelacionDto> spMembresiaObtenerDatosCancelacion(String membresia) {
         Map<String, Object> params = new HashMap<>();
@@ -122,16 +111,7 @@ public class MembresiaRepository {
         return spExecutor.querySingle("spMembresiaObtenerDetallesPlanVenta", params, detallesPlanVentaRowMapper);
     }
 
-    public List<BeneficiarioDto> spClienteObtenerBeneficiariosMembresia(String membresia) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("Membresia", membresia);
 
-        return spExecutor.queryList(
-                "spClienteObtenerBeneficiariosMembresia",
-                params,
-                beneficiarioRowMapper
-        );
-    }
 
     private final RowMapper<MembresiaDetalleProcesableDto> detalleProcesableRowMapper = (rs, rowNum) -> MembresiaDetalleProcesableDto.builder()
             .numeroPlan(rs.getObject("numeroPlan") != null ? rs.getInt("numeroPlan") : null)

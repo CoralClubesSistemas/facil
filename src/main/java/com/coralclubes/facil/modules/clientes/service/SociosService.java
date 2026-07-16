@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.clientes.service;
 
 import com.coralclubes.facil.modules.clientes.dto.projection.InformacionSocioDb;
+import com.coralclubes.facil.modules.clientes.dto.response.DatosSocioResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioBusqueda;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioPortales;
@@ -22,6 +23,12 @@ public class SociosService {
 
     @Value("${app.banco.cie.bbva}")
     private String bankNumberCie;
+
+    public DatosSocioResponse obtenerDatosSocio(String membresia) {
+        DatosSocioResponse socio = repo.spMembresiaObtenerDatosSocio(membresia)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró información para la membresía: " + membresia));
+        return socio;
+    }
 
     public ApiResponse<InformacionSocio> obtenerSocios(String membresia) {
         InformacionSocioDb socio = repo.spClientesObtenerDatosSocio(membresia)

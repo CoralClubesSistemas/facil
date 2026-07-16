@@ -70,27 +70,6 @@ public class MembresiaAdminController {
         return ResponseEntity.ok(ApiResponse.success("Detalles del plan de venta obtenidos exitosamente.", datos));
     }
 
-    @GetMapping("/{membresia}/beneficiarios")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<List<BeneficiarioDto>>> obtenerBeneficiariosMembresia(
-            @PathVariable String membresia
-    ) {
-        List<BeneficiarioDto> beneficiarios = service.obtenerBeneficiariosMembresia(membresia);
-        return ResponseEntity.ok(ApiResponse.success("Beneficiarios obtenidos exitosamente.", beneficiarios));
-    }
-
-    @GetMapping("/{membresia}/beneficiarios-pdf")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<byte[]> obtenerBeneficiariosPdf(
-            @PathVariable String membresia
-    ) {
-        byte[] pdf = service.generarPdfReporteBeneficiarios(membresia);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=reporte-beneficiarios-" + membresia + ".pdf")
-                .body(pdf);
-    }
-
     @GetMapping("/{membresia}/procesable")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<MembresiaDetalleProcesableDto>> obtenerDetalleProcesable(

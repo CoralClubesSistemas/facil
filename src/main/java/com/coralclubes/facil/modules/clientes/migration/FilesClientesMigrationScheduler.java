@@ -6,15 +6,15 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * Planificador encargado de ejecutar el proceso de migración de imágenes
- * de notas de clientes de forma automática diariamente a las 3:00 AM.
+ * Planificador encargado de ejecutar el proceso de migración de archivos
+ * del módulo de clientes de forma automática diariamente a las 3:00 AM.
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class NotasClientesMigrationScheduler {
+public class FilesClientesMigrationScheduler {
 
-    private final NotasClientesMigrationService migrationService;
+    private final FilesClientesMigrationService migrationService;
 
     /**
      * Cron para ejecutarse todos los días a las 3:00 AM.
@@ -22,7 +22,7 @@ public class NotasClientesMigrationScheduler {
      */
     @Scheduled(cron = "0 0 3 * * *")
     public void ejecutarMigracionDiaria() {
-        log.info("Iniciando ejecución programada diaria de la migración de imágenes (3:00 AM)...");
+        log.info("Iniciando ejecución programada diaria de la migración de archivos de clientes (3:00 AM)...");
         try {
             migrationService.ejecutarMigracion();
             log.info("Ejecución programada diaria finalizada con éxito.");

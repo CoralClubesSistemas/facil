@@ -3,6 +3,10 @@ package com.coralclubes.facil.modules.clientes.repository;
 import com.coralclubes.facil.modules.clientes.dto.projection.InformacionSocioDb;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioBusqueda;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioTabla;
+import com.coralclubes.facil.modules.clientes.dto.response.DatosSocioResponse;
+import com.coralclubes.facil.modules.clientes.dto.response.DomicilioSocioDto;
+import com.coralclubes.utils.json.JsonUtils;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
@@ -17,6 +21,43 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class SociosRepository {
     private final StoredProcedureExecutor executor;
+
+    private final RowMapper<DatosSocioResponse> datosSocioRowMapper = (rs, rowNum) -> {
+        String domiciliosJson = rs.getString("domicilios");
+        List<DomicilioSocioDto> listDomicilios = java.util.Collections.emptyList();
+        if (domiciliosJson != null && !domiciliosJson.isBlank()) {
+            try {
+                listDomicilios = JsonUtils.fromJson(
+                        domiciliosJson,
+                        new TypeReference<List<DomicilioSocioDto>>() {}
+                );
+            } catch (Exception e) {
+                // Ignore parsing errors
+            }
+        }
+
+        return DatosSocioResponse.builder()
+                .membresia(rs.getString("membresia"))
+                .fechaNacimiento(rs.getDate("fechaNacimiento") != null ? rs.getDate("fechaNacimiento").toLocalDate() : null)
+                .edad(rs.getObject("edad") != null ? rs.getInt("edad") : null)
+                .rfc(rs.getString("rfc"))
+                .curp(rs.getString("curp"))
+                .genero(rs.getString("genero"))
+                .estadoCivil(rs.getString("estadoCivil"))
+                .ocupacion(rs.getString("ocupacion"))
+                .estatusCliente(rs.getString("estatusCliente"))
+                .mailPersonal(rs.getString("mailPersonal"))
+                .mailTrabajo(rs.getString("mailTrabajo"))
+                .fechaRegistro(rs.getTimestamp("fechaRegistro") != null ? rs.getTimestamp("fechaRegistro").toLocalDateTime() : null)
+                .nombreCompleto(rs.getString("nombreCompleto"))
+                .nombre(rs.getString("primerNombre"))
+                .segundoNombre(rs.getString("segundoNombre"))
+                .apellidoPaterno(rs.getString("apellidoPaterno"))
+                .apellidoMaterno(rs.getString("apellidoMaterno"))
+                .nombreTitularAdicional(rs.getString("nombreTitularAdicional"))
+                .domicilios(listDomicilios)
+                .build();
+    };
 
     private final RowMapper<InformacionSocioDb> informacionSocioRowMapper = (rs, rowNum) ->
             new InformacionSocioDb(
@@ -159,5 +200,10 @@ public class SociosRepository {
         params.put("TamanoPagina", tamanioPagina);
 
         return executor.queryList("spFacilBusquedaPorFiltros", params, informacionSocioTablaRowMapper);
+    }
+
+    public Optional<DatosSocioResponse> spMembresiaObtenerDatosSocio(String membresia) {
+        Map<String, Object> params = Map.of("Membresia", membresia);
+        return executor.querySingle("spMembresiaObtenerDatosSocio", params, datosSocioRowMapper);
     }
 }
