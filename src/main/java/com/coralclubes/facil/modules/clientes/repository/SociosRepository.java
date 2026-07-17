@@ -5,6 +5,7 @@ import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioBusqu
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioTabla;
 import com.coralclubes.facil.modules.clientes.dto.response.DatosSocioResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.DomicilioSocioDto;
+import com.coralclubes.facil.modules.clientes.dto.response.MembresiaTarjetaDto;
 import com.coralclubes.utils.json.JsonUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
@@ -205,5 +206,32 @@ public class SociosRepository {
     public Optional<DatosSocioResponse> spMembresiaObtenerDatosSocio(String membresia) {
         Map<String, Object> params = Map.of("Membresia", membresia);
         return executor.querySingle("spMembresiaObtenerDatosSocio", params, datosSocioRowMapper);
+    }
+
+    private final RowMapper<MembresiaTarjetaDto> membresiaTarjetaRowMapper = (rs, rowNum) ->
+            MembresiaTarjetaDto.builder()
+                    .tipoFranquicia(rs.getString("tipo_franquicia"))
+                    .tarjeta(rs.getString("tarjeta"))
+                    .idInstrumento(rs.getObject("id_instrumento", Integer.class))
+                    .tipoTarjeta(rs.getString("tipo_tarjeta"))
+                    .clabe(rs.getString("clabe"))
+                    .vigencia(rs.getString("vigencia"))
+                    .idBanco(rs.getObject("id_banco", Integer.class))
+                    .banco(rs.getString("banco"))
+                    .codigoSeguridad(rs.getString("codigo_seguridad"))
+                    .idPrioridad(rs.getObject("id_prioridad", Integer.class))
+                    .prioridad(rs.getString("prioridad"))
+                    .esTitularDiferente(rs.getBoolean("es_titular_diferente"))
+                    .nombreTitular(rs.getString("nombre_titular"))
+                    .exentarCargoAutomatico(rs.getBoolean("exentar_cargo_automatico"))
+                    .idEstatus(rs.getObject("id_estatus", Integer.class))
+                    .estatusTarjeta(rs.getString("estatus_tarjeta"))
+                    .usuarioRegistro(rs.getString("usuario_registro"))
+                    .fechaActualizacion(rs.getString("fecha_actualizacion"))
+                    .build();
+
+    public List<MembresiaTarjetaDto> spClienteObtenerTarjetas(String membresia) {
+        Map<String, Object> params = Map.of("Membresia", membresia);
+        return executor.queryList("spClienteObtenerTarjetas", params, membresiaTarjetaRowMapper);
     }
 }

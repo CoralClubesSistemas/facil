@@ -5,6 +5,7 @@ import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioBusqueda;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioPortales;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioTabla;
+import com.coralclubes.facil.modules.clientes.dto.response.MembresiaTarjetaDto;
 import com.coralclubes.facil.modules.clientes.service.SociosService;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -88,5 +89,13 @@ public class SociosAdminController {
             @PathVariable String membresia
     ) {
         return ResponseEntity.ok(ApiResponse.success(service.obtenerDatosSocio(membresia)));
+    }
+
+    @GetMapping("/{membresia}/tarjetas")
+    public ResponseEntity<ApiResponse<List<MembresiaTarjetaDto>>> obtenerTarjetas(
+            @PathVariable String membresia
+    ) {
+        List<MembresiaTarjetaDto> tarjetas = service.obtenerTarjetas(membresia);
+        return ResponseEntity.ok(ApiResponse.success("Tarjetas de la membresía obtenidas exitosamente.", tarjetas));
     }
 }

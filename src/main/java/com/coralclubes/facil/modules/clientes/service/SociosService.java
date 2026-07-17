@@ -6,6 +6,7 @@ import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioBusqueda;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioPortales;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocioTabla;
+import com.coralclubes.facil.modules.clientes.dto.response.MembresiaTarjetaDto;
 import com.coralclubes.facil.modules.clientes.repository.SociosRepository;
 import com.coralclubes.facil.shared.infrastructure.integration.banco.service.BbvaService;
 import com.coralclubes.responses.ApiResponse;
@@ -174,5 +175,9 @@ public class SociosService {
 
     private boolean esNumerico(String valor) {
         return valor != null && valor.matches("\\d+");
+    }
+
+    public List<MembresiaTarjetaDto> obtenerTarjetas(String membresia) {
+        return repo.spClienteObtenerTarjetas(membresia);
     }
 }
