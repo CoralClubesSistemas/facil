@@ -78,4 +78,13 @@ public class MembresiaAdminController {
         MembresiaDetalleProcesableDto datos = service.obtenerDetalleProcesable(membresia).orElse(null);
         return ResponseEntity.ok(ApiResponse.success("Detalle procesable obtenido exitosamente.", datos));
     }
+
+    @GetMapping("/{membresia}/temporales")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<List<MembresiaTemporalDto>>> obtenerMembresiasTemporales(
+            @PathVariable String membresia
+    ) {
+        List<MembresiaTemporalDto> temporales = service.obtenerMembresiasTemporales(membresia);
+        return ResponseEntity.ok(ApiResponse.success("Membresías temporales obtenidas exitosamente.", temporales));
+    }
 }

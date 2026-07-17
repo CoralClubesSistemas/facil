@@ -127,4 +127,18 @@ public class MembresiaRepository {
         params.put("Membresia", membresia);
         return spExecutor.querySingle("spMembresiaObtenerDetalleProcesable", params, detalleProcesableRowMapper);
     }
+
+    private final RowMapper<MembresiaTemporalDto> temporalRowMapper = (rs, rowNum) -> MembresiaTemporalDto.builder()
+            .desarrollo(rs.getString("desarrollo"))
+            .estatusMembresia(rs.getString("estatus_membresia"))
+            .membresia(rs.getString("membresia"))
+            .socioTemporal(rs.getString("socio_temporal"))
+            .fechaVenta(rs.getTimestamp("fecha_venta") != null ? rs.getTimestamp("fecha_venta").toLocalDateTime() : null)
+            .build();
+
+    public List<MembresiaTemporalDto> spMembresiaObtenerMembresiasTemporales(String numeroMembresia) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("NumeroMembresia", numeroMembresia);
+        return spExecutor.queryList("spMembresiaObtenerMembresiasTemporales", params, temporalRowMapper);
+    }
 }

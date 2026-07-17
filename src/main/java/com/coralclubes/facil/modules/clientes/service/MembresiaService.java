@@ -5,6 +5,7 @@ import com.coralclubes.facil.modules.clientes.repository.MembresiaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -35,5 +36,9 @@ public class MembresiaService {
 
     public Optional<MembresiaDetalleProcesableDto> obtenerDetalleProcesable(String membresia) {
         return repository.spMembresiaObtenerDetalleProcesable(membresia);
+    }
+
+    public List<MembresiaTemporalDto> obtenerMembresiasTemporales(String membresia) {
+        return repository.spMembresiaObtenerMembresiasTemporales(membresia);
     }
 }
