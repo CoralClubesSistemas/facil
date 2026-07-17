@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,7 +80,6 @@ public class MembresiaRepository {
             .build();
 
 
-
     public Optional<MembresiaCancelacionDto> spMembresiaObtenerDatosCancelacion(String membresia) {
         Map<String, Object> params = new HashMap<>();
         params.put("Membresia", membresia);
@@ -112,7 +112,6 @@ public class MembresiaRepository {
     }
 
 
-
     private final RowMapper<MembresiaDetalleProcesableDto> detalleProcesableRowMapper = (rs, rowNum) -> MembresiaDetalleProcesableDto.builder()
             .numeroPlan(rs.getObject("numeroPlan") != null ? rs.getInt("numeroPlan") : null)
             .montoProcesable(rs.getBigDecimal("montoProcesable"))
@@ -140,5 +139,76 @@ public class MembresiaRepository {
         Map<String, Object> params = new HashMap<>();
         params.put("NumeroMembresia", numeroMembresia);
         return spExecutor.queryList("spMembresiaObtenerMembresiasTemporales", params, temporalRowMapper);
+    }
+
+    private final RowMapper<MembresiaAccesoDto> accesoRowMapper = (rs, rowNum) ->
+            MembresiaAccesoDto.builder()
+                    .totalRegistros(rs.getObject("total_registros", Integer.class))
+                    .membresia(rs.getString("membresia"))
+                    .numeroBeneficiario(rs.getObject("numero_beneficiario", Integer.class))
+                    .nombreBeneficiario(rs.getString("nombre_beneficiario"))
+                    .idDesarrolloAcceso(rs.getObject("id_desarrollo_acceso", Integer.class))
+                    .desarrolloAcceso(rs.getString("desarrollo_acceso"))
+                    .fechaAcceso(rs.getTimestamp("fecha_acceso") != null ? rs.getTimestamp("fecha_acceso").toLocalDateTime() : null)
+                    .diaAcceso(rs.getString("dia_acceso"))
+                    .trimestre(rs.getString("trimestre"))
+                    .numeroAutorizacion(rs.getObject("numero_autorizacion", Integer.class))
+                    .claveConceptoAutorizacion(rs.getObject("clave_concepto_autorizacion", Integer.class))
+                    .conceptoAutorizacion(rs.getString("concepto_autorizacion"))
+                    .fechaAutorizacion(rs.getString("fecha_autorizacion"))
+                    .usuarioAutoriza(rs.getString("usuario_autoriza"))
+                    .usuarioAccesa(rs.getString("usuario_accesa"))
+                    .membresiaAsociada(rs.getString("membresia_asociada"))
+                    .nombreInvitado(rs.getString("nombre_invitado"))
+                    .esFestivo(rs.getObject("es_festivo", Integer.class) != null && rs.getInt("es_festivo") == 1)
+                    .tipoAcceso(rs.getString("tipo_acceso"))
+                    .tipoPromocion(rs.getString("tipo_promocion"))
+                    .build();
+
+    public List<MembresiaAccesoDto> spMembresiaObtenerAccesos(
+            String membresia,
+            String desarrollo,
+            LocalDate fechaDesde,
+            LocalDate fechaHasta,
+            Boolean soloFS,
+            Integer numeroPagina,
+            Integer registrosPorPagina
+    ) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("Membresia", membresia);
+        params.put("Desarrollo", desarrollo);
+        params.put("FechaDesde", fechaDesde);
+        params.put("FechaHasta", fechaHasta);
+        params.put("SoloFS", soloFS);
+        params.put("NumeroPagina", numeroPagina);
+        params.put("RegistrosPorPagina", registrosPorPagina);
+
+        return spExecutor.queryList("spMembresiaObtenerAccesos", params, accesoRowMapper);
+    }
+
+    private final RowMapper<MembresiaAccesoEntradaSalidaDto> entradaSalidaRowMapper = (rs, rowNum) ->
+            MembresiaAccesoEntradaSalidaDto.builder()
+                    .membresia(rs.getString("membresia"))
+                    .numeroBeneficiario(rs.getObject("numero_beneficiario", Integer.class))
+                    .idDesarrolloAcceso(rs.getObject("id_desarrollo_acceso", Integer.class))
+                    .fechaAcceso(rs.getTimestamp("fecha_acceso") != null ? rs.getTimestamp("fecha_acceso").toLocalDateTime() : null)
+                    .tipoAcceso(rs.getString("tipo_acceso"))
+                    .usuarioRegistro(rs.getString("usuario_registro"))
+                    .fechaRegistro(rs.getTimestamp("fecha_registro") != null ? rs.getTimestamp("fecha_registro").toLocalDateTime() : null)
+                    .build();
+
+    public List<MembresiaAccesoEntradaSalidaDto> spMembresiaObtenerAccesosEntradasSalidas(
+            String membresia,
+            Integer desarrollo,
+            LocalDate fechaAccesoDesde,
+            Integer beneficiario
+    ) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("Membresia", membresia);
+        params.put("Desarrollo", desarrollo);
+        params.put("FechaAccesoDesde", fechaAccesoDesde);
+        params.put("Beneficiario", beneficiario);
+
+        return spExecutor.queryList("spMembresiaObtenerAccesosEntradasSalidas", params, entradaSalidaRowMapper);
     }
 }

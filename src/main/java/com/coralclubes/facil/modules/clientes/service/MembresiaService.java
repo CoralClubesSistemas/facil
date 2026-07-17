@@ -5,6 +5,7 @@ import com.coralclubes.facil.modules.clientes.repository.MembresiaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,5 +41,26 @@ public class MembresiaService {
 
     public List<MembresiaTemporalDto> obtenerMembresiasTemporales(String membresia) {
         return repository.spMembresiaObtenerMembresiasTemporales(membresia);
+    }
+
+    public List<MembresiaAccesoDto> obtenerAccesos(
+            String membresia,
+            String desarrollo,
+            LocalDate fechaDesde,
+            LocalDate fechaHasta,
+            Boolean soloFS,
+            Integer numeroPagina,
+            Integer registrosPorPagina
+    ) {
+        return repository.spMembresiaObtenerAccesos(membresia, desarrollo, fechaDesde, fechaHasta, soloFS, numeroPagina, registrosPorPagina);
+    }
+
+    public List<MembresiaAccesoEntradaSalidaDto> obtenerAccesosEntradasSalidas(
+            String membresia,
+            Integer desarrollo,
+            LocalDate fechaAccesoDesde,
+            Integer beneficiario
+    ) {
+        return repository.spMembresiaObtenerAccesosEntradasSalidas(membresia, desarrollo, fechaAccesoDesde, beneficiario);
     }
 }

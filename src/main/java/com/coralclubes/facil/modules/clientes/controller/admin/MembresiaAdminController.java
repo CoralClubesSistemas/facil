@@ -10,6 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -86,5 +89,45 @@ public class MembresiaAdminController {
     ) {
         List<MembresiaTemporalDto> temporales = service.obtenerMembresiasTemporales(membresia);
         return ResponseEntity.ok(ApiResponse.success("Membresías temporales obtenidas exitosamente.", temporales));
+    }
+
+    @GetMapping("/{membresia}/accesos")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<List<MembresiaAccesoDto>>> obtenerAccesos(
+            @PathVariable String membresia,
+            @RequestParam(required = false) String desarrollo,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta,
+            @RequestParam(required = false, defaultValue = "false") Boolean soloFS,
+            @RequestParam(required = false, defaultValue = "1") Integer numeroPagina,
+            @RequestParam(required = false, defaultValue = "20") Integer registrosPorPagina
+    ) {
+        List<MembresiaAccesoDto> accesos = service.obtenerAccesos(
+                membresia,
+                desarrollo,
+                fechaDesde,
+                fechaHasta,
+                soloFS,
+                numeroPagina,
+                registrosPorPagina
+        );
+        return ResponseEntity.ok(ApiResponse.success("Accesos de la membresía obtenidos exitosamente.", accesos));
+    }
+
+    @GetMapping("/{membresia}/accesos/entradas-salidas")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<List<MembresiaAccesoEntradaSalidaDto>>> obtenerAccesosEntradasSalidas(
+            @PathVariable String membresia,
+            @RequestParam Integer desarrollo,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaAccesoDesde,
+            @RequestParam Integer beneficiario
+    ) {
+        List<MembresiaAccesoEntradaSalidaDto> accesos = service.obtenerAccesosEntradasSalidas(
+                membresia,
+                desarrollo,
+                fechaAccesoDesde,
+                beneficiario
+        );
+        return ResponseEntity.ok(ApiResponse.success("Entradas y salidas de acceso obtenidas exitosamente.", accesos));
     }
 }
