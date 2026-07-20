@@ -139,4 +139,16 @@ public class MembresiaAdminController {
         List<MembresiaReferidoDto> referidos = service.obtenerReferidos(membresia);
         return ResponseEntity.ok(ApiResponse.success("Referidos de la membresía obtenidos exitosamente.", referidos));
     }
+
+    @PostMapping("/accesos-excel")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<byte[]> descargarReporteAccesosExcel(
+            @RequestBody(required = false) java.util.Map<String, Object> variables
+    ) {
+        byte[] excelBytes = service.generarReporteAccesosExcel(variables != null ? variables : java.util.Map.of());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=accesos_membresias.xlsx")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(excelBytes);
+    }
 }

@@ -2,11 +2,13 @@ package com.coralclubes.facil.modules.clientes.service;
 
 import com.coralclubes.facil.modules.clientes.dto.response.*;
 import com.coralclubes.facil.modules.clientes.repository.MembresiaRepository;
+import com.coralclubes.facil.modules.reportes.service.ReportesByKeyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -14,6 +16,7 @@ import java.util.Optional;
 public class MembresiaService {
 
     private final MembresiaRepository repository;
+    private final ReportesByKeyService reportesByKeyService;
 
     public Optional<MembresiaCancelacionDto> obtenerDatosCancelacion(String membresia) {
         return repository.spMembresiaObtenerDatosCancelacion(membresia);
@@ -66,5 +69,12 @@ public class MembresiaService {
 
     public List<MembresiaReferidoDto> obtenerReferidos(String membresia) {
         return repository.spMembresiaObtenerReferidos(membresia);
+    }
+
+    public byte[] generarReporteAccesosExcel(Map<String, Object> variables) {
+        return reportesByKeyService.generarReporteByKey(
+                com.coralclubes.facil.modules.reportes.enums.keysReportes.ACCESOS_MEMBRESIA.getClave(),
+                variables
+        );
     }
 }

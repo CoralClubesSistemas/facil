@@ -4,6 +4,7 @@ import lombok.Builder;
 
 @Builder
 public record ProcedimientoEjecucionDto(
+        Integer tipoReporte,
         String nombreStoredProcedure,
         Integer totalParametrosEsperados
 ) {}

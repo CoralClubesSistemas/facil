@@ -48,6 +48,7 @@ public class ReportesMotorRepository {
             .build();
 
     private final RowMapper<ProcedimientoEjecucionDto> procedimientoMapper = (rs, rowNum) -> ProcedimientoEjecucionDto.builder()
+            .tipoReporte(rs.getInt("TipoReporte"))
             .nombreStoredProcedure(rs.getString("NombreStoredProcedure"))
             .totalParametrosEsperados(rs.getInt("TotalParametrosEsperados"))
             .build();
@@ -89,6 +90,7 @@ public class ReportesMotorRepository {
             .mensajeError(rs.getString("MensajeError"))
             .build();
 
+
     // =========================================================================
     // CONSULTAS DEL MOTOR
     // =========================================================================
@@ -108,6 +110,13 @@ public class ReportesMotorRepository {
     public ProcedimientoEjecucionDto obtenerProcedimientoEjecucion(Integer idTipoReporte) {
         List<ProcedimientoEjecucionDto> result = querySP("spRepoObtenerProcedimientoEjecucion",
                 Map.of("IdTipoReporte", idTipoReporte),
+                procedimientoMapper);
+        return result.isEmpty() ? null : result.getFirst();
+    }
+
+    public ProcedimientoEjecucionDto obtenerProcedimientoPorKey(String key) {
+        List<ProcedimientoEjecucionDto> result = querySP("spRepoObtenerProcedimientoPorKey",
+                Map.of("Key", key),
                 procedimientoMapper);
         return result.isEmpty() ? null : result.getFirst();
     }
