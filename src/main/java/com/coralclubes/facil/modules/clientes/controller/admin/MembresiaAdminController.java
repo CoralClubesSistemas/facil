@@ -130,4 +130,13 @@ public class MembresiaAdminController {
         );
         return ResponseEntity.ok(ApiResponse.success("Entradas y salidas de acceso obtenidas exitosamente.", accesos));
     }
+
+    @GetMapping("/{membresia}/referidos")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<List<MembresiaReferidoDto>>> obtenerReferidos(
+            @PathVariable String membresia
+    ) {
+        List<MembresiaReferidoDto> referidos = service.obtenerReferidos(membresia);
+        return ResponseEntity.ok(ApiResponse.success("Referidos de la membresía obtenidos exitosamente.", referidos));
+    }
 }

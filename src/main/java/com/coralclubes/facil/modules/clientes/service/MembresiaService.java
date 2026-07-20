@@ -63,4 +63,8 @@ public class MembresiaService {
     ) {
         return repository.spMembresiaObtenerAccesosEntradasSalidas(membresia, desarrollo, fechaAccesoDesde, beneficiario);
     }
+
+    public List<MembresiaReferidoDto> obtenerReferidos(String membresia) {
+        return repository.spMembresiaObtenerReferidos(membresia);
+    }
 }
