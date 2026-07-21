@@ -5,6 +5,7 @@ import java.time.LocalDate;
 
 public record CarteraEjecutivoResponse(
         Integer totalRegistros,
+        String estatusAtencion,
         String membresia,
         String nombreCompleto,
         String nombre,

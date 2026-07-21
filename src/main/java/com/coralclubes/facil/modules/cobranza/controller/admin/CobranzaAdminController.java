@@ -109,4 +109,13 @@ public class CobranzaAdminController {
     ) {
         return ResponseEntity.ok(cobranzaService.analizarClienteParaCobranza(membresia));
     }
+
+    @GetMapping("/siguiente-pendiente")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<String>> obtenerSiguienteMembresiaPendiente(
+            @RequestParam(required = false) String membresiaActual
+    ) {
+        String siguiente = cobranzaService.obtenerSiguienteMembresiaPendiente(membresiaActual).orElse(null);
+        return ResponseEntity.ok(ApiResponse.success("Siguiente membresía pendiente obtenida correctamente.", siguiente));
+    }
 }

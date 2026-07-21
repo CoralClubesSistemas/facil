@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Optional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -255,5 +256,10 @@ public class CobranzaService {
             log.error(userContext.getUsername(), "La IA no devolvió un JSON válido: {}", respuestaIa);
             throw new IllegalStateException("Ocurrió un error al procesar la respuesta de la inteligencia artificial.");
         }
+    }
+
+    public Optional<String> obtenerSiguienteMembresiaPendiente(String membresiaActual) {
+        String usuario = userContext.getUsername();
+        return repository.spCobranzaObtenerSiguienteMembresiaPendiente(usuario, membresiaActual);
     }
 }

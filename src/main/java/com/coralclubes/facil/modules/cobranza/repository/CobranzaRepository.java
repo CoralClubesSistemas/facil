@@ -74,6 +74,7 @@ public class CobranzaRepository {
     private final RowMapper<CarteraEjecutivoResponse> carteraEjecutivoMapper = (rs, rowNum) ->
             new CarteraEjecutivoResponse(
                     rs.getObject("TotalRegistros", Integer.class),
+                    rs.getString("estatusAtencion"),
                     rs.getString("membresia"),
                     rs.getString("nombreCompleto"),
                     rs.getString("nombre"),
@@ -222,6 +223,17 @@ public class CobranzaRepository {
                 "spClientesObtenerDataParaAnalisis",
                 Map.of("Membresia", membresia),
                 jsonStringMapper
+        );
+    }
+
+    public Optional<String> spCobranzaObtenerSiguienteMembresiaPendiente(String usuario, String membresiaActual) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("Usuario", usuario);
+        params.put("MembresiaActual", membresiaActual);
+        return spExecutor.querySingle(
+                "spCobranzaObtenerSiguienteMembresiaPendiente",
+                params,
+                (rs, rowNum) -> rs.getString("membresia")
         );
     }
 }
