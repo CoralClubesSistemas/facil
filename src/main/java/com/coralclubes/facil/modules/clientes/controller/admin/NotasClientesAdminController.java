@@ -3,6 +3,7 @@ package com.coralclubes.facil.modules.clientes.controller.admin;
 import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.clientes.dto.request.CrearNotaUsuarioRequest;
 import com.coralclubes.facil.modules.clientes.dto.response.CrearNotaUsuarioResponse;
+import com.coralclubes.facil.modules.clientes.dto.response.NotasBuzonResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.NotasClienteResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.ObtenerArchivosNotaResponse;
 import com.coralclubes.facil.modules.clientes.service.NotasClientesService;
@@ -77,5 +78,16 @@ public class NotasClientesAdminController {
             @PathVariable String membresia,
             @PathVariable Integer consecutivo) {
         return ResponseEntity.ok(service.desactivarNotaConAlerta(membresia, consecutivo));
+    }
+
+    @GetMapping("/buzon")
+    public ResponseEntity<ApiResponse<List<NotasBuzonResponse>>> obtenerNotasBuzon(
+            @RequestParam String membresia,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaDesde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaHasta,
+            @RequestParam(required = false) Integer tipoNota
+    ) {
+        List<NotasBuzonResponse> notas = service.obtenerNotasBuzon(membresia, fechaDesde, fechaHasta, tipoNota);
+        return ResponseEntity.ok(ApiResponse.success("Notas de buzón obtenidas correctamente.", notas));
     }
 }

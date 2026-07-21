@@ -3,6 +3,7 @@ package com.coralclubes.facil.modules.clientes.service;
 import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.clientes.dto.request.CrearNotaUsuarioRequest;
 import com.coralclubes.facil.modules.clientes.dto.response.CrearNotaUsuarioResponse;
+import com.coralclubes.facil.modules.clientes.dto.response.NotasBuzonResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.NotasClienteResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.ObtenerArchivosNotaResponse;
 import com.coralclubes.facil.modules.clientes.repository.NotasClientesRepository;
@@ -207,5 +208,14 @@ public class NotasClientesService {
                 membresia, consecutivo);
 
         return ApiResponse.success("Alerta de nota desactivada correctamente.", true);
+    }
+
+    public List<NotasBuzonResponse> obtenerNotasBuzon(
+            String membresia,
+            LocalDateTime fechaDesde,
+            LocalDateTime fechaHasta,
+            Integer tipoNota
+    ) {
+        return repository.spMembresiaObtenerNotasBuzon(membresia, fechaDesde, fechaHasta, tipoNota);
     }
 }

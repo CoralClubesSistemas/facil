@@ -3,6 +3,7 @@ package com.coralclubes.facil.modules.clientes.repository;
 import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.clientes.dto.projection.ArchivoNotaProjection;
 import com.coralclubes.facil.modules.clientes.dto.response.CrearNotaUsuarioResponse;
+import com.coralclubes.facil.modules.clientes.dto.response.NotasBuzonResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.NotasClienteResponse;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +53,26 @@ public class NotasClientesRepository {
                     rs.getString("membresia"),
                     rs.getObject("consecutivo", Integer.class)
             );
+
+    private final RowMapper<NotasBuzonResponse> notasBuzonMapper = (rs, rowNum) ->
+            NotasBuzonResponse.builder()
+                    .numeroCaso(rs.getString("numero_caso"))
+                    .membresia(rs.getString("membresia"))
+                    .consecutivoPadre(rs.getObject("consecutivo_padre", Integer.class))
+                    .consecutivoHijo(rs.getObject("consecutivo_hijo", Integer.class))
+                    .desarrollo(rs.getString("desarrollo"))
+                    .nombreCliente(rs.getString("nombre_cliente"))
+                    .nota(rs.getString("nota"))
+                    .fechaNota(rs.getTimestamp("fecha_nota") != null ? rs.getTimestamp("fecha_nota").toLocalDateTime() : null)
+                    .fechaRegistro(rs.getTimestamp("fecha_registro") != null ? rs.getTimestamp("fecha_registro").toLocalDateTime() : null)
+                    .clasificacionNota(rs.getString("clasificacion_nota"))
+                    .clasificacionNotaBuzon(rs.getString("clasificacion_nota_buzon"))
+                    .estatus(rs.getString("estatus"))
+                    .correoElectronico(rs.getString("correo_electronico"))
+                    .telefono1(rs.getString("telefono_1"))
+                    .telefono2(rs.getString("telefono_2"))
+                    .usuarioRegistra(rs.getString("usuario_registra"))
+                    .build();
 
     public List<NotasClienteResponse> spBuscarNotasCliente(
             String numeroMembresia,
@@ -113,5 +134,20 @@ public class NotasClientesRepository {
         params.put("Consecutivo", consecutivo);
 
         executor.execute("spDesactivarNotaConAlerta", params);
+    }
+
+    public List<NotasBuzonResponse> spMembresiaObtenerNotasBuzon(
+            String membresia,
+            LocalDateTime fechaDesde,
+            LocalDateTime fechaHasta,
+            Integer tipoNota
+    ) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("Membresia", membresia);
+        params.put("FechaDesde", fechaDesde);
+        params.put("FechaHasta", fechaHasta);
+        params.put("TipoNota", tipoNota);
+
+        return executor.queryList("spMembresiaObtenerNotasBuzon", params, notasBuzonMapper);
     }
 }
