@@ -67,10 +67,6 @@ public class MembresiaService {
         return repository.spMembresiaObtenerAccesosEntradasSalidas(membresia, desarrollo, fechaAccesoDesde, beneficiario);
     }
 
-    public List<MembresiaReferidoDto> obtenerReferidos(String membresia) {
-        return repository.spMembresiaObtenerReferidos(membresia);
-    }
-
     public byte[] generarReporteAccesosExcel(Map<String, Object> variables) {
         return reportesByKeyService.generarReporteByKey(
                 com.coralclubes.facil.modules.reportes.enums.keysReportes.ACCESOS_MEMBRESIA.getClave(),

@@ -211,26 +211,4 @@ public class MembresiaRepository {
 
         return spExecutor.queryList("spMembresiaObtenerAccesosEntradasSalidas", params, entradaSalidaRowMapper);
     }
-
-    private final RowMapper<MembresiaReferidoDto> referidoRowMapper = (rs, rowNum) ->
-            MembresiaReferidoDto.builder()
-                    .consecutivoReferido(rs.getObject("consecutivo_referido", Integer.class))
-                    .apellidoPaterno(rs.getString("apellido_paterno"))
-                    .apellidoMaterno(rs.getString("apellido_materno"))
-                    .nombre(rs.getString("nombre"))
-                    .segundoNombre(rs.getString("segundo_nombre"))
-                    .nombreCompleto(rs.getString("nombre_completo"))
-                    .genero(rs.getString("genero"))
-                    .parentesco(rs.getString("parentesco"))
-                    .emailPrincipal(rs.getString("email_principal"))
-                    .emailAlterno(rs.getString("email_alterno"))
-                    .telefono(rs.getString("telefono"))
-                    .tipoCliente(rs.getString("tipo_cliente"))
-                    .membresia(rs.getString("membresia"))
-                    .build();
-
-    public List<MembresiaReferidoDto> spMembresiaObtenerReferidos(String membresia) {
-        Map<String, Object> params = Map.of("Membresia", membresia);
-        return spExecutor.queryList("spMembresiaObtenerReferidos", params, referidoRowMapper);
-    }
 }
