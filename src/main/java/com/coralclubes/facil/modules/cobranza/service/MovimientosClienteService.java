@@ -10,7 +10,8 @@ import com.coralclubes.facil.modules.cobranza.dto.response.*;
 import com.coralclubes.facil.modules.cobranza.repository.MovimientosClienteRepository;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.facil.modules.cobranza.dto.request.GenerarExcelHistoricoRequest;
-import com.coralclubes.facil.shared.utils.ExcelExportService;
+import com.coralclubes.facil.modules.reportes.enums.keysReportes;
+import com.coralclubes.facil.modules.reportes.service.ReportesByKeyService;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,7 @@ public class MovimientosClienteService {
     private final SociosService sociosService;
     private final CobranzaGeneradorDocumentosService generadorDocumentosService;
     private final PuntosService puntosService;
-    private final ExcelExportService excelExportService;
+    private final ReportesByKeyService reportesByKeyService;
 
     public ApiResponse<List<EstadoCuentaAdeudoDto>> obtenerEstadoCuentaAdeudo(EstadoCuentaAdeudoRequest request, Integer desarrolloUsuario) {
         return ApiResponse.success(
@@ -308,41 +309,15 @@ public class MovimientosClienteService {
     }
 
     public List<String> obtenerColumnasExcel(String membresia) {
-        return repository.spCobranzaObtenerColumnasExcel(membresia);
+        return reportesByKeyService.obtenerColumnasByKey(keysReportes.HISTORICO_MOV_MEM.getClave());
     }
 
-    public byte[] generarExcelHistorico(GenerarExcelHistoricoRequest request) throws IOException {
-        // 1. Obtener datos crudos
-        List<Map<String, Object>> rawData = repository.spCobranzaObtenerHistoricoMovimientosExcel(request.membresia());
-
-        // 2. Si no se especificaron columnas, usar todas las disponibles recuperadas dinámicamente
-        List<String> columnasDeseadas = request.columnas();
-        if (columnasDeseadas == null || columnasDeseadas.isEmpty()) {
-            columnasDeseadas = repository.spCobranzaObtenerColumnasExcel(request.membresia());
-        }
-
-        // 3. Filtrar registros y columnas en el orden solicitado
-        List<String> columnasFiltradas = columnasDeseadas;
-        List<Map<String, Object>> filteredData = rawData.stream()
-                .map(row -> {
-                    Map<String, Object> filteredRow = new LinkedHashMap<>();
-                    for (String col : columnasFiltradas) {
-                        // Buscar la columna ignorando mayúsculas/minúsculas para ser más tolerante
-                        String matchCol = row.keySet().stream()
-                                .filter(k -> k.equalsIgnoreCase(col))
-                                .findFirst()
-                                .orElse(null);
-                        if (matchCol != null) {
-                            filteredRow.put(col, row.get(matchCol));
-                        } else {
-                            filteredRow.put(col, "");
-                        }
-                    }
-                    return filteredRow;
-                })
-                .collect(Collectors.toList());
-
-        // 4. Generar el Excel
-        return excelExportService.generarExcelBytes(filteredData, "Historial Movimientos");
+    public byte[] generarExcelHistorico(GenerarExcelHistoricoRequest request) {
+        Map<String, Object> parametros = Map.of("Membresia", request.membresia());
+        return reportesByKeyService.generarReporteByKey(
+                keysReportes.HISTORICO_MOV_MEM.getClave(),
+                parametros,
+                request.columnas()
+        );
     }
 }

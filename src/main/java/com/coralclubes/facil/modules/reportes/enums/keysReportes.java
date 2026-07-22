@@ -1,7 +1,8 @@
 package com.coralclubes.facil.modules.reportes.enums;
 
 public enum keysReportes {
-    ACCESOS_MEMBRESIA("ACCESOS_MEMBRESIA");
+    ACCESOS_MEMBRESIA("ACCESOS_MEMBRESIA"),
+    HISTORICO_MOV_MEM("HISTORICO_MOV_MEM");
 
     private final String clave;
 
