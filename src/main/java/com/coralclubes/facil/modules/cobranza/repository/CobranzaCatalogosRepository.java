@@ -68,4 +68,16 @@ public class CobranzaCatalogosRepository {
     public List<SelectGenerico<Integer>> spCobranzaCatalogoEstatusPuntos() {
         return spExecutor.queryList("spCobranzaCatalogoEstatusPuntos", Collections.emptyMap(), selectGenericoMapper);
     }
+
+    public List<SelectGenerico<Integer>> spCobranzaCatalogoTemporadas() {
+        return spExecutor.queryList("spCobranzaCatalogoTemporadas", Collections.emptyMap(), selectGenericoMapper);
+    }
+
+    public List<SelectGenerico<Integer>> spCobranzaCatalogoDias() {
+        return spExecutor.queryList("spCobranzaCatalogoDias", Collections.emptyMap(), selectGenericoMapper);
+    }
+
+    public List<SelectGenerico<Integer>> obtenerCatalogoPorSp(String spName) {
+        return spExecutor.queryList(spName, Collections.emptyMap(), selectGenericoMapper);
+    }
 }

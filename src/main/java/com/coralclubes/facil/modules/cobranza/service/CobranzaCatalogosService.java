@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.cobranza.service;
 
 import com.coralclubes.dto.SelectGenerico;
+import com.coralclubes.facil.modules.cobranza.enums.CatalogoCobranzaEnum;
 import com.coralclubes.facil.modules.cobranza.repository.CobranzaCatalogosRepository;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -48,5 +49,11 @@ public class CobranzaCatalogosService {
 
     public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogoEstatusPuntos() {
         return ApiResponse.success("Catálogo de estatus de puntos obtenido correctamente.", repository.spCobranzaCatalogoEstatusPuntos());
+    }
+
+    public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogoPorClave(String clave) {
+        CatalogoCobranzaEnum catalogoEnum = CatalogoCobranzaEnum.fromClave(clave);
+        List<SelectGenerico<Integer>> resultado = repository.obtenerCatalogoPorSp(catalogoEnum.getSpName());
+        return ApiResponse.success("Catálogo de " + catalogoEnum.getClave() + " obtenido correctamente.", resultado);
     }
 }
