@@ -43,8 +43,8 @@ public class CobranzaCatalogosService {
         return ApiResponse.success("Catálogo de desarrollos obtenido correctamente.", repository.spCobranzaCatalogoDesarrollos());
     }
 
-    public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogoTiposMembresias(Integer idClasificacion) {
-        return ApiResponse.success("Catálogo de desarrollos obtenido correctamente.", repository.spRepoCatalogoTiposMembresias(idClasificacion));
+    public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogoTiposMembresias(Integer idClasificacion, Integer idDesarrollo) {
+        return ApiResponse.success("Catálogo de desarrollos obtenido correctamente.", repository.spRepoCatalogoTiposMembresias(idClasificacion, idDesarrollo));
     }
 
     public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogoEstatusPuntos() {

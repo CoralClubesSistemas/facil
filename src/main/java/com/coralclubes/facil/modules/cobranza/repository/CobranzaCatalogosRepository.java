@@ -30,7 +30,7 @@ public class CobranzaCatalogosRepository {
         return spExecutor.queryList("spCobranzaCatalogoTiposSeries", Map.of(), selectGenericoMapper);
     }
 
-    public BigDecimal spCobranzaObtenerPorcentajeLimite (Integer idDesarrollo, Integer clasificacionMembresia) {
+    public BigDecimal spCobranzaObtenerPorcentajeLimite(Integer idDesarrollo, Integer clasificacionMembresia) {
         return spExecutor.querySingle("spCobranzaObtenerPorcentajeLimite",
                         Map.of("DesarrolloId", idDesarrollo,
                                 "ClasificacionMembresia", clasificacionMembresia),
@@ -58,9 +58,10 @@ public class CobranzaCatalogosRepository {
         return spExecutor.queryList("spCobranzaCatalogoDesarrollos", Collections.emptyMap(), selectGenericoMapper);
     }
 
-    public List<SelectGenerico<Integer>> spRepoCatalogoTiposMembresias(Integer clasificacion) {
+    public List<SelectGenerico<Integer>> spRepoCatalogoTiposMembresias(Integer clasificacion, Integer desarrollo) {
         Map<String, Object> params = new HashMap<>();
         params.put("Clasificacion", clasificacion);
+        params.put("Desarrollo", desarrollo);
 
         return spExecutor.queryList("spRepoCatalogoTiposMembresias", params, selectGenericoMapper);
     }
