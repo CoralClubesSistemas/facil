@@ -2,9 +2,11 @@ package com.coralclubes.facil.modules.cobranza.controller.admin;
 
 import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarCuponRequest;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponListadoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponesCatalogoElementoResponse;
 import com.coralclubes.facil.modules.cobranza.service.CuponesService;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
+import com.coralclubes.facil.shared.domain.dto.ArchivoDescarga;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
 import com.coralclubes.responses.ApiResponse;
@@ -15,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/admin/cobranza/cupones")
@@ -57,6 +60,18 @@ public class CuponesAdminController {
         return ResponseEntity.ok(ApiResponse.success("Cupón guardado correctamente", idCupon));
     }
 
+    @GetMapping("/listado")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<List<CuponListadoResponse>>> obtenerListadoCupones(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer desarrollo,
+            @RequestParam(required = false) Integer origen,
+            @RequestParam(required = false) Integer destino
+    ) {
+        List<CuponListadoResponse> listado = cuponesService.obtenerListadoCupones(year, desarrollo, origen, destino);
+        return ResponseEntity.ok(ApiResponse.success("Listado de cupones obtenido exitosamente", listado));
+    }
+
     @PostMapping("/imagen/upload-url")
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
     public ResponseEntity<ApiResponse<RespuestaCargaDto>> solicitarUrlCargaImagenCupon(
@@ -74,5 +89,19 @@ public class CuponesAdminController {
             @RequestParam String uuidArchivo) {
         cuponesService.guardarImagenCupon(idCupon, uuidArchivo);
         return ResponseEntity.ok(ApiResponse.empty());
+    }
+
+    @GetMapping("/imagen")
+    public ResponseEntity<ApiResponse<ArchivoDescarga>> obtenerFormatoCupon (
+            @RequestParam UUID uuid) {
+        ArchivoDescarga archivo = cuponesService.obtenerFormatoCupon(uuid);
+        return ResponseEntity.ok(ApiResponse.success("Archivo obtenido correctamente", archivo));
+    }
+
+    @DeleteMapping("/{idCupon}")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<Void>> eliminarCupon(@PathVariable Integer idCupon) {
+        cuponesService.eliminarCupon(idCupon);
+        return ResponseEntity.ok(ApiResponse.success("Cupón eliminado correctamente", null));
     }
 }

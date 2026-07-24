@@ -11,6 +11,7 @@ import java.util.Map;
 public record GuardarCuponRequest(
         Integer id,
         @NotBlank @Size(max = 200) String nombre,
+        @NotNull Integer year,
         String descripcion,
         @NotNull Integer origen,
         @NotNull Integer destino,
@@ -29,7 +30,7 @@ public record GuardarCuponRequest(
             @NotNull LocalDateTime fechaInicio,
             @NotNull LocalDateTime fechaFin
     ) {}
-    
+
     public record Membresias(
             @NotNull Integer idTipoMembresia,
             Map<String, Integer> cantidades

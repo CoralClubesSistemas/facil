@@ -2,9 +2,11 @@ package com.coralclubes.facil.modules.cobranza.service;
 
 import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarCuponRequest;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponListadoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponesCatalogoElementoResponse;
 import com.coralclubes.facil.modules.cobranza.repository.CuponesRepository;
 import com.coralclubes.facil.modules.reservaciones.dto.response.TipoUnidadDetalleDto;
+import com.coralclubes.facil.shared.domain.dto.ArchivoDescarga;
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.ServiceUnavailableException;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
@@ -15,9 +17,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -50,6 +54,15 @@ public class CuponesService {
                 .orElseThrow(() -> new RuntimeException("No se pudo guardar el cupón"));
     }
 
+    public List<CuponListadoResponse> obtenerListadoCupones(
+            Integer year,
+            Integer desarrollo,
+            Integer origen,
+            Integer destino
+    ) {
+        return repository.spCuponesObtenerListadoCupones(year, desarrollo, origen, destino);
+    }
+
     public RespuestaCargaDto solicitarUrlCarga(SolicitarUrlRequest request, String usuario) {
         String year = String.valueOf(LocalDateTime.now().getYear());
 
@@ -62,7 +75,7 @@ public class CuponesService {
                 .contentType(request.contentType())
                 .tamanoBytes(request.tamanoBytes())
                 .aliasConfiguracion(aliasStorageDefault)
-                .esPublico(true)
+                .esPublico(false)
                 .rutaLogica(rutaLogica)
                 .metadatos(Map.of(
                         "modulo", "CUPONES",
@@ -77,5 +90,13 @@ public class CuponesService {
 
     public void guardarImagenCupon(Integer idCupon, String imagen) {
         repository.spCuponesGuardarImagenCupon(idCupon, imagen);
+    }
+
+    public ArchivoDescarga obtenerFormatoCupon (UUID uuid) {
+        return storageClient.obtenerUrlDescargaYNombre(uuid, "inline");
+    }
+
+    public void eliminarCupon(Integer idCupon) {
+        repository.spCuponesEliminarCupon(idCupon);
     }
 }

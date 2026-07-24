@@ -2,6 +2,7 @@ package com.coralclubes.facil.modules.cobranza.repository;
 
 import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarCuponRequest;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponListadoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponesCatalogoElementoResponse;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -27,6 +28,22 @@ public class CuponesRepository {
 
     private final RowMapper<SelectGenerico<Integer>> selectGenericoMapper = (rs, rowNum) -> new SelectGenerico<>(rs.getInt("value"), rs.getString("label"));
 
+    private final RowMapper<CuponListadoResponse> cuponListadoMapper = (rs, rowNum) -> new CuponListadoResponse(
+            rs.getObject("id", Integer.class),
+            rs.getString("nombre"),
+            rs.getObject("anio", Integer.class),
+            rs.getString("descripcion"),
+            rs.getString("origen"),
+            rs.getString("destino"),
+            rs.getTimestamp("inicio_vigencia") != null ? rs.getTimestamp("inicio_vigencia").toLocalDateTime() : null,
+            rs.getTimestamp("fin_vigencia") != null ? rs.getTimestamp("fin_vigencia").toLocalDateTime() : null,
+            rs.getObject("es_transferible", Boolean.class),
+            rs.getString("nomenclatura"),
+            rs.getObject("id_desarrollo", Integer.class),
+            rs.getString("desarrollo"),
+            rs.getString("imagen")
+    );
+
     public List<CuponesCatalogoElementoResponse> spCuponesCatalogoCondiciones() {
         return spExecutor.queryList("spCuponesCatalogoCondiciones", Collections.emptyMap(), catalogoElementoMapper);
     }
@@ -48,6 +65,7 @@ public class CuponesRepository {
             Map<String, Object> params = new HashMap<>();
             params.put("id", request.id());
             params.put("nombre", request.nombre());
+            params.put("year", request.year());
             params.put("descripcion", request.descripcion());
             params.put("origen", request.origen());
             params.put("destino", request.destino());
@@ -69,7 +87,26 @@ public class CuponesRepository {
         }
     }
 
+    public List<CuponListadoResponse> spCuponesObtenerListadoCupones(
+            Integer year,
+            Integer desarrollo,
+            Integer origen,
+            Integer destino
+    ) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("year", year);
+        params.put("desarrollo", desarrollo);
+        params.put("origen", origen);
+        params.put("destino", destino);
+
+        return spExecutor.queryList("spCuponesObtenerListadoCupones", params, cuponListadoMapper);
+    }
+
     public void spCuponesGuardarImagenCupon(Integer idCupon, String imagen) {
         spExecutor.execute("spCuponesGuardarImagenCupon", Map.of("id", idCupon, "imagen", imagen));
+    }
+
+    public void spCuponesEliminarCupon(Integer idCupon) {
+        spExecutor.execute("spCuponesEliminarCupon", Map.of("id", idCupon));
     }
 }
