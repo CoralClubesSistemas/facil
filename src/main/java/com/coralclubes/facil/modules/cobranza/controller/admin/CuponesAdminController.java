@@ -4,6 +4,9 @@ import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarCuponRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponesCatalogoElementoResponse;
 import com.coralclubes.facil.modules.cobranza.service.CuponesService;
+import com.coralclubes.facil.modules.usuarios.service.UserContext;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +22,7 @@ import java.util.List;
 public class CuponesAdminController {
 
     private final CuponesService cuponesService;
+    private final UserContext userContext;
 
     @GetMapping("/catalogos/condiciones")
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
@@ -47,7 +51,28 @@ public class CuponesAdminController {
     @PostMapping("/guardar")
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
     public ResponseEntity<ApiResponse<Integer>> guardarCupon(@Valid @RequestBody GuardarCuponRequest request) {
-        Integer idCupon = cuponesService.guardarCupon(request);
+        String usuario = userContext.getUsername();
+
+        Integer idCupon = cuponesService.guardarCupon(request, usuario);
         return ResponseEntity.ok(ApiResponse.success("Cupón guardado correctamente", idCupon));
+    }
+
+    @PostMapping("/imagen/upload-url")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<RespuestaCargaDto>> solicitarUrlCargaImagenCupon(
+            @Valid @RequestBody SolicitarUrlRequest request) {
+        String usuario = userContext.getUsername();
+
+        RespuestaCargaDto respuesta = cuponesService.solicitarUrlCarga(request, usuario);
+        return ResponseEntity.ok(ApiResponse.success("URL de carga de imagen solicitada correctamente", respuesta));
+    }
+
+    @PostMapping("/imagen")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<Void>> registrarImagenCupon(
+            @RequestParam Integer idCupon,
+            @RequestParam String uuidArchivo) {
+        cuponesService.guardarImagenCupon(idCupon, uuidArchivo);
+        return ResponseEntity.ok(ApiResponse.empty());
     }
 }
