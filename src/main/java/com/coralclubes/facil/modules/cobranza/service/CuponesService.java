@@ -2,6 +2,7 @@ package com.coralclubes.facil.modules.cobranza.service;
 
 import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarCuponRequest;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponDetalleResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponListadoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponesCatalogoElementoResponse;
 import com.coralclubes.facil.modules.cobranza.repository.CuponesRepository;
@@ -12,6 +13,7 @@ import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageCl
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaDto;
+import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +31,7 @@ public class CuponesService {
 
     private final CuponesRepository repository;
     private final StorageClient storageClient;
+    private final BusinessLogger logger;
 
     @Value("${app.clients.storage.aliases.default}")
     private String aliasStorageDefault;
@@ -50,6 +53,8 @@ public class CuponesService {
     }
 
     public Integer guardarCupon(GuardarCuponRequest request, String usuario) {
+        logger.info(usuario,"Guardando cupón con nombre: {} por usuario: {}", request.nombre(), usuario);
+
         return repository.spCuponesGuardarCupon(request, usuario)
                 .orElseThrow(() -> new RuntimeException("No se pudo guardar el cupón"));
     }
@@ -96,7 +101,24 @@ public class CuponesService {
         return storageClient.obtenerUrlDescargaYNombre(uuid, "inline");
     }
 
-    public void eliminarCupon(Integer idCupon) {
-        repository.spCuponesEliminarCupon(idCupon);
+    public void eliminarCupon(Integer idCupon, String usuario) {
+        logger.info(usuario,"Eliminando cupón con ID: {} por usuario: {}", idCupon, usuario);
+
+        repository.spCuponesModificarEstatusCupon(idCupon, false);
+    }
+
+    public void reactivarCupon(Integer idCupon, String usuario) {
+        logger.info(usuario,"Reactivando cupón con ID: {} por usuario: {}", idCupon, usuario);
+
+        repository.spCuponesModificarEstatusCupon(idCupon, true);
+    }
+
+    public CuponDetalleResponse obtenerDetalleCupon(Integer id) {
+        return repository.spCuponesObtenerDetalle(id)
+                .orElseThrow(() -> new RuntimeException("Cupón no encontrado"));
+    }
+
+    public List<CuponListadoResponse> obtenerCuponesDesactivados(Integer year, Integer desarrollo) {
+        return repository.spCuponesObtenerCuponesDesactivados(year, desarrollo);
     }
 }

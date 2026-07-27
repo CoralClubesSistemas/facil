@@ -2,10 +2,12 @@ package com.coralclubes.facil.modules.cobranza.repository;
 
 import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarCuponRequest;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponDetalleResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponListadoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponesCatalogoElementoResponse;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
@@ -106,7 +108,52 @@ public class CuponesRepository {
         spExecutor.execute("spCuponesGuardarImagenCupon", Map.of("id", idCupon, "imagen", imagen));
     }
 
-    public void spCuponesEliminarCupon(Integer idCupon) {
-        spExecutor.execute("spCuponesEliminarCupon", Map.of("id", idCupon));
+    public void spCuponesModificarEstatusCupon(Integer idCupon, Boolean estatus) {
+        spExecutor.execute("spCuponesModificarEstatusCupon", Map.of("id", idCupon, "estatus", estatus));
+    }
+
+    public Optional<CuponDetalleResponse> spCuponesObtenerDetalle(Integer id) {
+        Map<String, Object> params = Map.of("id", id);
+
+        return spExecutor.querySingle("spCuponesObtenerDetalle", params, (rs, rowNum) -> {
+            try {
+                // Mapeo JSON de SQL a Clases Java usando ObjectMapper
+                List<CuponDetalleResponse.PeriodoDto> periodos = objectMapper.readValue(rs.getString("json_periodos"), new TypeReference<List<CuponDetalleResponse.PeriodoDto>>() {
+                });
+                List<CuponDetalleResponse.MembresiaCantidadesDto> membresias = objectMapper.readValue(rs.getString("json_membresias"), new TypeReference<List<CuponDetalleResponse.MembresiaCantidadesDto>>() {
+                });
+                List<CuponDetalleResponse.AtributoCuponDto> condiciones = objectMapper.readValue(rs.getString("json_condiciones"), new TypeReference<List<CuponDetalleResponse.AtributoCuponDto>>() {
+                });
+                List<CuponDetalleResponse.AtributoCuponDto> beneficios = objectMapper.readValue(rs.getString("json_beneficios"), new TypeReference<List<CuponDetalleResponse.AtributoCuponDto>>() {
+                });
+
+                return new CuponDetalleResponse(
+                        rs.getInt("id"),
+                        rs.getString("nombre"),
+                        rs.getInt("year"),
+                        rs.getString("descripcion"),
+                        rs.getInt("origen"),
+                        rs.getInt("destino"),
+                        rs.getTimestamp("inicioVigencia").toLocalDateTime(),
+                        rs.getTimestamp("finVigencia").toLocalDateTime(),
+                        rs.getBoolean("esTransferible"),
+                        rs.getString("nomenclatura"),
+                        rs.getInt("desarrollo"),
+                        new CuponDetalleResponse.ConfiguracionMembresiasDto(periodos, membresias),
+                        condiciones,
+                        beneficios
+                );
+            } catch (Exception e) {
+                throw new RuntimeException("Error al mapear detalle del cupón", e);
+            }
+        });
+    }
+
+    public List<CuponListadoResponse> spCuponesObtenerCuponesDesactivados(Integer year, Integer desarrollo) {
+        HashMap<String, Object> params = new HashMap<>();
+        params.put("year", year);
+        params.put("desarrollo", desarrollo);
+        
+        return spExecutor.queryList("spCuponesObtenerCuponesDesactivados", params, cuponListadoMapper);
     }
 }

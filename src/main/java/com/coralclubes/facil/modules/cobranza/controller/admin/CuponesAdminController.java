@@ -2,6 +2,7 @@ package com.coralclubes.facil.modules.cobranza.controller.admin;
 
 import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarCuponRequest;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponDetalleResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponListadoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponesCatalogoElementoResponse;
 import com.coralclubes.facil.modules.cobranza.service.CuponesService;
@@ -92,7 +93,7 @@ public class CuponesAdminController {
     }
 
     @GetMapping("/imagen")
-    public ResponseEntity<ApiResponse<ArchivoDescarga>> obtenerFormatoCupon (
+    public ResponseEntity<ApiResponse<ArchivoDescarga>> obtenerFormatoCupon(
             @RequestParam UUID uuid) {
         ArchivoDescarga archivo = cuponesService.obtenerFormatoCupon(uuid);
         return ResponseEntity.ok(ApiResponse.success("Archivo obtenido correctamente", archivo));
@@ -101,7 +102,32 @@ public class CuponesAdminController {
     @DeleteMapping("/{idCupon}")
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
     public ResponseEntity<ApiResponse<Void>> eliminarCupon(@PathVariable Integer idCupon) {
-        cuponesService.eliminarCupon(idCupon);
+        String usuario = userContext.getUsername();
+        cuponesService.eliminarCupon(idCupon, usuario);
         return ResponseEntity.ok(ApiResponse.success("Cupón eliminado correctamente", null));
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<CuponDetalleResponse>> obtenerDetalleCupon(@PathVariable Integer id) {
+        return ResponseEntity.ok(ApiResponse.success("Detalle obtenido exitosamente", cuponesService.obtenerDetalleCupon(id)));
+    }
+
+    @PostMapping("/{idCupon}/reactivar")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<Void>> reactivarCupon(@PathVariable Integer idCupon) {
+        String usuario = userContext.getUsername();
+        cuponesService.reactivarCupon(idCupon, usuario);
+        return ResponseEntity.ok(ApiResponse.success("Cupón reactivado correctamente", null));
+    }
+
+    @GetMapping("/desactivados")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<List<CuponListadoResponse>>> obtenerCuponesDesactivados(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer desarrollo
+    ) {
+        List<CuponListadoResponse> listado = cuponesService.obtenerCuponesDesactivados(year, desarrollo);
+        return ResponseEntity.ok(ApiResponse.success("Listado de cupones desactivados obtenido exitosamente", listado));
     }
 }
