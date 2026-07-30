@@ -10,12 +10,12 @@ public record CuponDetalleResponse(
         Integer year,
         String descripcion,
         Integer origen,
-        Integer destino,
         LocalDateTime inicioVigencia,
         LocalDateTime finVigencia,
         Boolean esTransferible,
         String nomenclatura,
         Integer desarrollo,
+        List<Integer> desarrollos,
         ConfiguracionMembresiasDto configuracionMembresias,
         List<AtributoCuponDto> condiciones,
         List<AtributoCuponDto> beneficios
@@ -40,5 +40,9 @@ public record CuponDetalleResponse(
             String clave,
             String nombre,
             String tipo,
-            String valor) {}
+            String valor,
+            String configuracion,
+            Integer concepto,
+            String conceptoNombre,
+            String conceptoClave) {}
 }

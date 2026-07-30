@@ -4,7 +4,11 @@ import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarCuponRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponDetalleResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponListadoResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponesCanjesPorConceptoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponesCatalogoElementoResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponesEstadisticasKpiResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponesTopCanjeadosResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponesUsoMensualResponse;
 import com.coralclubes.facil.modules.cobranza.service.CuponesService;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.facil.shared.domain.dto.ArchivoDescarga;
@@ -46,10 +50,10 @@ public class CuponesAdminController {
         return ResponseEntity.ok(ApiResponse.success("Catálogo de orígenes obtenido exitosamente", cuponesService.obtenerCatalogoOrigenes()));
     }
 
-    @GetMapping("/catalogos/destinos")
+    @GetMapping("/catalogos/conceptos")
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
-    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerCatalogoDestinos() {
-        return ResponseEntity.ok(ApiResponse.success("Catálogo de destinos obtenido exitosamente", cuponesService.obtenerCatalogoDestinos()));
+    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerCatalogoConceptos() {
+        return ResponseEntity.ok(ApiResponse.success("Catálogo de conceptos obtenido exitosamente", cuponesService.obtenerCatalogoConceptos()));
     }
 
     @PostMapping("/guardar")
@@ -66,10 +70,9 @@ public class CuponesAdminController {
     public ResponseEntity<ApiResponse<List<CuponListadoResponse>>> obtenerListadoCupones(
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer desarrollo,
-            @RequestParam(required = false) Integer origen,
-            @RequestParam(required = false) Integer destino
+            @RequestParam(required = false) Integer origen
     ) {
-        List<CuponListadoResponse> listado = cuponesService.obtenerListadoCupones(year, desarrollo, origen, destino);
+        List<CuponListadoResponse> listado = cuponesService.obtenerListadoCupones(year, desarrollo, origen);
         return ResponseEntity.ok(ApiResponse.success("Listado de cupones obtenido exitosamente", listado));
     }
 
@@ -129,5 +132,46 @@ public class CuponesAdminController {
     ) {
         List<CuponListadoResponse> listado = cuponesService.obtenerCuponesDesactivados(year, desarrollo);
         return ResponseEntity.ok(ApiResponse.success("Listado de cupones desactivados obtenido exitosamente", listado));
+    }
+
+    @GetMapping("/estadisticas/kpis")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<CuponesEstadisticasKpiResponse>> obtenerEstadisticasKpis(
+            @RequestParam(required = false) Integer anio,
+            @RequestParam(required = false) Integer desarrollo
+    ) {
+        CuponesEstadisticasKpiResponse kpis = cuponesService.obtenerEstadisticasKpis(anio, desarrollo);
+        return ResponseEntity.ok(ApiResponse.success("KPIs de cupones obtenidos exitosamente", kpis));
+    }
+
+    @GetMapping("/estadisticas/uso-mensual")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<List<CuponesUsoMensualResponse>>> obtenerEstadisticasUsoMensual(
+            @RequestParam(required = false) Integer anio,
+            @RequestParam(required = false) Integer desarrollo
+    ) {
+        List<CuponesUsoMensualResponse> usoMensual = cuponesService.obtenerEstadisticasUsoMensual(anio, desarrollo);
+        return ResponseEntity.ok(ApiResponse.success("Uso mensual de cupones obtenido exitosamente", usoMensual));
+    }
+
+    @GetMapping("/estadisticas/canjes-concepto")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<List<CuponesCanjesPorConceptoResponse>>> obtenerEstadisticasCanjesPorConcepto(
+            @RequestParam(required = false) Integer anio,
+            @RequestParam(required = false) Integer desarrollo
+    ) {
+        List<CuponesCanjesPorConceptoResponse> canjesPorConcepto = cuponesService.obtenerEstadisticasCanjesPorConcepto(anio, desarrollo);
+        return ResponseEntity.ok(ApiResponse.success("Canjes por concepto obtenidos exitosamente", canjesPorConcepto));
+    }
+
+    @GetMapping("/estadisticas/top-canjeados")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<List<CuponesTopCanjeadosResponse>>> obtenerEstadisticasTopCanjeados(
+            @RequestParam(required = false) Integer anio,
+            @RequestParam(required = false) Integer desarrollo,
+            @RequestParam(required = false, defaultValue = "5") Integer top
+    ) {
+        List<CuponesTopCanjeadosResponse> topCanjeados = cuponesService.obtenerEstadisticasTopCanjeados(anio, desarrollo, top);
+        return ResponseEntity.ok(ApiResponse.success("Top de cupones canjeados obtenido exitosamente", topCanjeados));
     }
 }

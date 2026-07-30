@@ -5,7 +5,8 @@ import lombok.Getter;
 @Getter
 public enum CatalogoCobranzaEnum {
     TEMPORADA("temporada", "spCobranzaCatalogoTemporadas"),
-    DIAS("dias", "spCobranzaCatalogoDias");
+    DIAS("dias", "spCobranzaCatalogoDias"),
+    CLASIFICACION_MEMBRESIAS("clasificacion_membresias", "spCobranzaClasificacionMembresias");
 
     private final String clave;
     private final String spName;

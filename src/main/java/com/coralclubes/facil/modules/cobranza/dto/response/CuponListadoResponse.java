@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.cobranza.dto.response;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record CuponListadoResponse(
         Integer id,
@@ -8,7 +9,6 @@ public record CuponListadoResponse(
         Integer anio,
         String descripcion,
         String origen,
-        String destino,
         LocalDateTime inicioVigencia,
         LocalDateTime finVigencia,
         Boolean esTransferible,

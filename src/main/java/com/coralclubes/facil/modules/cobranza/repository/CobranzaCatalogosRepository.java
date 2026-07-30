@@ -78,6 +78,10 @@ public class CobranzaCatalogosRepository {
         return spExecutor.queryList("spCobranzaCatalogoDias", Collections.emptyMap(), selectGenericoMapper);
     }
 
+    public List<SelectGenerico<Integer>> spCobranzaClasificacionMembresias() {
+        return spExecutor.queryList("spCobranzaClasificacionMembresias", Collections.emptyMap(), selectGenericoMapper);
+    }
+
     public List<SelectGenerico<Integer>> obtenerCatalogoPorSp(String spName) {
         return spExecutor.queryList(spName, Collections.emptyMap(), selectGenericoMapper);
     }

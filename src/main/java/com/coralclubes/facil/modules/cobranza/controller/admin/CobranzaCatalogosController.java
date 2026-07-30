@@ -88,4 +88,10 @@ public class CobranzaCatalogosController {
     ) {
         return ResponseEntity.ok(service.obtenerCatalogoPorClave(clave));
     }
+
+    @GetMapping("/clasificaciones-membresias")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerCatalogoClasificacionesMembresias() {
+        return ResponseEntity.ok(service.obtenerCatalogoClasificacionesMembresias());
+    }
 }

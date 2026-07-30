@@ -51,6 +51,10 @@ public class CobranzaCatalogosService {
         return ApiResponse.success("Catálogo de estatus de puntos obtenido correctamente.", repository.spCobranzaCatalogoEstatusPuntos());
     }
 
+    public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogoClasificacionesMembresias() {
+        return ApiResponse.success("Catálogo de estatus de puntos obtenido correctamente.", repository.spCobranzaClasificacionMembresias());
+    }
+
     public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogoPorClave(String clave) {
         CatalogoCobranzaEnum catalogoEnum = CatalogoCobranzaEnum.fromClave(clave);
         List<SelectGenerico<Integer>> resultado = repository.obtenerCatalogoPorSp(catalogoEnum.getSpName());

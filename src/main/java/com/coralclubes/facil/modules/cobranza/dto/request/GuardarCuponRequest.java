@@ -14,12 +14,12 @@ public record GuardarCuponRequest(
         @NotNull Integer year,
         String descripcion,
         @NotNull Integer origen,
-        @NotNull Integer destino,
         @NotNull LocalDateTime inicioVigencia,
         @NotNull LocalDateTime finVigencia,
         @NotNull Boolean esTransferible,
         @NotBlank @Size(max = 100) String nomenclatura,
         @NotNull Integer desarrollo,
+        List<Integer> desarrollos,
         ConfiguracionMembresias configuracionMembresias,
         List<CondicionesBeneficios> condiciones,
         List<CondicionesBeneficios> beneficios
@@ -44,6 +44,8 @@ public record GuardarCuponRequest(
     public record CondicionesBeneficios(
             @NotNull String clave,
             String tipo,
-            @NotNull String valor
+            String valor,
+            String configuracion,
+            Integer concepto
     ) {}
 }

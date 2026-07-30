@@ -4,7 +4,11 @@ import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarCuponRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponDetalleResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponListadoResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponesCanjesPorConceptoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponesCatalogoElementoResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponesEstadisticasKpiResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponesTopCanjeadosResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponesUsoMensualResponse;
 import com.coralclubes.facil.modules.cobranza.repository.CuponesRepository;
 import com.coralclubes.facil.modules.reservaciones.dto.response.TipoUnidadDetalleDto;
 import com.coralclubes.facil.shared.domain.dto.ArchivoDescarga;
@@ -48,8 +52,8 @@ public class CuponesService {
         return repository.spCuponesCatalogoOrigenes();
     }
 
-    public List<SelectGenerico<Integer>> obtenerCatalogoDestinos() {
-        return repository.spCuponesCatalogoDestinos();
+    public List<SelectGenerico<Integer>> obtenerCatalogoConceptos() {
+        return repository.spCuponesCatalogoConceptos();
     }
 
     public Integer guardarCupon(GuardarCuponRequest request, String usuario) {
@@ -62,10 +66,9 @@ public class CuponesService {
     public List<CuponListadoResponse> obtenerListadoCupones(
             Integer year,
             Integer desarrollo,
-            Integer origen,
-            Integer destino
+            Integer origen
     ) {
-        return repository.spCuponesObtenerListadoCupones(year, desarrollo, origen, destino);
+        return repository.spCuponesObtenerListadoCupones(year, desarrollo, origen);
     }
 
     public RespuestaCargaDto solicitarUrlCarga(SolicitarUrlRequest request, String usuario) {
@@ -120,5 +123,22 @@ public class CuponesService {
 
     public List<CuponListadoResponse> obtenerCuponesDesactivados(Integer year, Integer desarrollo) {
         return repository.spCuponesObtenerCuponesDesactivados(year, desarrollo);
+    }
+
+    public CuponesEstadisticasKpiResponse obtenerEstadisticasKpis(Integer anio, Integer desarrollo) {
+        return repository.spCuponesEstadisticasKPIs(anio, desarrollo)
+                .orElse(new CuponesEstadisticasKpiResponse(0, 0, 0));
+    }
+
+    public List<CuponesUsoMensualResponse> obtenerEstadisticasUsoMensual(Integer anio, Integer desarrollo) {
+        return repository.spCuponesEstadisticasUsoMensual(anio, desarrollo);
+    }
+
+    public List<CuponesCanjesPorConceptoResponse> obtenerEstadisticasCanjesPorConcepto(Integer anio, Integer desarrollo) {
+        return repository.spCuponesEstadisticasCanjesPorConcepto(anio, desarrollo);
+    }
+
+    public List<CuponesTopCanjeadosResponse> obtenerEstadisticasTopCanjeados(Integer anio, Integer desarrollo, Integer top) {
+        return repository.spCuponesEstadisticasTopCanjeados(anio, desarrollo, top);
     }
 }
