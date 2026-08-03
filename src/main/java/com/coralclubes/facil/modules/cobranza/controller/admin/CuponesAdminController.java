@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.cobranza.controller.admin;
 
 import com.coralclubes.dto.SelectGenerico;
+import com.coralclubes.facil.modules.cobranza.dto.request.DuplicarCuponesMasivoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarCuponRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponDetalleResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponListadoResponse;
@@ -173,5 +174,15 @@ public class CuponesAdminController {
     ) {
         List<CuponesTopCanjeadosResponse> topCanjeados = cuponesService.obtenerEstadisticasTopCanjeados(anio, desarrollo, top);
         return ResponseEntity.ok(ApiResponse.success("Top de cupones canjeados obtenido exitosamente", topCanjeados));
+    }
+
+    @PostMapping("/duplicar-masivo")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<Void>> duplicarMasivoCupones(
+            @Valid @RequestBody DuplicarCuponesMasivoRequest request
+    ) {
+        String usuario = userContext.getUsername();
+        cuponesService.duplicarMasivoCupones(request, usuario);
+        return ResponseEntity.ok(ApiResponse.success("Clonación masiva de cupones completada exitosamente", null));
     }
 }

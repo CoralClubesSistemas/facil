@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.cobranza.service;
 
 import com.coralclubes.dto.SelectGenerico;
+import com.coralclubes.facil.modules.cobranza.dto.request.DuplicarCuponesMasivoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarCuponRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponDetalleResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponListadoResponse;
@@ -140,5 +141,10 @@ public class CuponesService {
 
     public List<CuponesTopCanjeadosResponse> obtenerEstadisticasTopCanjeados(Integer anio, Integer desarrollo, Integer top) {
         return repository.spCuponesEstadisticasTopCanjeados(anio, desarrollo, top);
+    }
+
+    public void duplicarMasivoCupones(DuplicarCuponesMasivoRequest request, String usuario) {
+        logger.info(usuario, "Duplicando masivamente {} cupones al año objetivo: {}", request.ids().size(), request.targetYear());
+        repository.spCuponesDuplicarMasivo(request.ids(), request.targetYear(), usuario);
     }
 }

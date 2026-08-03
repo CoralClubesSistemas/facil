@@ -39,4 +39,9 @@ public class CuponesMembresiasService {
         logger.info(usuario, "Asignando cupones a membresía: {} con origen: {}", request.membresia(), request.origen());
         repository.spCuponesAsignarAMembresia(request, usuario);
     }
+
+    public void bloquearCuponMembresia(Integer cuponId, Integer folio, String usuario) {
+        logger.info(usuario, "Bloqueando folio: {} del cupón ID: {}", folio, cuponId);
+        repository.spMembresiaBloquearCupon(cuponId, folio, usuario);
+    }
 }

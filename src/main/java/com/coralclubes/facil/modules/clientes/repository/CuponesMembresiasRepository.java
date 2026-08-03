@@ -113,4 +113,13 @@ public class CuponesMembresiasRepository {
             throw new RuntimeException("Error al serializar el JSON de cupones para asignación", e);
         }
     }
+
+    public void spMembresiaBloquearCupon(Integer cuponId, Integer folio, String usuario) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("cupon_id", cuponId);
+        params.put("folio", folio);
+        params.put("usuario", usuario);
+
+        spExecutor.execute("spMembresiaBloquearCupon", params);
+    }
 }

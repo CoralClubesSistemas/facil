@@ -222,4 +222,17 @@ public class CuponesRepository {
 
         return spExecutor.queryList("spCuponesEstadisticasTopCanjeados", params, topCanjeadosMapper);
     }
+
+    public void spCuponesDuplicarMasivo(List<Integer> ids, Integer targetYear, String usuario) {
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("json_ids", objectMapper.writeValueAsString(ids));
+            params.put("target_year", targetYear);
+            params.put("usuario", usuario);
+
+            spExecutor.execute("spCuponesDuplicarMasivo", params);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error al serializar el listado de IDs para duplicado masivo", e);
+        }
+    }
 }

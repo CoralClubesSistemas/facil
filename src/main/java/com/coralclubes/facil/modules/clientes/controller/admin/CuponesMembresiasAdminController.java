@@ -66,4 +66,15 @@ public class CuponesMembresiasAdminController {
         cuponesMembresiasService.asignarCuponesAMembresia(request, usuario);
         return ResponseEntity.ok(ApiResponse.success("Cupones asignados a la membresía exitosamente", null));
     }
+
+    @PostMapping("/bloquear")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<Void>> bloquearCuponMembresia(
+            @RequestParam Integer cuponId,
+            @RequestParam Integer folio
+    ) {
+        String usuario = userContext.getUsername();
+        cuponesMembresiasService.bloquearCuponMembresia(cuponId, folio, usuario);
+        return ResponseEntity.ok(ApiResponse.success("Cupón bloqueado exitosamente", null));
+    }
 }
