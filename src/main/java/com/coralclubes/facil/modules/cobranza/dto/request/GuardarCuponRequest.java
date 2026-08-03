@@ -13,7 +13,7 @@ public record GuardarCuponRequest(
         @NotBlank @Size(max = 200) String nombre,
         @NotNull Integer year,
         String descripcion,
-        @NotNull Integer origen,
+        @NotNull String origen,
         @NotNull LocalDateTime inicioVigencia,
         @NotNull LocalDateTime finVigencia,
         @NotNull Boolean esTransferible,

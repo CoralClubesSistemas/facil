@@ -33,6 +33,7 @@ public class CuponesRepository {
     private final RowMapper<CuponesCatalogoElementoResponse> catalogoElementoMapper = (rs, rowNum) -> new CuponesCatalogoElementoResponse(rs.getString("clave"), rs.getString("nombre"), rs.getString("descripcion"), rs.getString("tipo"));
 
     private final RowMapper<SelectGenerico<Integer>> selectGenericoMapper = (rs, rowNum) -> new SelectGenerico<>(rs.getInt("value"), rs.getString("label"));
+    private final RowMapper<SelectGenerico<String>> selectStringGenericoMapper = (rs, rowNum) -> new SelectGenerico<>(rs.getString("value"), rs.getString("label"));
 
     private final RowMapper<CuponListadoResponse> listadoResponseRowMapper = (rs, rowNum) -> new CuponListadoResponse(
             rs.getObject("id", Integer.class),
@@ -57,8 +58,8 @@ public class CuponesRepository {
         return spExecutor.queryList("spCuponesCatalogoBeneficios", Collections.emptyMap(), catalogoElementoMapper);
     }
 
-    public List<SelectGenerico<Integer>> spCuponesCatalogoOrigenes() {
-        return spExecutor.queryList("spCuponesCatalogoOrigenes", Collections.emptyMap(), selectGenericoMapper);
+    public List<SelectGenerico<String>> spCuponesCatalogoOrigenes() {
+        return spExecutor.queryList("spCuponesCatalogoOrigenes", Collections.emptyMap(), selectStringGenericoMapper);
     }
 
     public List<SelectGenerico<Integer>> spCuponesCatalogoConceptos() {
@@ -95,7 +96,7 @@ public class CuponesRepository {
     public List<CuponListadoResponse> spCuponesObtenerListadoCupones(
             Integer year,
             Integer desarrollo,
-            Integer origen
+            String origen
     ) {
         Map<String, Object> params = new HashMap<>();
         params.put("year", year);
@@ -141,7 +142,7 @@ public class CuponesRepository {
                         rs.getString("nombre"),
                         rs.getInt("year"),
                         rs.getString("descripcion"),
-                        rs.getInt("origen"),
+                        rs.getString("origen"),
                         rs.getTimestamp("inicioVigencia").toLocalDateTime(),
                         rs.getTimestamp("finVigencia").toLocalDateTime(),
                         rs.getBoolean("esTransferible"),

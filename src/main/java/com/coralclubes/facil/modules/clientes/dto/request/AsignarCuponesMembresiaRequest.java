@@ -9,7 +9,7 @@ import java.util.List;
 
 public record AsignarCuponesMembresiaRequest(
         @NotBlank String membresia,
-        @NotNull Integer desarrollo,
+        @NotBlank String origen,
         @NotEmpty List<@Valid CuponAsignacionItem> cupones
 ) {
     public record CuponAsignacionItem(

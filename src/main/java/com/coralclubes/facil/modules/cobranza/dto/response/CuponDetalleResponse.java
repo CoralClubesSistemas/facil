@@ -9,7 +9,7 @@ public record CuponDetalleResponse(
         String nombre,
         Integer year,
         String descripcion,
-        Integer origen,
+        String origen,
         LocalDateTime inicioVigencia,
         LocalDateTime finVigencia,
         Boolean esTransferible,

@@ -48,7 +48,7 @@ public class CuponesService {
         return repository.spCuponesCatalogoBeneficios();
     }
 
-    public List<SelectGenerico<Integer>> obtenerCatalogoOrigenes() {
+    public List<SelectGenerico<String>> obtenerCatalogoOrigenes() {
         return repository.spCuponesCatalogoOrigenes();
     }
 
@@ -66,7 +66,7 @@ public class CuponesService {
     public List<CuponListadoResponse> obtenerListadoCupones(
             Integer year,
             Integer desarrollo,
-            Integer origen
+            String origen
     ) {
         return repository.spCuponesObtenerListadoCupones(year, desarrollo, origen);
     }

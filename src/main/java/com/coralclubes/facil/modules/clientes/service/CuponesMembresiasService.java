@@ -23,22 +23,20 @@ public class CuponesMembresiasService {
         return repository.spMembresiaObtenerCupones(membresia, year);
     }
 
-    public List<CuponMembresiaDetalleResponse> obtenerDetalleCuponMembresia(Integer cuponId, String membresia) {
-        return repository.spMembresiaObtenerDetalleCupon(cuponId, membresia);
+    public List<CuponMembresiaDetalleResponse> obtenerDetalleCuponMembresia(Integer cuponId) {
+        return repository.spMembresiaObtenerDetalleCupon(cuponId);
     }
 
     public List<CuponDisponibleAsignacionResponse> obtenerDisponiblesParaAsignacion(
             String membresia,
-            Integer desarrollo,
-            Integer tipoMembresiaId,
-            Integer anio,
-            LocalDateTime fechaAsignacion
+            String origen,
+            Integer anio
     ) {
-        return repository.spCuponesObtenerDisponiblesParaAsignacion(membresia, desarrollo, tipoMembresiaId, anio, fechaAsignacion);
+        return repository.spCuponesObtenerDisponiblesParaAsignacion(membresia, origen, anio);
     }
 
     public void asignarCuponesAMembresia(AsignarCuponesMembresiaRequest request, String usuario) {
-        logger.info(usuario, "Asignando cupones a membresia: {} en desarrollo: {}", request.membresia(), request.desarrollo());
+        logger.info(usuario, "Asignando cupones a membresía: {} con origen: {}", request.membresia(), request.origen());
         repository.spCuponesAsignarAMembresia(request, usuario);
     }
 }

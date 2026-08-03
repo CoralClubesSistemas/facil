@@ -46,7 +46,7 @@ public class CuponesAdminController {
 
     @GetMapping("/catalogos/origenes")
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
-    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerCatalogoOrigenes() {
+    public ResponseEntity<ApiResponse<List<SelectGenerico<String>>>> obtenerCatalogoOrigenes() {
         return ResponseEntity.ok(ApiResponse.success("Catálogo de orígenes obtenido exitosamente", cuponesService.obtenerCatalogoOrigenes()));
     }
 
@@ -70,7 +70,7 @@ public class CuponesAdminController {
     public ResponseEntity<ApiResponse<List<CuponListadoResponse>>> obtenerListadoCupones(
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer desarrollo,
-            @RequestParam(required = false) Integer origen
+            @RequestParam(required = false) String origen
     ) {
         List<CuponListadoResponse> listado = cuponesService.obtenerListadoCupones(year, desarrollo, origen);
         return ResponseEntity.ok(ApiResponse.success("Listado de cupones obtenido exitosamente", listado));

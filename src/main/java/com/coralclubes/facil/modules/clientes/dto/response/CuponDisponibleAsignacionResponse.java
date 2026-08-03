@@ -10,7 +10,7 @@ public record CuponDisponibleAsignacionResponse(
         LocalDateTime inicioVigencia,
         LocalDateTime finVigencia,
         Boolean esTransferible,
-        Integer origenId,
+        String origenId,
         String origenNombre,
         Integer cantidadCupones,
         String nombrePeriodo,

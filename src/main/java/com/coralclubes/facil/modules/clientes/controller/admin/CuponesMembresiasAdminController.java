@@ -35,13 +35,12 @@ public class CuponesMembresiasAdminController {
         return ResponseEntity.ok(ApiResponse.success("Cupones de la membresía obtenidos exitosamente", cupones));
     }
 
-    @GetMapping("/{membresia}/detalle/{cuponId}")
+    @GetMapping("/detalle/{cuponId}")
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
     public ResponseEntity<ApiResponse<List<CuponMembresiaDetalleResponse>>> obtenerDetalleCuponMembresia(
-            @PathVariable String membresia,
             @PathVariable Integer cuponId
     ) {
-        List<CuponMembresiaDetalleResponse> detalle = cuponesMembresiasService.obtenerDetalleCuponMembresia(cuponId, membresia);
+        List<CuponMembresiaDetalleResponse> detalle = cuponesMembresiasService.obtenerDetalleCuponMembresia(cuponId);
         return ResponseEntity.ok(ApiResponse.success("Detalle de folios del cupón obtenido exitosamente", detalle));
     }
 
@@ -49,13 +48,11 @@ public class CuponesMembresiasAdminController {
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
     public ResponseEntity<ApiResponse<List<CuponDisponibleAsignacionResponse>>> obtenerDisponiblesParaAsignacion(
             @RequestParam(required = false) String membresia,
-            @RequestParam(required = false) Integer desarrollo,
-            @RequestParam(required = false) Integer tipoMembresiaId,
-            @RequestParam(required = false) Integer anio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaAsignacion
+            @RequestParam(required = false) String origen,
+            @RequestParam(required = false) Integer anio
     ) {
         List<CuponDisponibleAsignacionResponse> disponibles = cuponesMembresiasService.obtenerDisponiblesParaAsignacion(
-                membresia, desarrollo, tipoMembresiaId, anio, fechaAsignacion
+                membresia, origen, anio
         );
         return ResponseEntity.ok(ApiResponse.success("Cupones disponibles para asignación obtenidos exitosamente", disponibles));
     }

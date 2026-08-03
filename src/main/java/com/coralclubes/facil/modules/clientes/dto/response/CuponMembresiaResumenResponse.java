@@ -3,6 +3,7 @@ package com.coralclubes.facil.modules.clientes.dto.response;
 import java.time.LocalDateTime;
 
 public record CuponMembresiaResumenResponse(
+        Integer id,
         String membresia,
         Integer idCupon,
         Integer movimientoGeneradorId,

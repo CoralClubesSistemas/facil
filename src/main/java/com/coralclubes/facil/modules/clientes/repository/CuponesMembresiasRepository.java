@@ -24,6 +24,7 @@ public class CuponesMembresiasRepository {
     private final ObjectMapper objectMapper;
 
     private final RowMapper<CuponMembresiaResumenResponse> resumenMapper = (rs, rowNum) -> new CuponMembresiaResumenResponse(
+            rs.getObject("id", Integer.class),
             rs.getString("membresia"),
             rs.getObject("id_cupon", Integer.class),
             rs.getObject("movimiento_generador_id", Integer.class),
@@ -63,7 +64,7 @@ public class CuponesMembresiasRepository {
             rs.getTimestamp("inicio_vigencia") != null ? rs.getTimestamp("inicio_vigencia").toLocalDateTime() : null,
             rs.getTimestamp("fin_vigencia") != null ? rs.getTimestamp("fin_vigencia").toLocalDateTime() : null,
             rs.getObject("es_transferible", Boolean.class),
-            rs.getObject("origen_id", Integer.class),
+            rs.getString("origen_id"),
             rs.getString("origen_nombre"),
             rs.getObject("cantidad_cupones", Integer.class),
             rs.getString("nombre_periodo"),
@@ -79,27 +80,22 @@ public class CuponesMembresiasRepository {
         return spExecutor.queryList("spMembresiaObtenerCupones", params, resumenMapper);
     }
 
-    public List<CuponMembresiaDetalleResponse> spMembresiaObtenerDetalleCupon(Integer cuponId, String membresia) {
+    public List<CuponMembresiaDetalleResponse> spMembresiaObtenerDetalleCupon(Integer cuponId) {
         Map<String, Object> params = new HashMap<>();
-        params.put("cupon_id", cuponId);
-        params.put("membresia", membresia);
+        params.put("id", cuponId);
 
         return spExecutor.queryList("spMembresiaObtenerDetalleCupon", params, detalleMapper);
     }
 
     public List<CuponDisponibleAsignacionResponse> spCuponesObtenerDisponiblesParaAsignacion(
             String membresia,
-            Integer desarrollo,
-            Integer tipoMembresiaId,
-            Integer anio,
-            LocalDateTime fechaAsignacion
+            String origen,
+            Integer anio
     ) {
         Map<String, Object> params = new HashMap<>();
         params.put("membresia", membresia);
-        params.put("desarrollo", desarrollo);
-        params.put("tipo_membresia_id", tipoMembresiaId);
+        params.put("origen", origen);
         params.put("anio", anio);
-        params.put("fecha_asignacion", fechaAsignacion);
 
         return spExecutor.queryList("spCuponesObtenerDisponiblesParaAsignacion", params, disponibleMapper);
     }
@@ -108,12 +104,9 @@ public class CuponesMembresiasRepository {
         try {
             Map<String, Object> params = new HashMap<>();
             params.put("membresia", request.membresia());
-            params.put("desarrollo", request.desarrollo());
             params.put("usuario", usuario);
+            params.put("origen", request.origen());
             params.put("json_cupones", objectMapper.writeValueAsString(request.cupones()));
-
-            System.out.println("JSON de cupones para asignación: " + params.get("json_cupones")); // Debugging line
-            System.out.println("Parámetros para spCuponesAsignarAMembresia: " + params); // Debugging line
 
             spExecutor.execute("spCuponesAsignarAMembresia", params);
         } catch (JsonProcessingException e) {
