@@ -1,5 +1,6 @@
 package com.coralclubes.facil.modules.clientes.repository;
 
+import com.coralclubes.facil.modules.clientes.dto.request.AdicionarCuponesMembresiaRequest;
 import com.coralclubes.facil.modules.clientes.dto.request.AsignarCuponesMembresiaRequest;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleAsignacionResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponFormatoInfoResponse;
@@ -133,5 +134,14 @@ public class CuponesMembresiasRepository {
         params.put("usuario", usuario);
 
         spExecutor.execute("spMembresiaBloquearCupon", params);
+    }
+
+    public void spMembresiaAdicionarCupones(AdicionarCuponesMembresiaRequest request, String usuario) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("id", request.id());
+        params.put("cantidad", request.cantidad());
+        params.put("usuario", usuario);
+
+        spExecutor.execute("spMembresiaAdicionarCupones", params);
     }
 }

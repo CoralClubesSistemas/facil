@@ -1,5 +1,6 @@
 package com.coralclubes.facil.modules.clientes.controller.admin;
 
+import com.coralclubes.facil.modules.clientes.dto.request.AdicionarCuponesMembresiaRequest;
 import com.coralclubes.facil.modules.clientes.dto.request.AsignarCuponesMembresiaRequest;
 import com.coralclubes.facil.modules.clientes.dto.request.SintetizarCorreoCuponesRequest;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleAsignacionResponse;
@@ -82,6 +83,16 @@ public class CuponesMembresiasAdminController {
         String usuario = userContext.getUsername();
         cuponesMembresiasService.bloquearCuponMembresia(cuponId, folio, usuario);
         return ResponseEntity.ok(ApiResponse.success("Cupón bloqueado exitosamente", null));
+    }
+
+    @PostMapping("/adicionar")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<Void>> adicionarCuponesMembresia(
+            @Valid @RequestBody AdicionarCuponesMembresiaRequest request
+    ) {
+        String usuario = userContext.getUsername();
+        cuponesMembresiasService.adicionarCuponesMembresia(request, usuario);
+        return ResponseEntity.ok(ApiResponse.success("Cupones adicionales generados exitosamente", null));
     }
 
     @GetMapping("/{idCuponPqa}/pdf")
