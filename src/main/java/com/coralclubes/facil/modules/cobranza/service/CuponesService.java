@@ -61,7 +61,7 @@ public class CuponesService {
     }
 
     public Integer guardarCupon(GuardarCuponRequest request, String usuario) {
-        logger.info(usuario,"Guardando cupón con nombre: {} por usuario: {}", request.nombre(), usuario);
+        logger.info(usuario, "Guardando cupón con nombre: {} por usuario: {}", request.nombre(), usuario);
 
         return repository.spCuponesGuardarCupon(request, usuario)
                 .orElseThrow(() -> new RuntimeException("No se pudo guardar el cupón"));
@@ -128,13 +128,13 @@ public class CuponesService {
     }
 
     public void eliminarCupon(Integer idCupon, String usuario) {
-        logger.info(usuario,"Eliminando cupón con ID: {} por usuario: {}", idCupon, usuario);
+        logger.info(usuario, "Eliminando cupón con ID: {} por usuario: {}", idCupon, usuario);
 
         repository.spCuponesModificarEstatusCupon(idCupon, false);
     }
 
     public void reactivarCupon(Integer idCupon, String usuario) {
-        logger.info(usuario,"Reactivando cupón con ID: {} por usuario: {}", idCupon, usuario);
+        logger.info(usuario, "Reactivando cupón con ID: {} por usuario: {}", idCupon, usuario);
 
         repository.spCuponesModificarEstatusCupon(idCupon, true);
     }

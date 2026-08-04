@@ -4,12 +4,15 @@ import com.coralclubes.facil.modules.clientes.dto.request.AsignarCuponesMembresi
 import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleAsignacionResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponMembresiaDetalleResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponMembresiaResumenResponse;
+import com.coralclubes.facil.modules.clientes.service.CuponesFormatosClienteService;
 import com.coralclubes.facil.modules.clientes.service.CuponesMembresiasService;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +26,7 @@ import java.util.List;
 public class CuponesMembresiasAdminController {
 
     private final CuponesMembresiasService cuponesMembresiasService;
+    private final CuponesFormatosClienteService cuponesFormatosClienteService;
     private final UserContext userContext;
 
     @GetMapping("/{membresia}")
@@ -76,5 +80,15 @@ public class CuponesMembresiasAdminController {
         String usuario = userContext.getUsername();
         cuponesMembresiasService.bloquearCuponMembresia(cuponId, folio, usuario);
         return ResponseEntity.ok(ApiResponse.success("Cupón bloqueado exitosamente", null));
+    }
+
+    @GetMapping("/{idCuponPqa}/pdf")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<byte[]> obtenerPdfFormatosCupon(@PathVariable Integer idCuponPqa) {
+        byte[] pdfBytes = cuponesFormatosClienteService.generarPdfFormatosCupon(idCuponPqa);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=cupon-formatos-" + idCuponPqa + ".pdf")
+                .body(pdfBytes);
     }
 }

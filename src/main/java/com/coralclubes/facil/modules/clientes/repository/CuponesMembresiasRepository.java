@@ -2,6 +2,7 @@ package com.coralclubes.facil.modules.clientes.repository;
 
 import com.coralclubes.facil.modules.clientes.dto.request.AsignarCuponesMembresiaRequest;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleAsignacionResponse;
+import com.coralclubes.facil.modules.clientes.dto.response.CuponFormatoInfoResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponMembresiaDetalleResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponMembresiaResumenResponse;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
@@ -71,6 +72,17 @@ public class CuponesMembresiasRepository {
             rs.getTimestamp("fecha_inicio_periodo") != null ? rs.getTimestamp("fecha_inicio_periodo").toLocalDateTime() : null,
             rs.getTimestamp("fecha_fin_periodo") != null ? rs.getTimestamp("fecha_fin_periodo").toLocalDateTime() : null
     );
+
+    private final RowMapper<CuponFormatoInfoResponse> cuponFormatoInfoMapper = (rs, rowNum) -> new CuponFormatoInfoResponse(
+            rs.getString("membresia"),
+            rs.getString("folio"),
+            rs.getString("nombre"),
+            rs.getObject("cupon_id", Integer.class)
+    );
+
+    public List<CuponFormatoInfoResponse> spMembresiaObtenerInfoFormatosCupones(Integer id) {
+        return spExecutor.queryList("spMembresiaObtenerInfoFormatosCupones", Map.of("id", id), cuponFormatoInfoMapper);
+    }
 
     public List<CuponMembresiaResumenResponse> spMembresiaObtenerCupones(String membresia, Integer year) {
         Map<String, Object> params = new HashMap<>();

@@ -2,6 +2,7 @@ package com.coralclubes.facil.modules.clientes.service;
 
 import com.coralclubes.facil.modules.clientes.dto.request.AsignarCuponesMembresiaRequest;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleAsignacionResponse;
+import com.coralclubes.facil.modules.clientes.dto.response.CuponFormatoInfoResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponMembresiaDetalleResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponMembresiaResumenResponse;
 import com.coralclubes.facil.modules.clientes.repository.CuponesMembresiasRepository;
@@ -43,5 +44,9 @@ public class CuponesMembresiasService {
     public void bloquearCuponMembresia(Integer cuponId, Integer folio, String usuario) {
         logger.info(usuario, "Bloqueando folio: {} del cupón ID: {}", folio, cuponId);
         repository.spMembresiaBloquearCupon(cuponId, folio, usuario);
+    }
+
+    public List<CuponFormatoInfoResponse> obtenerInfoFormatosCupones(Integer id) {
+        return repository.spMembresiaObtenerInfoFormatosCupones(id);
     }
 }
