@@ -30,6 +30,7 @@ public class PebbleConfig {
     public PebbleEngine pebbleEngine() {
         return new PebbleEngine.Builder()
                 .loader(new StringLoader())
+                .strictVariables(false)
                 .build();
     }
 }

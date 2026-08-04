@@ -1,11 +1,13 @@
 package com.coralclubes.facil.modules.clientes.controller.admin;
 
 import com.coralclubes.facil.modules.clientes.dto.request.AsignarCuponesMembresiaRequest;
+import com.coralclubes.facil.modules.clientes.dto.request.SintetizarCorreoCuponesRequest;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleAsignacionResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponMembresiaDetalleResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponMembresiaResumenResponse;
 import com.coralclubes.facil.modules.clientes.service.CuponesFormatosClienteService;
 import com.coralclubes.facil.modules.clientes.service.CuponesMembresiasService;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuerpoCorreoResponse;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
@@ -90,5 +92,14 @@ public class CuponesMembresiasAdminController {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=cupon-formatos-" + idCuponPqa + ".pdf")
                 .body(pdfBytes);
+    }
+
+    @PostMapping("/plantilla-correo")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<CuerpoCorreoResponse>> obtenerPlantillaCorreoEnvioCupones(
+            @Valid @RequestBody SintetizarCorreoCuponesRequest request
+    ) {
+        CuerpoCorreoResponse response = cuponesMembresiasService.sintetizarCuerpoCorreoEnvioCupones(request);
+        return ResponseEntity.ok(ApiResponse.success("Plantilla de correo sintetizada exitosamente", response));
     }
 }

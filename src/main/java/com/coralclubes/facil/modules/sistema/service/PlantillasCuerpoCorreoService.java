@@ -30,7 +30,7 @@ public class PlantillasCuerpoCorreoService {
             template.evaluate(writer, variables);
             return writer.toString();
         } catch (Exception e) {
-            log.error("Error:{}", String.valueOf(e));
+            log.error("Error al renderizar el cuerpo de la plantilla de correo con código: {}", codigo, e);
             throw new RuntimeException("Error al renderizar la plantilla de correo con Pebble: " + codigo, e);
         }
     }
@@ -45,6 +45,7 @@ public class PlantillasCuerpoCorreoService {
             template.evaluate(writer, variables);
             return writer.toString();
         } catch (Exception e) {
+            log.error("Error al renderizar el asunto de la plantilla de correo con código: {}", codigo, e);
             return plantilla.asunto();
         }
     }
