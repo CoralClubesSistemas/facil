@@ -14,6 +14,5 @@ public record CuponListadoResponse(
         Boolean esTransferible,
         String nomenclatura,
         Integer idDesarrollo,
-        String desarrollo,
-        String imagen
+        String desarrollo
 ) {}

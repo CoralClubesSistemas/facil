@@ -3,7 +3,9 @@ package com.coralclubes.facil.modules.cobranza.service;
 import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.cobranza.dto.request.DuplicarCuponesMasivoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarCuponRequest;
+import com.coralclubes.facil.modules.cobranza.dto.request.GuardarFormatoImagenCuponRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponDetalleResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponImagenFormatoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponListadoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponesCanjesPorConceptoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponesCatalogoElementoResponse;
@@ -29,6 +31,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 
 @Service
 @RequiredArgsConstructor
@@ -97,12 +100,31 @@ public class CuponesService {
         return storageClient.solicitarUrlCarga(solicitudStorage);
     }
 
-    public void guardarImagenCupon(Integer idCupon, String imagen) {
-        repository.spCuponesGuardarImagenCupon(idCupon, imagen);
+    public void guardarImagenCupon(GuardarFormatoImagenCuponRequest request, String usuario) {
+        repository.spCuponesGuardarImagenCupon(request, usuario);
     }
 
-    public ArchivoDescarga obtenerFormatoCupon (UUID uuid) {
-        return storageClient.obtenerUrlDescargaYNombre(uuid, "inline");
+    public CuponImagenFormatoResponse obtenerImagenCupon(Integer cuponId) {
+        CuponImagenFormatoResponse response = repository.spCuponesObtenerImagenCupon(cuponId)
+                .orElse(null);
+
+        if (response == null) {
+            return null;
+        }
+
+        ArchivoDescarga archivo = storageClient.obtenerUrlDescargaYNombre(response.formatoUuid(), "inline");
+
+        return new CuponImagenFormatoResponse(
+                response.formatoId(),
+                response.cuponId(),
+                response.formatoNombre(),
+                response.formatoUuid(),
+                response.configuracionJson(),
+                response.metadataJson(),
+                response.fechaRegistro(),
+                response.usuarioRegistro(),
+                archivo
+        );
     }
 
     public void eliminarCupon(Integer idCupon, String usuario) {

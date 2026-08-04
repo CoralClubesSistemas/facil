@@ -2,7 +2,9 @@ package com.coralclubes.facil.modules.cobranza.repository;
 
 import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarCuponRequest;
+import com.coralclubes.facil.modules.cobranza.dto.request.GuardarFormatoImagenCuponRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponDetalleResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponImagenFormatoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponListadoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponesCanjesPorConceptoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponesCatalogoElementoResponse;
@@ -22,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
@@ -46,8 +49,7 @@ public class CuponesRepository {
             rs.getObject("es_transferible", Boolean.class),
             rs.getString("nomenclatura"),
             rs.getObject("id_desarrollo", Integer.class),
-            rs.getString("desarrollo"),
-            rs.getString("imagen")
+            rs.getString("desarrollo")
     );
 
     public List<CuponesCatalogoElementoResponse> spCuponesCatalogoCondiciones() {
@@ -93,6 +95,22 @@ public class CuponesRepository {
         }
     }
 
+    private final RowMapper<CuponImagenFormatoResponse> cuponImagenFormatoMapper = (rs, rowNum) -> {
+        String uuidStr = rs.getString("formato_uuid");
+        UUID formatoUuid = (uuidStr != null && !uuidStr.isBlank()) ? UUID.fromString(uuidStr) : null;
+
+        return CuponImagenFormatoResponse.builder()
+                .formatoId(rs.getObject("formato_id", Integer.class))
+                .cuponId(rs.getObject("cupon_id", Integer.class))
+                .formatoNombre(rs.getString("formato_nombre"))
+                .formatoUuid(formatoUuid)
+                .configuracionJson(rs.getString("configuracion_json"))
+                .metadataJson(rs.getString("metadata_json"))
+                .fechaRegistro(rs.getTimestamp("fecha_registro") != null ? rs.getTimestamp("fecha_registro").toLocalDateTime() : null)
+                .usuarioRegistro(rs.getString("usuario_registro"))
+                .build();
+    };
+
     public List<CuponListadoResponse> spCuponesObtenerListadoCupones(
             Integer year,
             Integer desarrollo,
@@ -106,8 +124,21 @@ public class CuponesRepository {
         return spExecutor.queryList("spCuponesObtenerListadoCupones", params, listadoResponseRowMapper);
     }
 
-    public void spCuponesGuardarImagenCupon(Integer idCupon, String imagen) {
-        spExecutor.execute("spCuponesGuardarImagenCupon", Map.of("id", idCupon, "imagen", imagen));
+    public void spCuponesGuardarImagenCupon(GuardarFormatoImagenCuponRequest request, String usuario) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("id", request.id());
+        params.put("cupon_id", request.cuponId());
+        params.put("uuid", request.uuid());
+        params.put("nombre", request.nombre());
+        params.put("configuracion", request.configuracion());
+        params.put("metadata", request.metadata());
+        params.put("usuario", usuario);
+
+        spExecutor.execute("spCuponesGuardarImagenCupon", params);
+    }
+
+    public Optional<CuponImagenFormatoResponse> spCuponesObtenerImagenCupon(Integer cuponId) {
+        return spExecutor.querySingle("spCuponesObtenerImagenCupon", Map.of("cupon_id", cuponId), cuponImagenFormatoMapper);
     }
 
     public void spCuponesModificarEstatusCupon(Integer idCupon, Boolean estatus) {

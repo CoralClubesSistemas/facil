@@ -3,7 +3,9 @@ package com.coralclubes.facil.modules.cobranza.controller.admin;
 import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.cobranza.dto.request.DuplicarCuponesMasivoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarCuponRequest;
+import com.coralclubes.facil.modules.cobranza.dto.request.GuardarFormatoImagenCuponRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponDetalleResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponImagenFormatoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponListadoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponesCanjesPorConceptoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponesCatalogoElementoResponse;
@@ -90,17 +92,18 @@ public class CuponesAdminController {
     @PostMapping("/imagen")
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
     public ResponseEntity<ApiResponse<Void>> registrarImagenCupon(
-            @RequestParam Integer idCupon,
-            @RequestParam String uuidArchivo) {
-        cuponesService.guardarImagenCupon(idCupon, uuidArchivo);
-        return ResponseEntity.ok(ApiResponse.empty());
+            @Valid @RequestBody GuardarFormatoImagenCuponRequest request) {
+        String usuario = userContext.getUsername();
+        cuponesService.guardarImagenCupon(request, usuario);
+        return ResponseEntity.ok(ApiResponse.success("Formato de imagen de cupón guardado correctamente", null));
     }
 
-    @GetMapping("/imagen")
-    public ResponseEntity<ApiResponse<ArchivoDescarga>> obtenerFormatoCupon(
-            @RequestParam UUID uuid) {
-        ArchivoDescarga archivo = cuponesService.obtenerFormatoCupon(uuid);
-        return ResponseEntity.ok(ApiResponse.success("Archivo obtenido correctamente", archivo));
+    @GetMapping("/{idCupon}/formato-imagen")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<CuponImagenFormatoResponse>> obtenerImagenCupon(
+            @PathVariable Integer idCupon) {
+        CuponImagenFormatoResponse response = cuponesService.obtenerImagenCupon(idCupon);
+        return ResponseEntity.ok(ApiResponse.success("Formato de imagen obtenido exitosamente", response));
     }
 
     @DeleteMapping("/{idCupon}")
