@@ -577,14 +577,6 @@ public class ReservacionesRepository {
         );
     }
 
-    public List<String> obtenerActividadDiaria(Integer desarrolloId) {
-        return spExecutor.queryList(
-                "spResvObtenerActividadDiaria",
-                Map.of("DesarrolloId", desarrolloId),
-                stringMapper
-        );
-    }
-
     public void transferirUnidad(TransferirUnidadRequest request, String usuario) {
         Map<String, Object> params = new HashMap<>();
         params.put("Membresia", request.membresia());

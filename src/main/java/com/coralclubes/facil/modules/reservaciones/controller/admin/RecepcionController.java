@@ -104,11 +104,6 @@ public class RecepcionController {
         return ResponseEntity.ok(recepcionService.obtenerMapaUnidades());
     }
 
-    @GetMapping("/actividad-reciente")
-    public ResponseEntity<ApiResponse<List<String>>> obtenerActividadReciente() {
-        return ResponseEntity.ok(recepcionService.obtenerActividadReciente());
-    }
-
     @PostMapping("/transferir-unidad")
     public ResponseEntity<ApiResponse<Boolean>> transferirUnidad(
             @Valid @RequestBody TransferirUnidadRequest request) {

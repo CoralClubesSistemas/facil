@@ -613,13 +613,6 @@ public class ReservacionesService {
         return ApiResponse.success("Mapa de unidades obtenido con éxito.", mapa);
     }
 
-    public ApiResponse<List<String>> obtenerActividadReciente() {
-        Integer desarrolloId = userContext.getIdDesarrollo();
-
-        List<String> actividad = repository.obtenerActividadDiaria(desarrolloId);
-        return ApiResponse.success("Actividad reciente obtenida.", actividad);
-    }
-
     // =========================================================================
     // 5. OPERACIONES DE RECEPCIÓN (CHECK-IN / CHECK-OUT)
     // =========================================================================
