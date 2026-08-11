@@ -21,12 +21,18 @@ public class ProspectosService {
      * Crea o actualiza la información de un prospecto de venta.
      *
      * @param request Datos del prospecto a registrar/actualizar.
+     * @return ID del prospecto creado o actualizado.
      */
-    public void crearOActualizarProspecto(ProspectoCrearRequest request) {
+    public Integer crearOActualizarProspecto(ProspectoCrearRequest request) {
         log.info("[PROSPECTOS SERVICE] Registrando/actualizando prospecto con ID externo: {}, email: {}",
                 request.idExterno(), request.email());
 
-        prospectosRepository.spProspectoCrearProspecto(request);
+        Integer prospectoId = prospectosRepository.spProspectoCrearProspecto(request);
+
+        log.info("[PROSPECTOS SERVICE] Prospecto con ID externo {} procesado exitosamente con ID interno: {}",
+                request.idExterno(), prospectoId);
+
+        return prospectoId;
     }
 
     /**

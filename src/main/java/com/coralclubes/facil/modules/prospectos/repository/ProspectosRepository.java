@@ -21,8 +21,9 @@ public class ProspectosRepository {
 
     /**
      * Ejecuta el Stored Procedure spProspectoCrearProspecto para insertar o actualizar un prospecto de venta.
+     * @return ID del prospecto creado o actualizado.
      */
-    public void spProspectoCrearProspecto(ProspectoCrearRequest request) {
+    public Integer spProspectoCrearProspecto(ProspectoCrearRequest request) {
         Map<String, Object> params = new HashMap<>();
         params.put("id_externo", request.idExterno());
         params.put("origen", request.origen());
@@ -39,7 +40,8 @@ public class ProspectosRepository {
         params.put("data_adicional", request.dataAdicional());
         params.put("estatus", request.estatus());
 
-        executor.execute("spProspectoCrearProspecto", params);
+        return executor.querySingle("spProspectoCrearProspecto", params, (rs, rowNum) -> rs.getInt(1))
+                .orElse(null);
     }
 
     /**
