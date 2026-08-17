@@ -87,6 +87,13 @@ app:
     cie:
       bbva: ${BANCO_CIE_BBVA}
 
+  zoho:
+    user-email: ${ZOHO_USER_EMAIL}
+    client-id: ${ZOHO_CLIENT_ID}
+    client-secret: ${ZOHO_CLIENT_SECRET}
+    refresh-token: ${ZOHO_REFRESH_TOKEN}
+    environment: ${ZOHO_ENVIRONMENT:PRODUCTION} # Opciones: PRODUCTION, SANDBOX, DEVELOPER
+
 logging:
   level:
     com.coralclubes.facil: DEBUG

@@ -90,6 +90,13 @@ app:
     cie:
       bbva: 2072866
 
+  zoho:
+    user-email: lvivar@coralclubes.com
+    client-id: 1000.KUPGVY4J37Z9KMVF8S8EE70BRAZ5JJ
+    client-secret: df8eb4e88267c8db718b08517e8376a24714289ea6
+    refresh-token: 1000.09ee00544e0fdddcbe2fe095263c1095.f1084d623620efcd5b45462ef206717e
+    environment: SANDBOX
+
 logging:
   level:
     com.coralclubes.facil: DEBUG
