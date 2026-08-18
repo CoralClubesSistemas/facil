@@ -18,16 +18,38 @@ public class GeneracionMovimientosRepository {
 
     private final StoredProcedureExecutor spExecutor;
 
-    private final RowMapper<MovimientoPorTipoMembresiaResponse> movimientoMapper = (rs, rowNum) ->
-            MovimientoPorTipoMembresiaResponse.builder()
-                    .id(rs.getInt("id"))
-                    .descripcion(rs.getString("descripcion"))
-                    .periodicidad(rs.getString("periodicidad"))
-                    .baseDeCobro(rs.getString("baseDeCobro"))
-                    .generaInteres(rs.getObject("generaInteres") != null ? rs.getBoolean("generaInteres") : null)
-                    .cuota(rs.getBigDecimal("cuota"))
-                    .anioVigencia(rs.getObject("anioVigencia") != null ? rs.getInt("anioVigencia") : null)
-                    .build();
+    private final RowMapper<MovimientoPorTipoMembresiaResponse> movimientoMapper = (rs, rowNum) -> {
+
+        boolean cuotaForzosa = rs.getObject("cuotaForzosa") != null
+                && rs.getBoolean("cuotaForzosa");
+
+        boolean esValido = !cuotaForzosa
+                || rs.getBigDecimal("cuota") != null;
+
+        return MovimientoPorTipoMembresiaResponse.builder()
+                .id(rs.getInt("id"))
+                .descripcion(rs.getString("descripcion"))
+                .periodicidad(rs.getString("periodicidad"))
+                .baseDeCobro(rs.getString("baseDeCobro"))
+                .generaInteres(
+                        rs.getObject("generaInteres") != null
+                                ? rs.getBoolean("generaInteres")
+                                : null
+                )
+                .cuota(rs.getBigDecimal("cuota"))
+                .anioVigencia(
+                        rs.getObject("anioVigencia") != null
+                                ? rs.getInt("anioVigencia")
+                                : null
+                )
+                .cuotaForzosa(
+                        rs.getObject("cuotaForzosa") != null
+                                ? rs.getBoolean("cuotaForzosa")
+                                : null
+                )
+                .esValido(esValido)
+                .build();
+    };
 
     public List<MovimientoPorTipoMembresiaResponse> spCobranzaObtenerMovimientosPorTipoMembresia(Integer tipoMembresia) {
         Map<String, Object> params = Map.of(
@@ -101,8 +123,6 @@ public class GeneracionMovimientosRepository {
             Boolean incluirPrevios,
             Integer desarrolloConsumo
     ) {
-        System.out.println("spCobranzaConsultarCotizacionCredenciales called with: membresia=" + membresia + ", anios=" + anios + ", incluirPrevios=" + incluirPrevios + ", desarrolloConsumo=" + desarrolloConsumo);
-
         Map<String, Object> params = Map.of(
                 "membresia", membresia,
                 "anios", anios,

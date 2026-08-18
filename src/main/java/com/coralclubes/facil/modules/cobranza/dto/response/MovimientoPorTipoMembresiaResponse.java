@@ -12,5 +12,7 @@ public record MovimientoPorTipoMembresiaResponse(
         String baseDeCobro,
         Boolean generaInteres,
         BigDecimal cuota,
-        Integer anioVigencia
+        Integer anioVigencia,
+        Boolean cuotaForzosa,
+        Boolean esValido
 ) {}
