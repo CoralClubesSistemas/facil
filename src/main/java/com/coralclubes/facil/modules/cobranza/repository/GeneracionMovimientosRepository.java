@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -36,5 +38,49 @@ public class GeneracionMovimientosRepository {
                 params,
                 movimientoMapper
         );
+    }
+
+    public void spCobranzaInsertaMovimientoManual(
+            String membresia,
+            Integer tipoMovimiento,
+            Integer cantidad,
+            String descripcion,
+            BigDecimal cuota,
+            LocalDate fechaVencimiento,
+            Integer desarrolloConsumo,
+            String usuario
+    ) {
+        Map<String, Object> params = Map.of(
+                "membresia", membresia,
+                "tipoMovimiento", tipoMovimiento,
+                "cantidad", cantidad,
+                "descripcion", descripcion != null ? descripcion : "",
+                "cuota", cuota,
+                "fechaVencimiento", fechaVencimiento,
+                "desarrolloConsumo", desarrolloConsumo,
+                "usuario", usuario
+        );
+
+        spExecutor.execute("spCobranzaInsertaMovimientoManual", params);
+    }
+
+    public void spCobranzaInsertaMovimientoCredenciales(
+            String membresia,
+            Integer anios,
+            Boolean incluirPrevios,
+            LocalDate fechaVencimiento,
+            Integer desarrolloConsumo,
+            String usuario
+    ) {
+        Map<String, Object> params = Map.of(
+                "membresia", membresia,
+                "anios", anios,
+                "incluirPrevios", incluirPrevios != null ? incluirPrevios : false,
+                "fechaVencimiento", fechaVencimiento,
+                "desarrolloConsumo", desarrolloConsumo,
+                "usuario", usuario
+        );
+
+        spExecutor.execute("spCobranzaInsertaMovimientoCredenciales", params);
     }
 }
