@@ -42,14 +42,31 @@ public class MovimientoEstandarStrategy implements GeneracionMovimientoStrategy 
             }
         }
 
+        String descripcion = "";
+        if (params.containsKey("descripcion") && params.get("descripcion") != null) {
+            descripcion = params.get("descripcion").toString();
+        }
+
+        java.math.BigDecimal cuota = java.math.BigDecimal.ZERO;
+        if (params.containsKey("cuota") && params.get("cuota") != null) {
+            Object cuotaVal = params.get("cuota");
+            if (cuotaVal instanceof java.math.BigDecimal bigDecimal) {
+                cuota = bigDecimal;
+            } else if (cuotaVal instanceof Number num) {
+                cuota = java.math.BigDecimal.valueOf(num.doubleValue());
+            } else {
+                cuota = new java.math.BigDecimal(cuotaVal.toString());
+            }
+        }
+
         logger.info(usuario, "Generando movimiento estándar: {}", Map.of(
                 "membresia", request.getMembresia(),
                 "tipoMovimientoId", request.getTipoMovimientoId(),
                 "cantidad", cantidad,
-                "descripcion", request.getDescripcion(),
-                "cuota", request.getCuota(),
-                "fechaVencimiento", request.getFechaVencimiento(),
-                "desarrolloConsumo", request.getDesarrolloConsumo()
+                "descripcion", descripcion,
+                "cuota", cuota,
+                "fechaVencimiento", request.getFechaVencimiento() != null ? request.getFechaVencimiento() : LocalDate.now(),
+                "desarrolloConsumo", request.getDesarrolloConsumo() != null ? request.getDesarrolloConsumo() : 0
         ));
 
         LocalDate fechaVencimiento = request.getFechaVencimiento() != null 
@@ -60,8 +77,8 @@ public class MovimientoEstandarStrategy implements GeneracionMovimientoStrategy 
                 request.getMembresia(),
                 request.getTipoMovimientoId(),
                 cantidad,
-                request.getDescripcion(),
-                request.getCuota(),
+                descripcion,
+                cuota,
                 fechaVencimiento,
                 request.getDesarrolloConsumo(),
                 usuario

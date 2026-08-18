@@ -1,5 +1,6 @@
 package com.coralclubes.facil.modules.cobranza.repository;
 
+import com.coralclubes.facil.modules.cobranza.dto.response.CotizacionCredencialesResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoPorTipoMembresiaResponse;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import lombok.RequiredArgsConstructor;
@@ -82,5 +83,37 @@ public class GeneracionMovimientosRepository {
         );
 
         spExecutor.execute("spCobranzaInsertaMovimientoCredenciales", params);
+    }
+
+    private final RowMapper<CotizacionCredencialesResponse> cotizacionCredencialesMapper = (rs, rowNum) ->
+            CotizacionCredencialesResponse.builder()
+                    .tarifaEstablecida(rs.getBigDecimal("tarifaEstablecida"))
+                    .cantidadBeneficiarios(rs.getObject("cantidadBeneficiarios") != null ? rs.getInt("cantidadBeneficiarios") : null)
+                    .cantidadMovimientosAInsertar(rs.getObject("cantidadMovimientosAInsertar") != null ? rs.getInt("cantidadMovimientosAInsertar") : null)
+                    .cantidadMovimientosAModificar(rs.getObject("cantidadMovimientosAModificar") != null ? rs.getInt("cantidadMovimientosAModificar") : null)
+                    .calculoTotal(rs.getBigDecimal("calculoTotal"))
+                    .cuotaPorRegitro(rs.getBigDecimal("cuotaPorRegitro"))
+                    .build();
+
+    public CotizacionCredencialesResponse spCobranzaConsultarCotizacionCredenciales(
+            String membresia,
+            Integer anios,
+            Boolean incluirPrevios,
+            Integer desarrolloConsumo
+    ) {
+        System.out.println("spCobranzaConsultarCotizacionCredenciales called with: membresia=" + membresia + ", anios=" + anios + ", incluirPrevios=" + incluirPrevios + ", desarrolloConsumo=" + desarrolloConsumo);
+
+        Map<String, Object> params = Map.of(
+                "membresia", membresia,
+                "anios", anios,
+                "incluirPrevios", incluirPrevios != null ? incluirPrevios : false,
+                "desarrolloConsumo", desarrolloConsumo
+        );
+
+        return spExecutor.querySingle(
+                "spCobranzaConsultarCotizacionCredenciales",
+                params,
+                cotizacionCredencialesMapper
+        ).orElse(null);
     }
 }

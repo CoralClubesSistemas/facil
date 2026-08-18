@@ -24,12 +24,10 @@ public class GeneracionMovimientoRequest {
     private Integer tipoMovimientoId;
 
     // Campos comunes
-    private BigDecimal cuota;
     private LocalDate fechaVencimiento;
     private Integer desarrolloConsumo;
-    private String descripcion;
 
-    // Campos dinámicos para casos especiales (anios, incluirPrevios, cantidad, etc.)
+    // Campos dinámicos para casos especiales (anios, incluirPrevios, cantidadMovimientos, descripcion, cuota, etc.)
     @Builder.Default
     private Map<String, Object> parametrosEspeciales = new HashMap<>();
 }

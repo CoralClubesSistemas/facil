@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.cobranza.controller.admin;
 
 import com.coralclubes.facil.modules.cobranza.dto.request.GeneracionMovimientoRequest;
+import com.coralclubes.facil.modules.cobranza.dto.response.CotizacionCredencialesResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoPorTipoMembresiaResponse;
 import com.coralclubes.facil.modules.cobranza.service.GeneracionMovimientosService;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
@@ -35,6 +36,26 @@ public class GeneracionMovimientosAdminController {
         return ResponseEntity.ok(ApiResponse.success(
                 "Tipos de movimientos obtenidos exitosamente.",
                 movimientos
+        ));
+    }
+
+    @GetMapping("/cotizar-credenciales")
+    @PreAuthorize("hasAuthority('MOD_SMNUGENERAMOVIMIENTOS')")
+    public ResponseEntity<ApiResponse<CotizacionCredencialesResponse>> cotizarCredenciales(
+            @RequestParam String membresia,
+            @RequestParam(defaultValue = "1") Integer anios,
+            @RequestParam(defaultValue = "false") Boolean incluirPrevios,
+            @RequestParam(required = false) Integer desarrolloConsumo
+    ) {
+        CotizacionCredencialesResponse cotizacion = service.cotizarCredenciales(
+                membresia,
+                anios,
+                incluirPrevios,
+                desarrolloConsumo
+        );
+        return ResponseEntity.ok(ApiResponse.success(
+                "Cotización de credenciales consultada exitosamente.",
+                cotizacion
         ));
     }
 

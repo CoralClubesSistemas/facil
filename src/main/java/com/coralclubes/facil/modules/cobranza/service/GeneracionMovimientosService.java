@@ -20,6 +20,15 @@ public class GeneracionMovimientosService {
         return repository.spCobranzaObtenerMovimientosPorTipoMembresia(tipoMembresia);
     }
 
+    public com.coralclubes.facil.modules.cobranza.dto.response.CotizacionCredencialesResponse cotizarCredenciales(
+            String membresia,
+            Integer anios,
+            Boolean incluirPrevios,
+            Integer desarrolloConsumo
+    ) {
+        return repository.spCobranzaConsultarCotizacionCredenciales(membresia, anios, incluirPrevios, desarrolloConsumo);
+    }
+
     public void generarMovimiento(GeneracionMovimientoRequest request, String usuario) {
         GeneracionMovimientoStrategy strategy = strategies.stream()
                 .filter(s -> s.soporta(request.getTipoMovimientoId()))
