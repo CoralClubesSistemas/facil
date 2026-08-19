@@ -10,13 +10,11 @@ import com.coralclubes.facil.modules.cobranza.repository.CobranzaRepository;
 import com.coralclubes.facil.modules.cobranza.repository.IntentoPagoRepository;
 import com.coralclubes.facil.modules.usuarios.service.UsuarioService;
 import com.coralclubes.facil.shared.events.dto.ReciboPagadoEvent;
-import com.coralclubes.facil.shared.infrastructure.integration.ia.analisis.AnalisisDeInformacion;
+// import com.coralclubes.facil.shared.infrastructure.integration.ia.analisis.AnalisisDeInformacion;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.NotificationClient;
-import com.coralclubes.facil.shared.infrastructure.integration.notifications.dto.SolicitudNotificacionDto;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
-import com.coralclubes.responses.codes.GeneralResponseCode;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -33,24 +31,17 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class CobranzaService {
-
     private final CobranzaRepository repository;
     private final ObjectMapper objectMapper;
-    private final CobranzaGeneradorDocumentosService generador;
-    private final NotificationClient notificationClient;
     private final BusinessLogger log;
     private final UsuarioService usuarioService;
-
     private final IntentoPagoRepository intentoPagoRepository;
     private final PaymentStrategyFactory strategyFactory;
-
     private final UserContext userContext;
-
     private final CobranzaPostProcesoAsyncService postProcesoAsyncService;
-
     private final ApplicationEventPublisher eventPublisher;
 
-    private final AnalisisDeInformacion bedrockClient;
+    // private final AnalisisDeInformacion bedrockClient;
 
     public ApiResponse<GenerarOrdenCobranzaResponse> generarOrdenCobranza(GenerarOrdenCobranzaRequest request, String usuario) {
         String movimientosJson = serializarMovimientos(request);
@@ -230,7 +221,7 @@ public class CobranzaService {
     }
 
 
-    public ApiResponse<AnalisisCobranzaResponse> analizarClienteParaCobranza(String membresia) {
+    /* public ApiResponse<AnalisisCobranzaResponse> analizarClienteParaCobranza(String membresia) {
         String dataJsonCliente = repository.spClientesObtenerDataParaAnalisis(membresia)
                 .orElseThrow(() -> new IllegalStateException("No se encontró información para la membresía proporcionada."));
 
@@ -256,7 +247,7 @@ public class CobranzaService {
             log.error(userContext.getUsername(), "La IA no devolvió un JSON válido: {}", respuestaIa);
             throw new IllegalStateException("Ocurrió un error al procesar la respuesta de la inteligencia artificial.");
         }
-    }
+    }*/
 
     public Optional<String> obtenerSiguienteMembresiaPendiente(String membresiaActual) {
         String usuario = userContext.getUsername();
