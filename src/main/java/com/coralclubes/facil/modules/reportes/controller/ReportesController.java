@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.reportes.controller;
 
 import com.coralclubes.dto.SelectGenerico;
+import com.coralclubes.facil.modules.reportes.dto.application.RegistroReporte;
 import com.coralclubes.facil.modules.reportes.dto.request.EjecutarReporteRequest;
 import com.coralclubes.facil.modules.reportes.dto.response.*;
 import com.coralclubes.facil.modules.reportes.enums.ClavesModulosReportes;
@@ -78,11 +79,11 @@ public class ReportesController {
             @RequestParam(required = false, defaultValue = "Reporte") String nombreReporte) {
 
         // A. Motor Service hace su trabajo síncrono: Guarda la bitácora
-        Integer idBitacora = motorService.registrarInicioReporteAsync(request, nombreReporte);
+        RegistroReporte registro = motorService.registrarInicioReporteAsync(request, nombreReporte);
         String usuario = userContext.getUsername();
 
         // B. dispara el servicio asíncrono
-        asyncService.procesarReporteYSubirAsincrono(request, nombreReporte, idBitacora, usuario);
+        asyncService.procesarReporteYSubirAsincrono(request, registro.nombreArchivo(), registro.idBitacora(), usuario);
 
         // C. Responde inmediatamente al Frontend
         return ResponseEntity.accepted().body(
@@ -95,7 +96,7 @@ public class ReportesController {
     // =========================================================================
 
     @GetMapping("/catalogos/{nombreCatalogo}")
-    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerCatalogo(
+    public ResponseEntity<ApiResponse<List<? extends SelectGenerico<?>>>> obtenerCatalogo(
             @PathVariable String nombreCatalogo) {
         return ResponseEntity.ok(catalogoService.obtenerCatalogo(nombreCatalogo));
     }
@@ -135,5 +136,16 @@ public class ReportesController {
         } catch (Exception e) {
             throw new RuntimeException("No se pudo obtener la URL de descarga del archivo.");
         }
+    }
+
+    // =========================================================================
+    // Eliminacion fisica del archivo del storage
+    // =========================================================================
+
+    @DeleteMapping("/eliminar/{uuid}")
+    public ResponseEntity<ApiResponse<Void>> eliminarArchivo(@PathVariable java.util.UUID uuid) {
+        String usuario = userContext.getUsername();
+        motorService.eliminarArchivo(uuid, usuario);
+        return ResponseEntity.ok(ApiResponse.empty());
     }
 }

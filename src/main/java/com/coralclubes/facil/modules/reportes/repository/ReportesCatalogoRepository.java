@@ -17,71 +17,78 @@ public class ReportesCatalogoRepository {
     private final RowMapper<SelectGenerico<Integer>> selectIntMapper = (rs, rowNum) ->
             new SelectGenerico<>(rs.getInt(1), rs.getString(2));
 
+    private final RowMapper<SelectGenerico<String>> selectStringMapper = (rs, rowNum) ->
+            new SelectGenerico<>(rs.getString(1), rs.getString(2));
+
+    private <T> List<SelectGenerico<T>> ejecutarSp(String spName, RowMapper<SelectGenerico<T>> mapper) {
+        return spExecutor.queryList(spName, java.util.Map.of(), mapper);
+    }
+
     public List<SelectGenerico<Integer>> catalogoDesarrollos() {
-        return spExecutor.queryList("spRepoCatalogoDesarrollos", java.util.Map.of(), selectIntMapper);
+        return ejecutarSp("spRepoCatalogoDesarrollos", selectIntMapper);
     }
 
     public List<SelectGenerico<Integer>> catalogoCartera() {
-        return spExecutor.queryList("spRepoCatalogoCartera", java.util.Map.of(), selectIntMapper);
+        return ejecutarSp("spRepoCatalogoCartera", selectIntMapper);
     }
 
     public List<SelectGenerico<Integer>> catalogoClasificacionMembresia() {
-        return spExecutor.queryList("spRepoCatalogoClasificacionMembresia", java.util.Map.of(), selectIntMapper);
+        return ejecutarSp("spRepoCatalogoClasificacionMembresia", selectIntMapper);
     }
 
     public List<SelectGenerico<Integer>> catalogoEmpleados() {
-        return spExecutor.queryList("spRepoCatalogoEmpleados", java.util.Map.of(), selectIntMapper);
+        return ejecutarSp("spRepoCatalogoEmpleados", selectIntMapper);
     }
 
     public List<SelectGenerico<Integer>> catalogoEstados() {
-        return spExecutor.queryList("spRepoCatalogoEstados", java.util.Map.of(), selectIntMapper);
+        return ejecutarSp("spRepoCatalogoEstados", selectIntMapper);
     }
 
     public List<SelectGenerico<Integer>> catalogoEstatusRecibos() {
-        return spExecutor.queryList("spRepoCatalogoEstatusRecibos", java.util.Map.of(), selectIntMapper);
+        return ejecutarSp("spRepoCatalogoEstatusRecibos", selectIntMapper);
     }
 
     public List<SelectGenerico<Integer>> catalogoEstatusUnidades() {
-        return spExecutor.queryList("spRepoCatalogoEstatusUnidades", java.util.Map.of(), selectIntMapper);
+        return ejecutarSp("spRepoCatalogoEstatusUnidades", selectIntMapper);
     }
 
     public List<SelectGenerico<Integer>> catalogoLocaciones() {
-        return spExecutor.queryList("spRepoCatalogoLocaciones", java.util.Map.of(), selectIntMapper);
+        return ejecutarSp("spRepoCatalogoLocaciones", selectIntMapper);
     }
 
     public List<SelectGenerico<Integer>> catalogoPromotores() {
-        return spExecutor.queryList("spRepoCatalogoPromotores", java.util.Map.of(), selectIntMapper);
+        return ejecutarSp("spRepoCatalogoPromotores", selectIntMapper);
     }
 
     public List<SelectGenerico<Integer>> catalogoSeriesRecibos() {
-        return spExecutor.queryList("spRepoCatalogoSeriesRecibos", java.util.Map.of(), selectIntMapper);
+        return ejecutarSp("spRepoCatalogoSeriesRecibos", selectIntMapper);
     }
 
     public List<SelectGenerico<Integer>> catalogoTipoCupones() {
-        return spExecutor.queryList("spRepoCatalogoTipoCupones", java.util.Map.of(), selectIntMapper);
+        return ejecutarSp("spRepoCatalogoTipoCupones", selectIntMapper);
     }
 
     public List<SelectGenerico<Integer>> catalogoTiposMovimientos() {
-        return spExecutor.queryList("spRepoCatalogoTiposMovimientos", java.util.Map.of(), selectIntMapper);
+        return ejecutarSp("spRepoCatalogoTiposMovimientos", selectIntMapper);
     }
 
     public List<SelectGenerico<Integer>> catalogoTiposProductos() {
-        return spExecutor.queryList("spRepoCatalogoTiposProductos", java.util.Map.of(), selectIntMapper);
+        return ejecutarSp("spRepoCatalogoTiposProductos", selectIntMapper);
     }
 
-    public List<SelectGenerico<Integer>> catalogoUsuarios() {
-        return spExecutor.queryList("spRepoCatalogoUsuarios", java.util.Map.of(), selectIntMapper);
+    public List<SelectGenerico<String>> catalogoUsuarios() {
+        return ejecutarSp("spRepoCatalogoUsuarios", selectStringMapper);
     }
 
     public List<SelectGenerico<Integer>> catalogoEstatusReservaciones() {
-        return spExecutor.queryList("spRepoCatalogoEstatusReservaciones", java.util.Map.of(), selectIntMapper);
+        return ejecutarSp("spRepoCatalogoEstatusReservaciones", selectIntMapper);
     }
 
     public List<SelectGenerico<Integer>> catalogoEstatusMembresia() {
-        return spExecutor.queryList("spRepoCatalogoEstatusMembresias", java.util.Map.of(), selectIntMapper);
+        return ejecutarSp("spRepoCatalogoEstatusMembresias", selectIntMapper);
     }
 
     public List<SelectGenerico<Integer>> catalogoTiposMembresias() {
-        return spExecutor.queryList("spRepoCatalogoTiposMembresias", java.util.Map.of(), selectIntMapper);
+        return ejecutarSp("spRepoCatalogoTiposMembresias", selectIntMapper);
     }
 }

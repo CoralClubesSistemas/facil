@@ -15,8 +15,8 @@ public class ReportesCatalogoService {
 
     private final ReportesCatalogoRepository repository;
 
-    public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogo(String nombreCatalogo) {
-        List<SelectGenerico<Integer>> datos = switch (nombreCatalogo.toUpperCase()) {
+    public ApiResponse<List<? extends SelectGenerico<?>>> obtenerCatalogo(String nombreCatalogo) {
+        List<? extends SelectGenerico<?>> datos = switch (nombreCatalogo.toUpperCase()) {
             case "DESARROLLOS" -> repository.catalogoDesarrollos();
             case "CARTERAS" -> repository.catalogoCartera();
             case "CLASIFICACIONMEMBRESIA" -> repository.catalogoClasificacionMembresia();

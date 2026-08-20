@@ -49,8 +49,6 @@ public class ReportesAsyncService {
     public void procesarReporteYSubirAsincrono(EjecutarReporteRequest request, String nombreReporteBase, Integer idBitacora, String usuario) {
         log.info("Iniciando procesamiento asíncrono. Reporte: {}, Bitácora ID: {}, Usuario: {}", nombreReporteBase, idBitacora, usuario);
 
-        String nombreArchivoFinal = excelExportService.generarNombreArchivo(nombreReporteBase);
-
         try {
             // 1. Ejecutar el reporte en BD (También persiste favoritos y columnas seleccionadas)
             List<Map<String, Object>> datosCrudos = motorService.ejecutarYpersistir(request);
@@ -74,7 +72,7 @@ public class ReportesAsyncService {
                     .requiereDepuracion(false)
                     .build();
 
-            InfoArchivoDto respuestaCarga = storageClient.cargarArchivoSincrono(excelBytes, nombreArchivoFinal, MIME_TYPE_EXCEL, solicitud);
+            InfoArchivoDto respuestaCarga = storageClient.cargarArchivoSincrono(excelBytes, nombreReporteBase, MIME_TYPE_EXCEL, solicitud);
             UUID fileUuid = respuestaCarga.uuid();
 
             log.info("Reporte subido exitosamente a Coral Storage. FileId: {}", fileUuid);

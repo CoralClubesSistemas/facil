@@ -418,4 +418,9 @@ public class ReportesMotorRepository {
                 Map.of("Usuario", usuario, "Limite", limite, "Modulo", claveModulo),
                 historialMapper);
     }
+
+    public void marcarArchivoEliminado(UUID uuidArchivo) {
+        executeSP("spRepoMarcarArchivoEliminado",
+                Map.of("UuidArchivo", uuidArchivo.toString()));
+    }
 }

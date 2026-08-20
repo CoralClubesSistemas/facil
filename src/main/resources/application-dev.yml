@@ -8,12 +8,12 @@ spring:
       - io.awspring.cloud.autoconfigure.sqs.SqsAutoConfiguration
 
   datasource:
-    url: jdbc:sqlserver://localhost:1435;databaseName=Facil_2;trustServerCertificate=true;encrypt=false
+    url: jdbc:sqlserver://localhost:1435;databaseName=Facil_1;trustServerCertificate=true;encrypt=false
     username: sa
     password: CoralClubes1234#
 
   datasource-replica:
-    url: jdbc:sqlserver://localhost:1435;databaseName=Facil_2;trustServerCertificate=true;encrypt=false
+    url: jdbc:sqlserver://localhost:1435;databaseName=Facil_1;trustServerCertificate=true;encrypt=false
     username: sa
     password: CoralClubes1234#
 

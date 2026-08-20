@@ -1,21 +1,22 @@
 package com.coralclubes.facil.modules.reportes.service;
 
+import com.coralclubes.facil.modules.reportes.dto.application.RegistroReporte;
 import com.coralclubes.facil.modules.reportes.dto.request.EjecutarReporteRequest;
 import com.coralclubes.facil.modules.reportes.dto.response.*;
 import com.coralclubes.facil.modules.reportes.enums.ClavesModulosReportes;
 import com.coralclubes.facil.modules.reportes.repository.ReportesMotorRepository;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
 import com.coralclubes.responses.ApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 public class ReportesMotorService {
 
     private final ReportesMotorRepository repository;
+    private final StorageClient storageClient;
     private final UserContext userContext;
     private final ObjectMapper mapper;
 
@@ -259,10 +261,14 @@ public class ReportesMotorService {
     /**
      * Solo registra la solicitud en la bitácora y devuelve el ID generado.
      */
-    public Integer registrarInicioReporteAsync(EjecutarReporteRequest request, String nombreReporteBase) {
+    public RegistroReporte registrarInicioReporteAsync(EjecutarReporteRequest request, String nombreReporteBase) {
         try {
+            // Agregamos a los parametros las fechas de inicio y fin del reporte
+            request.parametros().put("fecha_inicio", request.fechaInicio());
+            request.parametros().put("fecha_fin", request.fechaFin());
+
             String parametrosJson = mapper.writeValueAsString(request.parametros());
-            String nombreTemporal = nombreReporteBase + "_Procesando.xlsx";
+            String nombreTemporal = parseName(nombreReporteBase, request.fechaInicio(), request.fechaFin());
             String usuario = userContext.getUsername();
 
             Integer idBitacora = repository.registrarInicioReporte(usuario, request.idTipoReporte(), nombreTemporal, parametrosJson);
@@ -274,10 +280,27 @@ public class ReportesMotorService {
             // guardamos las preferencias del usario para este reporte
             persistirConfiguracion(request.idTipoReporte(), repository.obtenerParametrosMapeo(request.idTipoReporte()), request.parametros(), request.columnas());
 
-            return idBitacora;
+            return new RegistroReporte(idBitacora, nombreTemporal);
         } catch (Exception e) {
             log.error("Error al registrar inicio de bitácora: {}", e.getMessage());
             throw new RuntimeException("No se pudo registrar el reporte en el historial.");
         }
+    }
+
+    @Transactional
+    public void eliminarArchivo(UUID uuid, String usuario) {
+        log.info("Eliminando archivo con UUID {} solicitado por usuario {}", uuid, usuario);
+        // 1. marcamos el archivo como eliminado en la bitácora
+        repository.marcarArchivoEliminado(uuid);
+        // 2. eliminamos el archivo del storage
+        storageClient.eliminarArchivo(uuid, true);
+    }
+
+    private String parseName(String name, String fechaInicio, String fechaFin) {
+        String nombre = name.replaceAll("\\s+", "_");
+        String fechaInicioStr = fechaInicio.replace("-", "");
+        String fechaFinStr = fechaFin.replace("-", "");
+
+        return String.format("%s_%s_%s.xlsx", nombre, fechaInicioStr, fechaFinStr);
     }
 }
