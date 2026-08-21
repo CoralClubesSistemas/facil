@@ -1,10 +1,10 @@
-package com.coralclubes.facil.modules.manuales.controller;
+package com.coralclubes.facil.modules.sistema.controller.admin;
 
-import com.coralclubes.facil.modules.manuales.dto.request.ManualRequest;
-import com.coralclubes.facil.modules.manuales.dto.request.VersionRequest;
-import com.coralclubes.facil.modules.manuales.dto.response.ManualResponse;
-import com.coralclubes.facil.modules.manuales.dto.response.VersionResponse;
-import com.coralclubes.facil.modules.manuales.service.ManualesService;
+import com.coralclubes.facil.modules.sistema.dto.request.ManualRequest;
+import com.coralclubes.facil.modules.sistema.dto.request.VersionRequest;
+import com.coralclubes.facil.modules.sistema.dto.response.ManualResponse;
+import com.coralclubes.facil.modules.sistema.dto.response.VersionResponse;
+import com.coralclubes.facil.modules.sistema.service.ManualesService;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
 import com.coralclubes.responses.ApiResponse;
@@ -68,5 +68,11 @@ public class ManualesController {
             @PathVariable Integer manualId,
             @PathVariable Integer version) {
         return ResponseEntity.ok(service.obtenerUrlDescarga(manualId, version));
+    }
+
+    @GetMapping("/modulo/{moduloId}/version-actual")
+    public ResponseEntity<ApiResponse<VersionResponse>> obtenerVersionActualManual(
+            @PathVariable Integer moduloId) {
+        return ResponseEntity.ok(service.obtenerVersionActualManual(moduloId));
     }
 }

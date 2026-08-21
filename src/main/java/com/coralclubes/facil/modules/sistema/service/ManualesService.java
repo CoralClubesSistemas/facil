@@ -1,10 +1,10 @@
-package com.coralclubes.facil.modules.manuales.service;
+package com.coralclubes.facil.modules.sistema.service;
 
-import com.coralclubes.facil.modules.manuales.dto.request.ManualRequest;
-import com.coralclubes.facil.modules.manuales.dto.request.VersionRequest;
-import com.coralclubes.facil.modules.manuales.dto.response.ManualResponse;
-import com.coralclubes.facil.modules.manuales.dto.response.VersionResponse;
-import com.coralclubes.facil.modules.manuales.repository.ManualesRepository;
+import com.coralclubes.facil.modules.sistema.dto.request.ManualRequest;
+import com.coralclubes.facil.modules.sistema.dto.request.VersionRequest;
+import com.coralclubes.facil.modules.sistema.dto.response.ManualResponse;
+import com.coralclubes.facil.modules.sistema.dto.response.VersionResponse;
+import com.coralclubes.facil.modules.sistema.repository.ManualesRepository;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
@@ -101,7 +101,7 @@ public class ManualesService {
                 .contentType(request.contentType())
                 .tamanoBytes(request.tamanoBytes())
                 .aliasConfiguracion(aliasStorageDefault)
-                .esPublico(true)
+                .esPublico(false)
                 .rutaLogica(rutaLogica)
                 .metadatos(Map.of(
                         "modulo", "MANUALES",
@@ -113,5 +113,11 @@ public class ManualesService {
         RespuestaCargaDto respuestaStorage = storageClient.solicitarUrlCarga(solicitudStorage);
 
         return ApiResponse.success("URL de carga generada exitosamente", respuestaStorage);
+    }
+
+    public ApiResponse<VersionResponse> obtenerVersionActualManual(Integer moduloId) {
+        VersionResponse version = repository.spMnlObtenerVersionActual(moduloId)
+                .orElse(null);
+        return ApiResponse.success("Versión actual del manual obtenida correctamente", version);
     }
 }

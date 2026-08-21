@@ -1,4 +1,4 @@
-package com.coralclubes.facil.modules.manuales.dto.response;
+package com.coralclubes.facil.modules.sistema.dto.response;
 
 import lombok.Builder;
 

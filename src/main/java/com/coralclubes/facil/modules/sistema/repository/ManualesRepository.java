@@ -1,9 +1,9 @@
-package com.coralclubes.facil.modules.manuales.repository;
+package com.coralclubes.facil.modules.sistema.repository;
 
-import com.coralclubes.facil.modules.manuales.dto.request.ManualRequest;
-import com.coralclubes.facil.modules.manuales.dto.request.VersionRequest;
-import com.coralclubes.facil.modules.manuales.dto.response.ManualResponse;
-import com.coralclubes.facil.modules.manuales.dto.response.VersionResponse;
+import com.coralclubes.facil.modules.sistema.dto.request.ManualRequest;
+import com.coralclubes.facil.modules.sistema.dto.request.VersionRequest;
+import com.coralclubes.facil.modules.sistema.dto.response.ManualResponse;
+import com.coralclubes.facil.modules.sistema.dto.response.VersionResponse;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
@@ -96,5 +96,10 @@ public class ManualesRepository {
         return spExecutor.queryList("spMnlObtenerUuidArchivo", params, uuidMapper)
                 .stream()
                 .findFirst();
+    }
+
+    public Optional<VersionResponse> spMnlObtenerVersionActual(Integer moduloId) {
+        Map<String, Object> params = Map.of("modulo_id", moduloId);
+        return spExecutor.querySingle("spMnlObtenerVersionActual", params, versionMapper);
     }
 }

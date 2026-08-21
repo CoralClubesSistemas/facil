@@ -94,6 +94,7 @@ public class ReportesMotorRepository {
     // =========================================================================
     // CONSULTAS DEL MOTOR
     // =========================================================================
+    // =========================================================================
 
     public List<ReporteDisponibleDto> obtenerReportesActivos(Integer idRol, String claveModulo) {
         return querySP("spRepoObtenerReportesActivos",

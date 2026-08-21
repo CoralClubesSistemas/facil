@@ -1,4 +1,4 @@
-package com.coralclubes.facil.modules.manuales.dto.request;
+package com.coralclubes.facil.modules.sistema.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
