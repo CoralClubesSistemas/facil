@@ -11,7 +11,6 @@ import com.coralclubes.facil.modules.cobranza.repository.IntentoPagoRepository;
 import com.coralclubes.facil.modules.usuarios.service.UsuarioService;
 import com.coralclubes.facil.shared.events.dto.ReciboPagadoEvent;
 // import com.coralclubes.facil.shared.infrastructure.integration.ia.analisis.AnalisisDeInformacion;
-import com.coralclubes.facil.shared.infrastructure.integration.notifications.NotificationClient;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
@@ -21,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.Optional;
 
 import java.math.BigDecimal;

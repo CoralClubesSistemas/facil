@@ -1107,7 +1107,7 @@ public class ReservacionesService {
                 .aliasConfig(aliasConfigNotificaciones)
                 .destinatarios(destinatarios)
                 .codigoPlantilla(templateReservaCreada)
-                .remitenteOverride("reservaciones@lvivardev.com")
+                // .remitenteOverride("reservaciones@lvivardev.com")
                 .variables(Map.of(
                         "nombreUsuario", event.nombreReserva(),
                         "numeroReserva", foliosStr

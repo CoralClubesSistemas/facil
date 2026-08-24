@@ -79,7 +79,7 @@ public class TemporadasRepository {
         params.put("Usuario", usuario);
 
         // Pasamos throwException = true para que el THROW de SQL Server llegue al GlobalExceptionHandler
-        return spExecutor.querySingleLog("spResvGuardarTemporadaReservacion", params, scalarIntMapper, usuario, false, true);
+        return spExecutor.querySingleLog("spResvGuardarTemporadaReservacion", params, scalarIntMapper, usuario, true, false);
     }
 
     @Caching(evict = {

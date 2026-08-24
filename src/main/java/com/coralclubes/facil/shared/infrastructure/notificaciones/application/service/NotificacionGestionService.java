@@ -27,7 +27,7 @@ public class NotificacionGestionService {
     public List<NotificacionDto> obtenerNoLeidas() {
         String username = userContext.getUsername();
 
-        List<Notificacion> resp = notificacionRepository.findByDestinatarioAndEstadoOrderByFechaCreacionDesc(username, "NO_LEIDO");
+        List<Notificacion> resp = notificacionRepository.findByDestinatarioAndEstadoOrderByNivelPrioridadDescFechaCreacionDesc(username, "NO_LEIDO");
 
         return resp.stream().map(n -> new NotificacionDto(
                 n.getId(),
@@ -71,7 +71,7 @@ public class NotificacionGestionService {
         String username = userContext.getUsername();
 
         List<Notificacion> notificaciones = notificacionRepository
-                .findByDestinatarioAndEstadoOrderByFechaCreacionDesc(username, "NO_LEIDO");
+                .findByDestinatarioAndEstadoOrderByNivelPrioridadDescFechaCreacionDesc(username, "NO_LEIDO");
 
         if (notificaciones == null || notificaciones.isEmpty()) return;
 
