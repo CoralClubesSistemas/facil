@@ -40,12 +40,6 @@
             <name>GitHub Packages - Exceptions</name>
             <url>https://maven.pkg.github.com/CoralClubesSistemas/coral-exceptions</url>
         </repository>
-
-        <repository>
-            <id>zohocrm-java-sdk-8-0</id>
-            <name>Zoho CRM SDK Repository</name>
-            <url>https://maven.zohodl.com</url>
-        </repository>
     </repositories>
 
     <properties>
@@ -220,20 +214,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
-
-        <!-- Zoho CRM Java SDK 8.0 -->
-        <dependency>
-            <groupId>com.zoho.crm</groupId>
-            <artifactId>zohocrm-java-sdk-8-0</artifactId>
-            <version>5.0.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-simple</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
 
     </dependencies>
     <dependencyManagement>

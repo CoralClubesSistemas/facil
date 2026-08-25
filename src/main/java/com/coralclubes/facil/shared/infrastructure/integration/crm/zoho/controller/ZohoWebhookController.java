@@ -31,7 +31,7 @@ public class ZohoWebhookController {
      */
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<String>> recibirWebhookJson(@RequestBody ZohoWebhookPayload payload) {
-        log.info("[ZOHO WEBHOOK CONTROLLER] Webhook JSON recibido para Lead ID: {}", payload.getEffectiveLeadId());
+        log.info("[ZOHO WEBHOOK] Se recibió evento de cita desde Zoho para Lead ID: {}", payload.getEffectiveLeadId());
         zohoProspectoAdapter.procesarWebhookZoho(payload, null);
         return ResponseEntity.ok(ApiResponse.success("Evento de Zoho procesado exitosamente", payload.getEffectiveLeadId()));
     }
@@ -42,7 +42,7 @@ public class ZohoWebhookController {
     @PostMapping(consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public ResponseEntity<ApiResponse<String>> recibirWebhookFormUrlEncoded(@RequestParam Map<String, String> params) {
         String leadId = params.getOrDefault("entity_id", params.getOrDefault("id", "UNKNOWN_LEAD_ID"));
-        log.info("[ZOHO WEBHOOK CONTROLLER] Webhook Form-UrlEncoded recibido para Lead ID: {}", leadId);
+        log.info("[ZOHO WEBHOOK] Se recibió evento de cita desde Zoho para Lead ID: {}", leadId);
         zohoProspectoAdapter.procesarWebhookZoho(null, params);
         return ResponseEntity.ok(ApiResponse.success("Evento de Zoho procesado exitosamente", leadId));
     }

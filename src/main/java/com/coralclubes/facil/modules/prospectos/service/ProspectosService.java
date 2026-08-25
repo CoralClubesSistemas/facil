@@ -30,12 +30,12 @@ public class ProspectosService {
      * @return ID del prospecto creado o actualizado.
      */
     public Integer crearOActualizarProspecto(ProspectoCrearRequest request) {
-        log.info("[PROSPECTOS SERVICE] Registrando/actualizando prospecto con ID externo: {}, email: {}",
+        log.debug("[PROSPECTOS SERVICE] Registrando/actualizando prospecto con ID externo: {}, email: {}",
                 request.idExterno(), request.email());
 
         Integer prospectoId = prospectosRepository.spProspectoCrearProspecto(request);
 
-        log.info("[PROSPECTOS SERVICE] Prospecto con ID externo {} procesado exitosamente con ID interno: {}",
+        log.debug("[PROSPECTOS SERVICE] Prospecto con ID externo {} procesado exitosamente con ID interno: {}",
                 request.idExterno(), prospectoId);
 
         return prospectoId;
@@ -48,7 +48,7 @@ public class ProspectosService {
      * @param usuario Usuario que ejecuta el registro de la cita.
      */
     public void registrarCitaProspecto(ProspectoRegistrarCitaRequest request, String usuario) {
-        log.info("[PROSPECTOS SERVICE] Registrando cita para el prospecto ID: {} en fecha: {} {}, usuario: {}",
+        log.debug("[PROSPECTOS SERVICE] Registrando cita para el prospecto ID: {} en fecha: {} {}, usuario: {}",
                 request.prospectoId(), request.fechaInicio(), request.horaInicio(), usuario);
 
         prospectosRepository.spProspectoRegistarCita(request, usuario);
@@ -64,21 +64,21 @@ public class ProspectosService {
      * @return true si el proceso se ejecutó exitosamente.
      */
     public boolean procesarResultadoCita(RegistrarResultadoCitaRequest request, String usuario) {
-        log.info("[PROSPECTOS SERVICE] Procesando resultado de cita '{}' para Lead ID Externo: {}, Cita ID: {}, Usuario: {}",
+        log.debug("[PROSPECTOS SERVICE] Procesando resultado de cita '{}' para Lead ID Externo: {}, Cita ID: {}, Usuario: {}",
                 request.resultado(), request.idExterno(), request.idCita(), usuario);
 
         // Paso 1: Actualizar estatus de la cita en BD mediante SP si idCita está presente
         if (request.idCita() != null) {
-            log.info("[PROSPECTOS SERVICE] Ejecutando spProspectoActualizarEstatusCita para Cita ID: {}", request.idCita());
+            log.debug("[PROSPECTOS SERVICE] Ejecutando spProspectoActualizarEstatusCita para Cita ID: {}", request.idCita());
             prospectosRepository.spProspectoActualizarEstatusCita(
                     request.idCita(),
                     request.resultado().name(),
                     request.observaciones(),
                     request.datosCompra() != null ? request.datosCompra().membresia() : null
             );
-            log.info("[PROSPECTOS SERVICE] Cita ID: {} actualizada exitosamente en BD", request.idCita());
+            log.debug("[PROSPECTOS SERVICE] Cita ID: {} actualizada exitosamente en BD", request.idCita());
         } else {
-            log.warn("[PROSPECTOS SERVICE] idCita no fue proporcionado en el request. Omitiendo ejecución de spProspectoActualizarEstatusCita.");
+            log.debug("[PROSPECTOS SERVICE] idCita no fue proporcionado en el request. Omitiendo ejecución de spProspectoActualizarEstatusCita.");
         }
 
         // Paso 2: Emitir evento hacia el CRM configurado
@@ -94,7 +94,7 @@ public class ProspectosService {
 
         crmEventPublisherPort.publicarResultadoCita(evento);
 
-        log.info("[PROSPECTOS SERVICE] Evento de resultado de cita despachado hacia el puerto CRM exitosamente para Lead: {}",
+        log.debug("[PROSPECTOS SERVICE] Evento de resultado de cita despachado hacia el puerto CRM exitosamente para Lead: {}",
                 request.idExterno());
 
         return true;

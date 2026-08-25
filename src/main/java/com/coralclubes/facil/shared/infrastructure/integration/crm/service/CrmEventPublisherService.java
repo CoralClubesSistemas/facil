@@ -31,12 +31,12 @@ public class CrmEventPublisherService {
         this.strategies = strategyList.stream()
                 .collect(Collectors.toMap(CrmEventSenderStrategy::getProveedor, Function.identity()));
         this.configuredProvider = parseProvider(providerStr);
-        log.info("[CRM PUBLISHER SERVICE] Inicializado con Proveedor activo: {}", this.configuredProvider);
+        log.debug("[CRM PUBLISHER SERVICE] Inicializado con Proveedor activo: {}", this.configuredProvider);
     }
 
     @Async
     public void publicarResultadoCita(EventoResultadoCita evento) {
-        log.info("[CRM PUBLISHER SERVICE] Emitiendo evento de resultado de cita para Lead ID: {} ({}) hacia Proveedor: {}",
+        log.debug("[CRM PUBLISHER SERVICE] Emitiendo evento de resultado de cita para Lead ID: {} ({}) hacia Proveedor: {}",
                 evento.idExterno(), evento.resultado(), configuredProvider);
 
         CrmEventSenderStrategy strategy = strategies.get(configuredProvider);

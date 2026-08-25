@@ -41,15 +41,4 @@ logging:
 server:
   max-http-request-header-size: 32KB
 
-app:
-  crm:
-    provider: zoho
-    zoho:
-      user-email: admin@coralclubes.com
-      client-id: ""
-      client-secret: ""
-      refresh-token: ""
-      environment: PRODUCTION
-      webhook-url: ""
-
 kind: Application

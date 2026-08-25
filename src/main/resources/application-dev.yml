@@ -93,11 +93,6 @@ app:
   crm:
     provider: zoho
     zoho:
-      user-email: lvivar@coralclubes.com
-      client-id: 1000.KUPGVY4J37Z9KMVF8S8EE70BRAZ5JJ
-      client-secret: df8eb4e88267c8db718b08517e8376a24714289ea6
-      refresh-token: 1000.b941b6d6c2471589ef80db9cb592e17b.34a1638a3e8f0a93f953e24c19b57a7b
-      environment: SANDBOX
       webhook-url: https://sandbox.zohoapis.com/crm/v7/functions/receiver_result/actions/execute?auth_type=apikey&zapikey=1003.f7e2178f61364f4334bab20df5e2600f.60496ce27353b741e3c88fb81367a440
 
 logging:

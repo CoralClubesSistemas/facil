@@ -40,8 +40,7 @@ public class ZohoCrmEventSenderStrategy implements CrmEventSenderStrategy {
 
         try {
             String jsonPayload = objectMapper.writeValueAsString(evento);
-            log.info("[ZOHO CRM SENDER] Enviando evento hacia Zoho Función/Webhook URL: {}\nPayload: {}",
-                    webhookUrl, jsonPayload);
+            log.debug("[ZOHO CRM SENDER] Payload a enviar a {}:\n{}", webhookUrl, jsonPayload);
 
             String response = restClient.post()
                     .uri(webhookUrl)
@@ -50,7 +49,9 @@ public class ZohoCrmEventSenderStrategy implements CrmEventSenderStrategy {
                     .retrieve()
                     .body(String.class);
 
-            log.info("[ZOHO CRM SENDER] Respuesta exitosa de Zoho CRM: {}", response);
+            log.info("[ZOHO CRM] Se envió evento de resultado de cita a Zoho para Lead ID: {}, Resultado: {}",
+                    evento.idExterno(), evento.resultado());
+            log.debug("[ZOHO CRM SENDER] Respuesta de Zoho CRM: {}", response);
         } catch (Exception e) {
             log.error("[ZOHO CRM SENDER] Error al emitir evento hacia Zoho para lead {}: {}",
                     evento.idExterno(), e.getMessage(), e);

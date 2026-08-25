@@ -50,22 +50,22 @@ public class ZohoProspectoAdapter {
             idExterno = "ZOHO_" + System.currentTimeMillis();
         }
 
-        log.info("[ZOHO ADAPTER] Procesando webhook de Zoho para ID Externo: {}", idExterno);
+        log.debug("[ZOHO ADAPTER] Procesando webhook de Zoho para ID Externo: {}", idExterno);
 
         // PASO 1: Crear o Actualizar Prospecto
         ProspectoCrearRequest prospectoRequest = construirProspectoRequest(idExterno, dataMap);
         Integer prospectoId = prospectosService.crearOActualizarProspecto(prospectoRequest);
 
-        log.info("[ZOHO ADAPTER] Prospecto procesado con éxito. ID Interno: {}", prospectoId);
+        log.debug("[ZOHO ADAPTER] Prospecto procesado con éxito. ID Interno: {}", prospectoId);
 
         // PASO 2: Registrar Cita para el Prospecto (si viene fecha_inicio)
         String fechaInicioStr = getVal(dataMap, "fecha_inicio");
         if (prospectoId != null && fechaInicioStr != null) {
             ProspectoRegistrarCitaRequest citaRequest = construirCitaRequest(prospectoId, fechaInicioStr, dataMap);
             prospectosService.registrarCitaProspecto(citaRequest, "ZOHO");
-            log.info("[ZOHO ADAPTER] Cita registrada secuencialmente para el Prospecto ID: {}", prospectoId);
+            log.debug("[ZOHO ADAPTER] Cita registrada secuencialmente para el Prospecto ID: {}", prospectoId);
         } else {
-            log.info("[ZOHO ADAPTER] El webhook no contiene fecha_inicio para cita. Proceso completado.");
+            log.debug("[ZOHO ADAPTER] El webhook no contiene fecha_inicio para cita. Proceso completado.");
         }
     }
 
