@@ -12,7 +12,7 @@ public record DatosCompraProspecto(
         BigDecimal montoCompra,
         String membresia,
         String nombreTitularContrato,
-        Integer tipoMembresia,
+        String tipoMembresia,
         BigDecimal montoEnganche
 ) {
 }

@@ -14,8 +14,6 @@ public record RegistrarResultadoCitaRequest(
         @NotBlank(message = "El ID externo del prospecto es obligatorio")
         String idExterno,
 
-        Integer prospectoId,
-
         Integer idCita,
 
         @NotNull(message = "El resultado de la cita es obligatorio")

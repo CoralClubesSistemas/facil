@@ -64,8 +64,8 @@ public class ProspectosService {
      * @return true si el proceso se ejecutó exitosamente.
      */
     public boolean procesarResultadoCita(RegistrarResultadoCitaRequest request, String usuario) {
-        log.info("[PROSPECTOS SERVICE] Procesando resultado de cita '{}' para Lead ID Externo: {}, Prospecto ID: {}, Cita ID: {}, Usuario: {}",
-                request.resultado(), request.idExterno(), request.prospectoId(), request.idCita(), usuario);
+        log.info("[PROSPECTOS SERVICE] Procesando resultado de cita '{}' para Lead ID Externo: {}, Cita ID: {}, Usuario: {}",
+                request.resultado(), request.idExterno(), request.idCita(), usuario);
 
         // Paso 1: Actualizar estatus de la cita en BD mediante SP si idCita está presente
         if (request.idCita() != null) {
@@ -84,10 +84,8 @@ public class ProspectosService {
         // Paso 2: Emitir evento hacia el CRM configurado
         EventoResultadoCita evento = EventoResultadoCita.builder()
                 .idExterno(request.idExterno())
-                .prospectoId(request.prospectoId())
                 .idCita(request.idCita())
                 .resultado(request.resultado())
-                .fechaHoraEvento(LocalDateTime.now())
                 .desarrollo(request.desarrollo())
                 .observaciones(request.observaciones())
                 .datosCompra(request.datosCompra())

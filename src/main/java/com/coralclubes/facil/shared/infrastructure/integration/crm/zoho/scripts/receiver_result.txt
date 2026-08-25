@@ -1,0 +1,185 @@
+string standalone.receiver_result(String crmAPIRequest)
+{
+info "Request entrante: " + crmAPIRequest;
+// 1. Parseo y extracción del payload entrante
+reqMap = crmAPIRequest.toMap();
+payload = Map();
+if(reqMap.containKey("body") && reqMap.get("body") != null)
+{
+	bodyVal = reqMap.get("body");
+	if(bodyVal.toString().startsWith("{"))
+	{
+		payload = bodyVal.toString().toMap();
+	}
+	else if(bodyVal.toMap().size() > 0)
+	{
+		payload = bodyVal.toMap();
+	}
+}
+if(payload.isEmpty() && reqMap.containKey("idExterno"))
+{
+	payload = reqMap;
+}
+// 2. Validación de presencia del ID del Lead
+recordId = payload.get("idExterno");
+if(recordId == null || recordId.toString().trim() == "")
+{
+	response = Map();
+	response.put("status_code",400);
+	response.put("body",{"success":false,"error":"El campo 'idExterno' (ID de Zoho CRM) es obligatorio y no fue proporcionado en el payload."});
+	return response;
+}
+// 3. Extracción de variables de la petición
+resultado = payload.get("resultado");
+desarrollo = payload.get("desarrollo");
+observaciones = payload.get("observaciones");
+usuario = payload.get("usuario");
+datosCompra = payload.get("datosCompra");
+// 4. Mapeo y validación de la transición según el resultado
+transitionNameMap = Map();
+transitionNameMap.put("ASISTIO_COMPRO","SOCIO - Persona que ya es socia");
+transitionNameMap.put("ASISTIO_NO_COMPRO","SHOW - Asistió a la visita");
+transitionNameMap.put("NO_ASISTIO","Cita - NO Show");
+transitionName = transitionNameMap.get(resultado);
+if(transitionName == null || transitionName == "")
+{
+	response = Map();
+	response.put("status_code",400);
+	response.put("body",{"success":false,"error":"El campo 'resultado' debe ser: ASISTIO_COMPRO, ASISTIO_NO_COMPRO o NO_ASISTIO"});
+	return response;
+}
+// 5. Construcción del título y contenido de la nota según el escenario
+noteTitle = "";
+noteContent = "";
+if(resultado == "ASISTIO_COMPRO")
+{
+	noteTitle = "Resultado Visita: Venta Exitosa (Socio)";
+	noteContent = "El prospecto asistió y adquirió membresía. ";
+	noteContent = noteContent + "Observaciones: " + ifnull(observaciones,"N/A") + " ";
+	noteContent = noteContent + "Registrado por: " + ifnull(usuario,"N/A") + " ";
+	noteContent = noteContent + "Desarrollo: " + ifnull(desarrollo,"N/A") + " ";
+	noteContent = noteContent + "--- DETALLES DE LA VENTA --- ";
+	if(datosCompra != null)
+	{
+		compraMap = datosCompra.toString().toMap();
+		noteContent = noteContent + "Membresía: " + ifnull(compraMap.get("membresia"),"N/A") + " ";
+		noteContent = noteContent + "Titular Contrato: " + ifnull(compraMap.get("nombreTitularContrato"),"N/A") + " ";
+		noteContent = noteContent + "Tipo Membresía " + ifnull(compraMap.get("tipoMembresia"),"N/A") + " ";
+		noteContent = noteContent + "Monto Compra: $" + ifnull(compraMap.get("montoCompra"),"0.00") + " ";
+		noteContent = noteContent + "Monto Enganche: $" + ifnull(compraMap.get("montoEnganche"),"0.00");
+	}
+}
+else if(resultado == "ASISTIO_NO_COMPRO")
+{
+	noteTitle = "Resultado Visita: Asistió (No Compró) ";
+	noteContent = "El prospecto se presentó a la cita pero no concretó compra. ";
+	noteContent = noteContent + "Observaciones: " + ifnull(observaciones,"Sin observaciones") + " ";
+	noteContent = noteContent + "Desarrollo: " + ifnull(desarrollo,"N/A") + " ";
+	noteContent = noteContent + "Registrado por: " + ifnull(usuario,"N/A");
+}
+else if(resultado == "NO_ASISTIO")
+{
+	noteTitle = "Resultado Visita: No Asistió (No Show) ";
+	noteContent = "El usuario no asistió a la cita programada. ";
+	noteContent = noteContent + "Observaciones: " + ifnull(observaciones,"Sin observaciones") + " ";
+	noteContent = noteContent + "Desarrollo: " + ifnull(desarrollo,"N/A") + " ";
+	noteContent = noteContent + "Registrado por: " + ifnull(usuario,"N/A");
+}
+// 6. Consulta de transiciones disponibles en el Blueprint del Lead
+blueprintInfo = invokeurl
+[
+	url :"https://sandbox.zohoapis.com/crm/v7/Leads/" + recordId + "/actions/blueprint"
+	type :GET
+	connection:"blueprint_conn"
+];
+transitionId = "";
+if(blueprintInfo.containKey("blueprint"))
+{
+	blueprintObj = blueprintInfo.get("blueprint");
+	transitionsArray = blueprintObj.get("transitions");
+	if(transitionsArray != null)
+	{
+		for each  transition in transitionsArray
+		{
+			if(transition.get("name") == transitionName)
+			{
+				transitionId = transition.get("id");
+				info "Transición encontrada: " + transitionName + " (ID: " + transitionId + ")";
+				break;
+			}
+		}
+	}
+}
+if(transitionId == "" || transitionId == null)
+{
+	info "ERROR: No se encontró transición '" + transitionName + "' disponible desde el estado actual del Lead";
+	response = Map();
+	response.put("status_code",400);
+	response.put("body",{"success":false,"error":"No existe transición '" + transitionName + "' disponible desde el estado actual del Lead."});
+	return response;
+}
+// 7. Ejecución de la transición en el Blueprint
+transitionEntry = Map();
+transitionEntry.put("transition_id",transitionId);
+blueprintDataMap = Map();
+blueprintDataMap.put("Notes",noteContent);
+transitionEntry.put("data",blueprintDataMap);
+blueprintList = List();
+blueprintList.add(transitionEntry);
+blueprintPayload = Map();
+blueprintPayload.put("blueprint",blueprintList);
+info "Payload Blueprint: " + blueprintPayload;
+crmResponse = invokeurl
+[
+	url :"https://sandbox.zohoapis.com/crm/v7/Leads/" + recordId + "/actions/blueprint"
+	type :PUT
+	parameters:blueprintPayload.toString()
+	connection:"blueprint_conn"
+	content-type:"application/json"
+];
+info "Respuesta Blueprint: " + crmResponse;
+// 8. Validación de respuesta de la transición
+blueprintSuccess = false;
+if(crmResponse.containKey("blueprint"))
+{
+	bpList = crmResponse.get("blueprint");
+	if(bpList != null && bpList.size() > 0)
+	{
+		bpEntry = bpList.get(0);
+		if(bpEntry.containKey("code") && bpEntry.get("code") == "SUCCESS")
+		{
+			blueprintSuccess = true;
+			info "Transición ejecutada exitosamente";
+		}
+	}
+}
+if(!blueprintSuccess)
+{
+	info "ERROR en transición Blueprint: " + crmResponse;
+	response = Map();
+	response.put("status_code",400);
+	response.put("body",{"success":false,"error":crmResponse});
+	return response;
+}
+// 9. Registro de la nota estructurada en el módulo Notes
+noteCreated = false;
+if(blueprintSuccess)
+{
+	noteMap = Map();
+	noteMap.put("Note_Title",noteTitle);
+	noteMap.put("Note_Content",noteContent);
+	noteMap.put("Parent_Id",recordId.toLong());
+	noteMap.put("se_module","Leads");
+	createNoteResponse = zoho.crm.createRecord("Notes",noteMap);
+	if(createNoteResponse.containKey("id"))
+	{
+		noteCreated = true;
+		info "Nota creada exitosamente: " + createNoteResponse.get("id");
+	}
+}
+// 10. Construcción y retorno de la respuesta exitosa
+response = Map();
+response.put("status_code",200);
+response.put("body",{"success":true,"record_id":recordId,"transition_applied":transitionName,"note_created":noteCreated});
+return response;
+}
