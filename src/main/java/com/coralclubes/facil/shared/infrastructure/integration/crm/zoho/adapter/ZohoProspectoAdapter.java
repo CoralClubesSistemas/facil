@@ -1,13 +1,13 @@
-package com.coralclubes.facil.shared.infrastructure.integration.zoho.service;
+package com.coralclubes.facil.shared.infrastructure.integration.crm.zoho.adapter;
 
 import com.coralclubes.facil.modules.prospectos.dto.request.ProspectoCrearRequest;
 import com.coralclubes.facil.modules.prospectos.dto.request.ProspectoRegistrarCitaRequest;
 import com.coralclubes.facil.modules.prospectos.service.ProspectosService;
-import com.coralclubes.facil.shared.infrastructure.integration.zoho.dto.ZohoLeadEventPayload;
+import com.coralclubes.facil.shared.infrastructure.integration.crm.zoho.dto.ZohoWebhookPayload;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.text.Normalizer;
 import java.time.LocalDate;
@@ -19,21 +19,17 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Servicio simplificado para procesar eventos y webhooks de Zoho CRM
- * y orquestar secuencialmente la creación de prospectos y citas en el sistema FACIL.
+ * Adaptador específico para transformar los eventos y datos entrantes de Zoho CRM
+ * hacia los modelos y servicios de dominio del módulo de Prospectos.
  */
-@Service
+@Component
 @Slf4j
 @RequiredArgsConstructor
-public class ZohoWebhookService {
+public class ZohoProspectoAdapter {
 
     private final ProspectosService prospectosService;
     private final ObjectMapper objectMapper;
 
-    /**
-     * Lista exacta de campos consumidos enviados por Zoho CRM.
-     * Estos campos no se incluirán en el JSON de data_adicional.
-     */
     private static final Set<String> CAMPOS_CONSUMIDOS = Set.of(
             "id", "entity_id", "nombre", "apellido_paterno", "email",
             "telefono", "cargo", "edad", "desarrollo_interes", "green_fees",
@@ -41,36 +37,35 @@ public class ZohoWebhookService {
     );
 
     /**
-     * Procesa el evento de Zoho CRM consumiendo los datos del Lead y de la Cita de forma secuencial.
+     * Procesa un webhook recibido de Zoho CRM creando/actualizando el prospecto y su cita de forma secuencial.
      */
-    public void procesarEventoLead(ZohoLeadEventPayload payload, Map<String, String> rawParams) {
+    public void procesarWebhookZoho(ZohoWebhookPayload payload, Map<String, String> rawParams) {
         Map<String, Object> dataMap = consolidarDatos(payload, rawParams);
 
-        String idExterno = getVal(dataMap, "entity_id");
+        String idExterno = getVal(dataMap, "id");
         if (idExterno == null || idExterno.isBlank()) {
-            idExterno = getVal(dataMap, "id");
+            idExterno = getVal(dataMap, "entity_id");
         }
         if (idExterno == null || idExterno.isBlank()) {
             idExterno = "ZOHO_" + System.currentTimeMillis();
         }
 
-        log.info("[ZOHO WEBHOOK] Procesando evento Zoho ID Externo: {}", idExterno);
+        log.info("[ZOHO ADAPTER] Procesando webhook de Zoho para ID Externo: {}", idExterno);
 
-        // =========================================================================
         // PASO 1: Crear o Actualizar Prospecto
-        // =========================================================================
         ProspectoCrearRequest prospectoRequest = construirProspectoRequest(idExterno, dataMap);
         Integer prospectoId = prospectosService.crearOActualizarProspecto(prospectoRequest);
 
-        // =========================================================================
+        log.info("[ZOHO ADAPTER] Prospecto procesado con éxito. ID Interno: {}", prospectoId);
+
         // PASO 2: Registrar Cita para el Prospecto (si viene fecha_inicio)
-        // =========================================================================
         String fechaInicioStr = getVal(dataMap, "fecha_inicio");
         if (prospectoId != null && fechaInicioStr != null) {
             ProspectoRegistrarCitaRequest citaRequest = construirCitaRequest(prospectoId, fechaInicioStr, dataMap);
             prospectosService.registrarCitaProspecto(citaRequest, "ZOHO");
+            log.info("[ZOHO ADAPTER] Cita registrada secuencialmente para el Prospecto ID: {}", prospectoId);
         } else {
-            log.info("[ZOHO WEBHOOK] El evento no contiene fecha_inicio para cita. Proceso completado.");
+            log.info("[ZOHO ADAPTER] El webhook no contiene fecha_inicio para cita. Proceso completado.");
         }
     }
 
@@ -119,36 +114,39 @@ public class ZohoWebhookService {
         return ProspectoRegistrarCitaRequest.builder()
                 .prospectoId(prospectoId)
                 .fechaInicio(fechaInicio)
-                .horaInicio(horaInicio) 
+                .horaInicio(horaInicio)
                 .lugarCita(lugarCita)
                 .nota(getVal(dataMap, "nota"))
                 .build();
     }
 
-    public Integer mapearDesarrolloInteres(String texto) {
+    private Integer mapearDesarrolloInteres(String texto) {
         if (texto == null || texto.isBlank()) return null;
         String norm = normalizarTexto(texto);
 
-        if (norm.contains("cuernavaca")) return 1;
-        if (norm.contains("santa maria") || norm.contains("santa maría")) return 2;
-        if (norm.contains("golf")) return 6;
+        if (norm.contains("coral cuernavaca")) return 1;
+        if (norm.contains("coral santa maria")) return 2;
+        if (norm.contains("coral golf")) return 6;
         if (norm.contains("fitur")) return 907;
+        if (norm.contains("eventos santa maria")) return 2;
+        if (norm.contains("eventos cuernavaca")) return 1;
+        if (norm.contains("eventos golf")) return 6;
         if (norm.contains("desarrollo de playas") || norm.contains("playas")) return 0;
 
         return null;
     }
 
-    public Integer mapearAreaInteres(String desarrolloTexto, String greenFees) {
+    private Integer mapearAreaInteres(String desarrolloTexto, String greenFees) {
         if (desarrolloTexto == null || desarrolloTexto.isBlank()) return null;
         String norm = normalizarTexto(desarrolloTexto);
 
         if (norm.contains("coral golf") && greenFees != null && !greenFees.isBlank()) {
             return 3754;
         }
-        if (norm.contains("eventos")) {
+        if (norm.contains("eventos santa maria") || norm.contains("eventos cuernavaca") || norm.contains("eventos golf")) {
             return 3751;
         }
-        if (norm.contains("coral cuernavaca") || norm.contains("coral santa maria") || norm.contains("coral santa maría") || norm.contains("coral golf")) {
+        if (norm.contains("coral cuernavaca") || norm.contains("coral santa maria") || norm.contains("coral golf")) {
             return 3750;
         }
         if (norm.contains("desarrollo de playas") || norm.contains("playas")) {
@@ -178,8 +176,7 @@ public class ZohoWebhookService {
         for (DateTimeFormatter formatter : formatters) {
             try {
                 return LocalDateTime.parse(trimmed, formatter);
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
         }
 
         DateTimeFormatter[] dateOnlyFormatters = new DateTimeFormatter[]{
@@ -192,8 +189,7 @@ public class ZohoWebhookService {
             try {
                 LocalDate d = LocalDate.parse(trimmed, formatter);
                 return d.atStartOfDay();
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
         }
 
         return null;
@@ -209,7 +205,7 @@ public class ZohoWebhookService {
         return adicionales;
     }
 
-    private Map<String, Object> consolidarDatos(ZohoLeadEventPayload payload, Map<String, String> rawParams) {
+    private Map<String, Object> consolidarDatos(ZohoWebhookPayload payload, Map<String, String> rawParams) {
         Map<String, Object> map = new HashMap<>();
         if (rawParams != null) map.putAll(rawParams);
         if (payload != null) {
@@ -248,8 +244,7 @@ public class ZohoWebhookService {
         if (str != null) {
             try {
                 return Integer.parseInt(str.replaceAll("[^0-9]", ""));
-            } catch (NumberFormatException ignored) {
-            }
+            } catch (NumberFormatException ignored) {}
         }
         return null;
     }
@@ -258,7 +253,7 @@ public class ZohoWebhookService {
         try {
             return objectMapper.writeValueAsString(dataMap);
         } catch (Exception e) {
-            log.warn("[ZOHO WEBHOOK] No se pudo serializar data_adicional a JSON: {}", e.getMessage());
+            log.warn("[ZOHO ADAPTER] No se pudo serializar data_adicional a JSON: {}", e.getMessage());
             return dataMap.toString();
         }
     }

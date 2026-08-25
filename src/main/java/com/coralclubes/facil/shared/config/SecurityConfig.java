@@ -82,8 +82,8 @@ public class SecurityConfig {
                         // Endpoints públicos (portales web)
                         .requestMatchers("/api/v1/public/**").permitAll()
 
-                        // Webhook de Zoho CRM
-                        .requestMatchers("/api/v1/public/zoho/webhook/**").permitAll()
+                        // Webhook de CRM / Zoho
+                        .requestMatchers("/api/v1/zoho/webhook/**", "/api/v1/public/crm/**").permitAll()
 
                         // TODO LO DEMÁS requiere estar autenticado
                         .anyRequest().authenticated()

@@ -58,4 +58,21 @@ public class ProspectosRepository {
 
         executor.execute("spProspectoRegistarCita", params);
     }
+
+    /**
+     * Ejecuta el Stored Procedure spProspectoActualizarEstatusCita para actualizar el estatus y notas de la cita.
+     *
+     * @param idCita ID de la cita en CITAS_PROSPECTOS.
+     * @param estatus Estatus/resultado de la cita (NO_ASISTIO, ASISTIO_NO_COMPRO, ASISTIO_COMPRO).
+     * @param nota Nota o comentarios de cierre de la cita.
+     */
+    public void spProspectoActualizarEstatusCita(Integer idCita, String estatus, String nota, String membresia) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("id_cita", idCita);
+        params.put("estatus", estatus);
+        params.put("nota", nota);
+        params.put("membresia", membresia);
+
+        executor.execute("spProspectoActualizarEstatusCita", params);
+    }
 }

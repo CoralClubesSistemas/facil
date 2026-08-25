@@ -1,4 +1,4 @@
-package com.coralclubes.facil.shared.infrastructure.integration.zoho.dto;
+package com.coralclubes.facil.shared.infrastructure.integration.crm.zoho.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -6,10 +6,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Map;
 
 /**
- * Payload de evento recibido desde Zoho CRM.
+ * Payload de evento recibido desde Zoho CRM con mapeo específico del proveedor.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record ZohoLeadEventPayload(
+public record ZohoWebhookPayload(
         @JsonProperty("id") String id,
         @JsonProperty("entity_id") String entityId,
         Map<String, Object> data

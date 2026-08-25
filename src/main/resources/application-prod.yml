@@ -87,12 +87,15 @@ app:
     cie:
       bbva: ${BANCO_CIE_BBVA}
 
-  zoho:
-    user-email: ${ZOHO_USER_EMAIL}
-    client-id: ${ZOHO_CLIENT_ID}
-    client-secret: ${ZOHO_CLIENT_SECRET}
-    refresh-token: ${ZOHO_REFRESH_TOKEN}
-    environment: ${ZOHO_ENVIRONMENT:PRODUCTION} # Opciones: PRODUCTION, SANDBOX, DEVELOPER
+  crm:
+    provider: ${CRM_PROVIDER:zoho}
+    zoho:
+      user-email: ${ZOHO_USER_EMAIL}
+      client-id: ${ZOHO_CLIENT_ID}
+      client-secret: ${ZOHO_CLIENT_SECRET}
+      refresh-token: ${ZOHO_REFRESH_TOKEN}
+      environment: ${ZOHO_ENVIRONMENT:PRODUCTION}
+      webhook-url: ${ZOHO_EVENTS_WEBHOOK_URL:}
 
 logging:
   level:
