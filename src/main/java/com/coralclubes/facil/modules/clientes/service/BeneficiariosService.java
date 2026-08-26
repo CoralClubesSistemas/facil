@@ -60,6 +60,8 @@ public class BeneficiariosService {
                             .mesVigenciaTexto(b.mesVigencia() != null ? monthToText(b.mesVigencia()) : "")
                             .ultimoMovimiento(b.ultimoMovimiento())
                             .urlImagen(url)
+                            .tieneAccesoPreferencial(b.tieneAccesoPreferencial())
+                            .aplicaAccesoPreferencial(b.aplicaAccesoPreferencial())
                             .build();
                 })
                 .toList();

@@ -94,4 +94,10 @@ public class CobranzaCatalogosController {
     public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerCatalogoClasificacionesMembresias() {
         return ResponseEntity.ok(service.obtenerCatalogoClasificacionesMembresias());
     }
+
+    @GetMapping("/motivos-acceso-preferencial")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerCatalogoMotivosAccesoPreferencial() {
+        return ResponseEntity.ok(service.obtenerCatalogoMotivosAccesoPreferencial());
+    }
 }

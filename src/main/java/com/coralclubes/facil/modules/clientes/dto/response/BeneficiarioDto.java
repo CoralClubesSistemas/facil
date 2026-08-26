@@ -22,6 +22,8 @@ public record BeneficiarioDto(
         Integer mesVigencia,
         String mesVigenciaTexto,
         String ultimoMovimiento,
-        String urlImagen
+        String urlImagen,
+        Boolean tieneAccesoPreferencial,
+        Boolean aplicaAccesoPreferencial
 ) {
 }

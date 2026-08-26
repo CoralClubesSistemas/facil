@@ -33,6 +33,8 @@ public class BeneficiariosRepository {
             .anioVigencia(rs.getObject("anio_vigencia") != null ? rs.getInt("anio_vigencia") : null)
             .mesVigencia(rs.getObject("mes_vigencia") != null ? rs.getInt("mes_vigencia") : null)
             .ultimoMovimiento(rs.getString("ultimo_movimiento"))
+            .tieneAccesoPreferencial(rs.getObject("tiene_acceso_preferencial") != null && rs.getInt("tiene_acceso_preferencial") == 1)
+            .aplicaAccesoPreferencial(rs.getObject("aplica_acceso_preferencial", Boolean.class))
             .build();
 
     public List<BeneficiarioDto> spClienteObtenerBeneficiariosMembresia(String membresia) {

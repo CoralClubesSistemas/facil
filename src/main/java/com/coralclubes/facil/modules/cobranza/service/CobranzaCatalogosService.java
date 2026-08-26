@@ -60,4 +60,8 @@ public class CobranzaCatalogosService {
         List<SelectGenerico<Integer>> resultado = repository.obtenerCatalogoPorSp(catalogoEnum.getSpName());
         return ApiResponse.success("Catálogo de " + catalogoEnum.getClave() + " obtenido correctamente.", resultado);
     }
+
+    public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogoMotivosAccesoPreferencial() {
+        return ApiResponse.success("Catálogo de motivos de acceso preferencial obtenido correctamente.", repository.spCobranzaCatalogoMotivosAccesoPreferencial());
+    }
 }

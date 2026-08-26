@@ -85,4 +85,8 @@ public class CobranzaCatalogosRepository {
     public List<SelectGenerico<Integer>> obtenerCatalogoPorSp(String spName) {
         return spExecutor.queryList(spName, Collections.emptyMap(), selectGenericoMapper);
     }
+
+    public List<SelectGenerico<Integer>> spCobranzaCatalogoMotivosAccesoPreferencial() {
+        return spExecutor.queryList("spCobranzaCatalogoMotivosAccesoPreferencial", Collections.emptyMap(), selectGenericoMapper);
+    }
 }
