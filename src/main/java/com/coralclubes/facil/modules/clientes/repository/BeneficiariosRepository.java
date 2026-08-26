@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,5 +47,33 @@ public class BeneficiariosRepository {
                 params,
                 beneficiarioRowMapper
         );
+    }
+
+    public void spMembresiaBloqueaBeneficiario(
+            String membresia,
+            Integer numBeneficiario,
+            String usuario,
+            String motivo,
+            java.time.LocalDate fechaInicio,
+            java.time.LocalDate fechaFin
+    ) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("membresia", membresia);
+        params.put("numbeneficiario", numBeneficiario);
+        params.put("usuario", usuario);
+        params.put("motivo", motivo);
+        params.put("fecha_inicio", fechaInicio);
+        params.put("fecha_fin", fechaFin != null ? fechaFin : LocalDateTime.of(2999, 12, 31, 23, 59, 59));
+        
+        spExecutor.execute("spMembresiaBloqueaBeneficiario", params);
+    }
+
+    public void spMembresiaDesbloqueaBeneficiario(String membresia, Integer numBeneficiario, String usuario) {
+        Map<String, Object> params = Map.of(
+                "membresia", membresia,
+                "numbeneficiario", numBeneficiario,
+                "usuario", usuario
+        );
+        spExecutor.execute("spMembresiaDesbloqueaBeneficiario", params);
     }
 }

@@ -2,12 +2,14 @@ package com.coralclubes.facil.modules.clientes.service;
 
 import com.coralclubes.facil.shared.domain.dto.ArchivoDescarga;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
+import com.coralclubes.facil.modules.clientes.dto.request.BloqueoBeneficiarioRequest;
 import com.coralclubes.facil.modules.clientes.dto.response.BeneficiarioDto;
 import com.coralclubes.facil.modules.clientes.dto.response.BeneficiarioPdfItemDto;
 import com.coralclubes.facil.modules.clientes.dto.response.DatosReporteBeneficiariosDto;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
 import com.coralclubes.facil.modules.clientes.repository.BeneficiariosRepository;
 import com.coralclubes.facil.modules.cobranza.service.CobranzaGeneradorDocumentosService;
+import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ public class BeneficiariosService {
     private final SociosService sociosService;
     private final CobranzaGeneradorDocumentosService generadorDocumentosService;
     private final StorageClient storageClient;
+    private final BusinessLogger logger;
 
     public List<BeneficiarioDto> obtenerBeneficiariosMembresia(String membresia) {
         List<BeneficiarioDto> list = repository.spClienteObtenerBeneficiariosMembresia(membresia);
@@ -110,6 +113,25 @@ public class BeneficiariosService {
 
         // 5. Generar PDF
         return generadorDocumentosService.generarPdfReporteBeneficiarios(datos);
+    }
+
+    public void bloquearBeneficiario(String membresia, Integer numBeneficiario, BloqueoBeneficiarioRequest request, String usuario) {
+        logger.info(usuario, "Bloqueando beneficiario {} de la membresía {} por motivo: {}", numBeneficiario, membresia, request.motivo());
+
+        repository.spMembresiaBloqueaBeneficiario(
+                membresia,
+                numBeneficiario,
+                usuario,
+                request.motivo(),
+                request.fechaInicio(),
+                request.fechaFin()
+        );
+    }
+
+    public void desbloquearBeneficiario(String membresia, Integer numBeneficiario, String usuario) {
+        logger.info(usuario, "Desbloqueando beneficiario {} de la membresía {}", numBeneficiario, membresia);
+
+        repository.spMembresiaDesbloqueaBeneficiario(membresia, numBeneficiario, usuario);
     }
 
     private String monthToText(int month) {
