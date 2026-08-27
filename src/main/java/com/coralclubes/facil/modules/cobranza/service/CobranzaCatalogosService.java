@@ -64,4 +64,8 @@ public class CobranzaCatalogosService {
     public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogoMotivosAccesoPreferencial() {
         return ApiResponse.success("Catálogo de motivos de acceso preferencial obtenido correctamente.", repository.spCobranzaCatalogoMotivosAccesoPreferencial());
     }
+
+    public ApiResponse<List<SelectGenerico<String>>> obtenerCatalogoEsquemasPagoPaqueteAnual() {
+        return ApiResponse.success("Catálogo de esquemas de pago de paquete anual obtenido correctamente.", repository.spCobranzaCatalogoEsquemasPagoPaqueteAnual());
+    }
 }

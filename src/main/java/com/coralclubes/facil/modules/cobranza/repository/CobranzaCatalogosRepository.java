@@ -89,4 +89,8 @@ public class CobranzaCatalogosRepository {
     public List<SelectGenerico<Integer>> spCobranzaCatalogoMotivosAccesoPreferencial() {
         return spExecutor.queryList("spCobranzaCatalogoMotivosAccesoPreferencial", Collections.emptyMap(), selectGenericoMapper);
     }
+
+    public List<SelectGenerico<String>> spCobranzaCatalogoEsquemasPagoPaqueteAnual() {
+        return spExecutor.queryList("spCobranzaCatalogoEsquemasPagoPaqueteAnual", Collections.emptyMap(), selectGenericoStringMapper);
+    }
 }

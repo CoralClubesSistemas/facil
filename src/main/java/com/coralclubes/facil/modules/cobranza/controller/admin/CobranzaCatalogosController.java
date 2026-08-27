@@ -100,4 +100,10 @@ public class CobranzaCatalogosController {
     public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerCatalogoMotivosAccesoPreferencial() {
         return ResponseEntity.ok(service.obtenerCatalogoMotivosAccesoPreferencial());
     }
+
+    @GetMapping("/esquemas-pago-paquete-anual")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<List<SelectGenerico<String>>>> obtenerCatalogoEsquemasPagoPaqueteAnual() {
+        return ResponseEntity.ok(service.obtenerCatalogoEsquemasPagoPaqueteAnual());
+    }
 }
