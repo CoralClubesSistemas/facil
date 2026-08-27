@@ -2,6 +2,8 @@ package com.coralclubes.facil.modules.cobranza.controller.admin;
 
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarPaqueteAnualRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoPaqueteAnualResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.PaqueteAnualDetalleResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.PaqueteAnualResponse;
 import com.coralclubes.facil.modules.cobranza.service.PaqueteAnualService;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
@@ -20,6 +22,27 @@ public class PaqueteAnualAdminController {
 
     private final PaqueteAnualService service;
     private final UserContext userContext;
+
+    @GetMapping
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<List<PaqueteAnualResponse>>> obtenerPaquetesAnuales(
+            @RequestParam(required = false) Integer anio,
+            @RequestParam(required = false) Integer tipoMembresia,
+            @RequestParam(required = false) Integer clasificacionMembresia,
+            @RequestParam(required = false) Integer desarrollo
+    ) {
+        List<PaqueteAnualResponse> paquetes = service.obtenerPaquetesAnuales(anio, tipoMembresia, clasificacionMembresia, desarrollo);
+        return ResponseEntity.ok(ApiResponse.success("Paquetes anuales obtenidos exitosamente.", paquetes));
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<PaqueteAnualDetalleResponse>> obtenerPaqueteAnualDetalle(
+            @PathVariable Integer id
+    ) {
+        PaqueteAnualDetalleResponse detalle = service.obtenerPaqueteAnualDetalle(id);
+        return ResponseEntity.ok(ApiResponse.success("Detalle de paquete anual obtenido exitosamente.", detalle));
+    }
 
     @GetMapping("/movimientos")
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")

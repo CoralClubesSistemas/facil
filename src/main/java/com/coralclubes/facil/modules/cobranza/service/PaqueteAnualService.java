@@ -2,6 +2,8 @@ package com.coralclubes.facil.modules.cobranza.service;
 
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarPaqueteAnualRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoPaqueteAnualResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.PaqueteAnualDetalleResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.PaqueteAnualResponse;
 import com.coralclubes.facil.modules.cobranza.repository.PaqueteAnualRepository;
 import com.coralclubes.logging.BusinessLogger;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -23,11 +25,29 @@ public class PaqueteAnualService {
         return repository.spCobranzaCatalogoMovimientosPaqueteAnual(anio, tipoMembresia);
     }
 
-    public Integer guardarPaqueteAnual(GuardarPaqueteAnualRequest request, String usuario) {
+    public List<PaqueteAnualResponse> obtenerPaquetesAnuales(
+            Integer anio,
+            Integer tipoMembresia,
+            Integer clasificacionMembresia,
+            Integer desarrollo
+    ) {
+        return repository.spCobranzaObtenerPaquetesAnuales(anio, tipoMembresia, clasificacionMembresia, desarrollo);
+    }
 
+    public PaqueteAnualDetalleResponse obtenerPaqueteAnualDetalle(Integer paqueteAnualId) {
+        String jsonDetalle = repository.spCobranzaObtenerPaqueteAnualDetalle(paqueteAnualId)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró el paquete anual con ID: " + paqueteAnualId));
+
+        try {
+            return objectMapper.readValue(jsonDetalle, PaqueteAnualDetalleResponse.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error al deserializar el detalle del paquete anual", e);
+        }
+    }
+
+    public Integer guardarPaqueteAnual(GuardarPaqueteAnualRequest request, String usuario) {
         businessLogger.info(usuario, "Solicitud de creación/actualización de paquete anual para año: {}, desarrollo: {}, tipoMembresia: {}",
                 request.anio(), request.desarrollo(), request.tipoMembresia());
-
 
         String descuentosJson = null;
         if (request.configuracionDescuentos() != null) {
