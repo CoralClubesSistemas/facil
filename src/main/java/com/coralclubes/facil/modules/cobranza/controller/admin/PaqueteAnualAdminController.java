@@ -1,9 +1,7 @@
 package com.coralclubes.facil.modules.cobranza.controller.admin;
 
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarPaqueteAnualRequest;
-import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoPaqueteAnualResponse;
-import com.coralclubes.facil.modules.cobranza.dto.response.PaqueteAnualDetalleResponse;
-import com.coralclubes.facil.modules.cobranza.dto.response.PaqueteAnualResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.*;
 import com.coralclubes.facil.modules.cobranza.service.PaqueteAnualService;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
@@ -52,6 +50,27 @@ public class PaqueteAnualAdminController {
     ) {
         List<MovimientoPaqueteAnualResponse> movimientos = service.obtenerMovimientosPaqueteAnual(anio, tipoMembresia);
         return ResponseEntity.ok(ApiResponse.success("Movimientos de paquete anual obtenidos exitosamente.", movimientos));
+    }
+
+    @GetMapping("/propuesta/esquemas")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<List<EsquemaPagoPropuestaResponse>>> obtenerEsquemasPagoPropuesta(
+            @RequestParam String membresia,
+            @RequestParam Integer anio
+    ) {
+        List<EsquemaPagoPropuestaResponse> esquemas = service.obtenerEsquemasPagoPropuesta(membresia, anio);
+        return ResponseEntity.ok(ApiResponse.success("Esquemas de pago obtenidos exitosamente.", esquemas));
+    }
+
+    @PostMapping("/propuesta/cotizar")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<CotizacionPaqueteAnualResponse>> cotizarPropuestaPaqueteAnual(
+            @RequestParam String membresia,
+            @RequestParam Integer anio,
+            @RequestBody(required = false) List<String> esquemas
+    ) {
+        CotizacionPaqueteAnualResponse cotizacion = service.cotizarPropuestaPaqueteAnual(membresia, anio, esquemas);
+        return ResponseEntity.ok(ApiResponse.success("Cotización de paquete anual generada exitosamente.", cotizacion));
     }
 
     @PostMapping("/guardar")

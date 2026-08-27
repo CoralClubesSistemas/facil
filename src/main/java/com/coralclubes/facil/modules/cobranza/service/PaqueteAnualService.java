@@ -1,9 +1,7 @@
 package com.coralclubes.facil.modules.cobranza.service;
 
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarPaqueteAnualRequest;
-import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoPaqueteAnualResponse;
-import com.coralclubes.facil.modules.cobranza.dto.response.PaqueteAnualDetalleResponse;
-import com.coralclubes.facil.modules.cobranza.dto.response.PaqueteAnualResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.*;
 import com.coralclubes.facil.modules.cobranza.repository.PaqueteAnualRepository;
 import com.coralclubes.logging.BusinessLogger;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -42,6 +40,28 @@ public class PaqueteAnualService {
             return objectMapper.readValue(jsonDetalle, PaqueteAnualDetalleResponse.class);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Error al deserializar el detalle del paquete anual", e);
+        }
+    }
+
+    public List<EsquemaPagoPropuestaResponse> obtenerEsquemasPagoPropuesta(String membresia, Integer anio) {
+        return repository.spCobranzaObtenerEsquemasPagoPropuestaPaqueteAnual(membresia, anio);
+    }
+
+    public CotizacionPaqueteAnualResponse cotizarPropuestaPaqueteAnual(String membresia, Integer anio, List<String> esquemas) {
+        String esquemasJson;
+        try {
+            esquemasJson = objectMapper.writeValueAsString(esquemas != null ? esquemas : List.of());
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Error al serializar los esquemas a JSON", e);
+        }
+
+        String jsonCotizacion = repository.spCobranzaCotizarPropuestaPaqueteAnual(membresia, anio, esquemasJson)
+                .orElseThrow(() -> new IllegalArgumentException("No se pudo generar la cotización para la membresía: " + membresia));
+
+        try {
+            return objectMapper.readValue(jsonCotizacion, CotizacionPaqueteAnualResponse.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error al deserializar la cotización del paquete anual", e);
         }
     }
 

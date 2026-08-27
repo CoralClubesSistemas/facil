@@ -1,5 +1,6 @@
 package com.coralclubes.facil.modules.cobranza.repository;
 
+import com.coralclubes.facil.modules.cobranza.dto.response.EsquemaPagoPropuestaResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoPaqueteAnualResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.PaqueteAnualResponse;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
@@ -23,6 +24,7 @@ public class PaqueteAnualRepository {
                     .id(rs.getObject("id") != null ? rs.getInt("id") : null)
                     .descripcion(rs.getString("descripcion"))
                     .periodicidad(rs.getString("periodicidad"))
+                    .baseDeCobroId(rs.getObject("baseDeCobroId") != null ? rs.getInt("baseDeCobroId") : null)
                     .baseDeCobro(rs.getString("baseDeCobro"))
                     .cuota(rs.getBigDecimal("cuota"))
                     .anioVigencia(rs.getObject("anioVigencia") != null ? rs.getInt("anioVigencia") : null)
@@ -40,6 +42,14 @@ public class PaqueteAnualRepository {
                     .clasificacionMembresia(rs.getString("clasificacion_membresia"))
                     .fechaRegistro(rs.getTimestamp("fecha_registro") != null ? rs.getTimestamp("fecha_registro").toLocalDateTime() : null)
                     .usuarioRegistro(rs.getString("usuario_registro"))
+                    .build();
+
+    private final RowMapper<EsquemaPagoPropuestaResponse> esquemaPagoPropuestaMapper = (rs, rowNum) ->
+            EsquemaPagoPropuestaResponse.builder()
+                    .paqueteId(rs.getObject("paquete_id") != null ? rs.getInt("paquete_id") : null)
+                    .value(rs.getString("value"))
+                    .label(rs.getString("label"))
+                    .descuento(rs.getBigDecimal("descuento"))
                     .build();
 
     private final RowMapper<Integer> paqueteIdMapper = (rs, rowNum) -> rs.getInt("paquete_anual_id");
@@ -80,6 +90,33 @@ public class PaqueteAnualRepository {
     public Optional<String> spCobranzaObtenerPaqueteAnualDetalle(Integer paqueteAnualId) {
         Map<String, Object> params = Map.of("paquete_anual_id", paqueteAnualId);
         List<String> list = spExecutor.queryList("spCobranzaObtenerPaqueteAnualDetalle", params, jsonStringMapper);
+        if (list.isEmpty() || list.getFirst() == null || list.getFirst().isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.of(String.join("", list));
+    }
+
+    public List<EsquemaPagoPropuestaResponse> spCobranzaObtenerEsquemasPagoPropuestaPaqueteAnual(String membresia, Integer anio) {
+        Map<String, Object> params = Map.of(
+                "membresia", membresia,
+                "anio", anio
+        );
+
+        return spExecutor.queryList(
+                "spCobranzaObtenerEsquemasPagoPropuestaPaqueteAnual",
+                params,
+                esquemaPagoPropuestaMapper
+        );
+    }
+
+    public Optional<String> spCobranzaCotizarPropuestaPaqueteAnual(String membresia, Integer anio, String esquemasJson) {
+        Map<String, Object> params = Map.of(
+                "membresia", membresia,
+                "anio", anio,
+                "esquemas", esquemasJson
+        );
+
+        List<String> list = spExecutor.queryList("spCobranzaCotizarPropuestaPaqueteAnual", params, jsonStringMapper);
         if (list.isEmpty() || list.getFirst() == null || list.getFirst().isBlank()) {
             return Optional.empty();
         }

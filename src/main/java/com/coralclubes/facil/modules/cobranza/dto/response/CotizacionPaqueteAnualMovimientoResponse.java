@@ -3,23 +3,24 @@ package com.coralclubes.facil.modules.cobranza.dto.response;
 import lombok.Builder;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Map;
 
 @Builder
-public record PaqueteAnualMovimientoResponse(
+public record CotizacionPaqueteAnualMovimientoResponse(
         Integer paqueteAnualMovimientoId,
         Integer movimientoId,
         String movimiento,
-        Boolean aplicaDescuento,
-        Boolean obligatorio,
         Integer cantidadMovimientos,
         Integer baseDeCobroId,
         String baseDeCobro,
         String periodicidad,
-        BigDecimal cuotaVigente,
+        Integer totalBeneficiarios,
+        Boolean aplicaDescuento,
+        Boolean obligatorio,
+        BigDecimal tarifaUnitario,
         Integer anioVigenciaCuota,
-        Map<String, Object> configuracionAdicional,
-        LocalDateTime fechaRegistro,
-        String usuarioRegistro
+        BigDecimal subtotal,
+        BigDecimal montoDescuento,
+        BigDecimal total,
+        Map<String, Object> configuracionAdicional
 ) {}
