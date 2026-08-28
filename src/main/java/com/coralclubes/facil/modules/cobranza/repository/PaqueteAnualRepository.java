@@ -110,20 +110,6 @@ public class PaqueteAnualRepository {
         );
     }
 
-    public Optional<String> spCobranzaCotizarPropuestaPaqueteAnual(String membresia, Integer anio, String esquemasJson) {
-        Map<String, Object> params = Map.of(
-                "membresia", membresia,
-                "anio", anio,
-                "esquemas", esquemasJson
-        );
-
-        List<String> list = spExecutor.queryList("spCobranzaCotizarPropuestaPaqueteAnual", params, jsonStringMapper);
-        if (list.isEmpty() || list.getFirst() == null || list.getFirst().isBlank()) {
-            return Optional.empty();
-        }
-        return Optional.of(String.join("", list));
-    }
-
     private final RowMapper<PeriodicidadMantenimientoResponse> periodicidadMapper = (rs, rowNum) ->
             PeriodicidadMantenimientoResponse.builder()
                     .periodicidadId(rs.getObject("periodicidad_id") != null ? rs.getInt("periodicidad_id") : null)
