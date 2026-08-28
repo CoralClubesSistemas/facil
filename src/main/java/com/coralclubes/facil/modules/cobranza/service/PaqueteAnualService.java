@@ -63,6 +63,10 @@ public class PaqueteAnualService {
         return repository.spCobranzaObtenerPeriodicidadMantenimiento(membresia);
     }
 
+    public List<CuponBeneficioPaqueteAnualResponse> obtenerCuponesBeneficio(String membresia, Integer anio, java.time.LocalDateTime fechaCotizacion) {
+        return repository.spCobranzaObtenerCuponesBeneficioPaqueteAnual(membresia, anio, fechaCotizacion);
+    }
+
     public List<EsquemaPagoPropuestaResponse> obtenerEsquemasPagoPropuesta(String membresia, Integer anio) {
         return repository.spCobranzaObtenerEsquemasPagoPropuestaPaqueteAnual(membresia, anio);
     }

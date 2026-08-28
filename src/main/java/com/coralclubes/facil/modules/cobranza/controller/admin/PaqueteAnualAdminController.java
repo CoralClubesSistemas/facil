@@ -63,6 +63,17 @@ public class PaqueteAnualAdminController {
         return ResponseEntity.ok(ApiResponse.success("Esquemas de pago obtenidos exitosamente.", esquemas));
     }
 
+    @GetMapping("/propuesta/cupones")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<List<CuponBeneficioPaqueteAnualResponse>>> obtenerCuponesBeneficio(
+            @RequestParam String membresia,
+            @RequestParam Integer anio,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime fechaCotizacion
+    ) {
+        List<CuponBeneficioPaqueteAnualResponse> cupones = service.obtenerCuponesBeneficio(membresia, anio, fechaCotizacion);
+        return ResponseEntity.ok(ApiResponse.success("Cupones de beneficio obtenidos exitosamente.", cupones));
+    }
+
     @PostMapping("/propuesta/cotizar")
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
     public ResponseEntity<ApiResponse<CotizacionPaqueteAnualResponse>> cotizarPropuestaPaqueteAnual(

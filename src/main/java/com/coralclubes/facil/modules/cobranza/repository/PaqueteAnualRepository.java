@@ -1,5 +1,6 @@
 package com.coralclubes.facil.modules.cobranza.repository;
 
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponBeneficioPaqueteAnualResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.EsquemaPagoPropuestaResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoPaqueteAnualResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.PaqueteAnualResponse;
@@ -138,6 +139,35 @@ public class PaqueteAnualRepository {
             return Optional.empty();
         }
         return Optional.of(esquemas.getFirst().paqueteId());
+    }
+
+    private final RowMapper<CuponBeneficioPaqueteAnualResponse> cuponBeneficioMapper = (rs, rowNum) ->
+            CuponBeneficioPaqueteAnualResponse.builder()
+                    .cuponId(rs.getObject("cupon_id") != null ? rs.getInt("cupon_id") : null)
+                    .cupon(rs.getString("cupon"))
+                    .nomenclatura(rs.getString("nomenclatura"))
+                    .cantidadCupones(rs.getObject("cantidad_cupones") != null ? rs.getInt("cantidad_cupones") : null)
+                    .periodoInicio(rs.getTimestamp("periodo_inicio") != null ? rs.getTimestamp("periodo_inicio").toLocalDateTime() : null)
+                    .periodoFin(rs.getTimestamp("periodo_fin") != null ? rs.getTimestamp("periodo_fin").toLocalDateTime() : null)
+                    .inicioVigenciaPeriodo(rs.getTimestamp("inicio_vigencia_periodo") != null ? rs.getTimestamp("inicio_vigencia_periodo").toLocalDateTime() : null)
+                    .finVigenciaPeriodo(rs.getTimestamp("fin_vigencia_periodo") != null ? rs.getTimestamp("fin_vigencia_periodo").toLocalDateTime() : null)
+                    .build();
+
+    public List<CuponBeneficioPaqueteAnualResponse> spCobranzaObtenerCuponesBeneficioPaqueteAnual(
+            String membresia,
+            Integer anio,
+            java.time.LocalDateTime fechaCotizacion
+    ) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("membresia", membresia);
+        params.put("anio", anio);
+        params.put("fecha_cotizacion", fechaCotizacion);
+
+        return spExecutor.queryList(
+                "spCobranzaObtenerCuponesBeneficioPaqueteAnual",
+                params,
+                cuponBeneficioMapper
+        );
     }
 
     public Optional<Integer> spCobranzaGuardarPaqueteAnual(
