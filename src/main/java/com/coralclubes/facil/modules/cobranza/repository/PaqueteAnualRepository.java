@@ -3,6 +3,7 @@ package com.coralclubes.facil.modules.cobranza.repository;
 import com.coralclubes.facil.modules.cobranza.dto.response.EsquemaPagoPropuestaResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoPaqueteAnualResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.PaqueteAnualResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.PeriodicidadMantenimientoResponse;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
@@ -23,7 +24,7 @@ public class PaqueteAnualRepository {
             MovimientoPaqueteAnualResponse.builder()
                     .id(rs.getObject("id") != null ? rs.getInt("id") : null)
                     .descripcion(rs.getString("descripcion"))
-                    .periodicidad(rs.getString("periodicidad"))
+                    .aplicaPeriodicidad(rs.getObject("aplicaPeriodicidad") != null && rs.getInt("aplicaPeriodicidad") == 1)
                     .baseDeCobroId(rs.getObject("baseDeCobroId") != null ? rs.getInt("baseDeCobroId") : null)
                     .baseDeCobro(rs.getString("baseDeCobro"))
                     .cuota(rs.getBigDecimal("cuota"))
@@ -121,6 +122,36 @@ public class PaqueteAnualRepository {
             return Optional.empty();
         }
         return Optional.of(String.join("", list));
+    }
+
+    private final RowMapper<PeriodicidadMantenimientoResponse> periodicidadMapper = (rs, rowNum) ->
+            PeriodicidadMantenimientoResponse.builder()
+                    .periodicidadId(rs.getObject("periodicidad_id") != null ? rs.getInt("periodicidad_id") : null)
+                    .periodicidad(rs.getString("periodicidad"))
+                    .cantidadPorPeriodo(rs.getObject("cantidad_por_periodo") != null ? rs.getInt("cantidad_por_periodo") : null)
+                    .build();
+
+    public List<PeriodicidadMantenimientoResponse> spCobranzaObtenerPeriodicidadMantenimiento(String membresia) {
+        Map<String, Object> params = Map.of("membresia", membresia);
+        return spExecutor.queryList("spCobranzaObtenerPeriodicidadMantenimiento", params, periodicidadMapper);
+    }
+
+    public Integer spCobranzaObtenerBeneficiariosPaqueteAnual(String membresia) {
+        Map<String, Object> params = Map.of("membresia", membresia);
+        return spExecutor.querySingle(
+                "spCobranzaObtenerBeneficiariosPaqueteAnual",
+                params,
+                (rs, rowNum) -> rs.getInt("totalBeneficiarios")
+        ).orElse(0);
+    }
+
+    public Optional<Integer> spCobranzaObtenerPaqueteAnualActivoIdPorMembresia(String membresia, Integer anio) {
+        // Obtenemos los esquemas para extraer el paquete_id activo asociado a la membresía
+        List<EsquemaPagoPropuestaResponse> esquemas = spCobranzaObtenerEsquemasPagoPropuestaPaqueteAnual(membresia, anio);
+        if (esquemas.isEmpty() || esquemas.getFirst().paqueteId() == null) {
+            return Optional.empty();
+        }
+        return Optional.of(esquemas.getFirst().paqueteId());
     }
 
     public Optional<Integer> spCobranzaGuardarPaqueteAnual(

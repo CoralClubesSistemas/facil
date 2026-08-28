@@ -1,5 +1,6 @@
 package com.coralclubes.facil.modules.cobranza.controller.admin;
 
+import com.coralclubes.facil.modules.cobranza.dto.request.CotizarPropuestaPaqueteAnualRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarPaqueteAnualRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.*;
 import com.coralclubes.facil.modules.cobranza.service.PaqueteAnualService;
@@ -65,11 +66,9 @@ public class PaqueteAnualAdminController {
     @PostMapping("/propuesta/cotizar")
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
     public ResponseEntity<ApiResponse<CotizacionPaqueteAnualResponse>> cotizarPropuestaPaqueteAnual(
-            @RequestParam String membresia,
-            @RequestParam Integer anio,
-            @RequestBody(required = false) List<String> esquemas
+            @Valid @RequestBody CotizarPropuestaPaqueteAnualRequest request
     ) {
-        CotizacionPaqueteAnualResponse cotizacion = service.cotizarPropuestaPaqueteAnual(membresia, anio, esquemas);
+        CotizacionPaqueteAnualResponse cotizacion = service.cotizarPropuestaPaqueteAnual(request);
         return ResponseEntity.ok(ApiResponse.success("Cotización de paquete anual generada exitosamente.", cotizacion));
     }
 

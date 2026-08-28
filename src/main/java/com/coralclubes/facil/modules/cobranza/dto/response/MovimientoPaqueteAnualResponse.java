@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 public record MovimientoPaqueteAnualResponse(
         Integer id,
         String descripcion,
-        String periodicidad,
+        Boolean aplicaPeriodicidad,
         Integer baseDeCobroId,
         String baseDeCobro,
         BigDecimal cuota,
