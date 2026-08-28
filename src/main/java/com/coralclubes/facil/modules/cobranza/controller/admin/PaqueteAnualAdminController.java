@@ -2,6 +2,7 @@ package com.coralclubes.facil.modules.cobranza.controller.admin;
 
 import com.coralclubes.facil.modules.cobranza.dto.request.CotizarPropuestaPaqueteAnualRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarPaqueteAnualRequest;
+import com.coralclubes.facil.modules.cobranza.dto.request.GuardarPropuestaPaqueteAnualRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.*;
 import com.coralclubes.facil.modules.cobranza.service.PaqueteAnualService;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
@@ -81,6 +82,36 @@ public class PaqueteAnualAdminController {
     ) {
         CotizacionPaqueteAnualResponse cotizacion = service.cotizarPropuestaPaqueteAnual(request);
         return ResponseEntity.ok(ApiResponse.success("Cotización de paquete anual generada exitosamente.", cotizacion));
+    }
+
+    @GetMapping("/propuesta")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<PropuestaPaqueteAnualResponse>> obtenerPropuestaPaqueteAnual(
+            @RequestParam String membresia,
+            @RequestParam Integer anio
+    ) {
+        PropuestaPaqueteAnualResponse propuesta = service.obtenerPropuestaPaqueteAnual(membresia, anio);
+        return ResponseEntity.ok(ApiResponse.success("Propuesta de paquete anual consultada exitosamente.", propuesta));
+    }
+
+    @GetMapping("/propuesta/correo")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<CuerpoCorreoResponse>> sintetizarCuerpoCorreoPropuesta(
+            @RequestParam String membresia,
+            @RequestParam Integer anio
+    ) {
+        CuerpoCorreoResponse cuerpoCorreo = service.sintetizarCuerpoCorreoPropuesta(membresia, anio);
+        return ResponseEntity.ok(ApiResponse.success("Cuerpo de correo sintetizado exitosamente.", cuerpoCorreo));
+    }
+
+    @PostMapping("/propuesta/guardar")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<Integer>> guardarPropuestaPaqueteAnual(
+            @Valid @RequestBody GuardarPropuestaPaqueteAnualRequest request
+    ) {
+        String usuario = userContext.getUsername();
+        Integer propuestaId = service.guardarPropuestaPaqueteAnual(request, usuario);
+        return ResponseEntity.ok(ApiResponse.success("Propuesta de paquete anual guardada exitosamente.", propuestaId));
     }
 
     @PostMapping("/guardar")

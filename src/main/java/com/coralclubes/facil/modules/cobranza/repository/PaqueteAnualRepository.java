@@ -196,4 +196,56 @@ public class PaqueteAnualRepository {
                 paqueteIdMapper
         );
     }
+
+    private final RowMapper<Integer> propuestaIdMapper = (rs, rowNum) -> rs.getInt("propuesta_id");
+
+    public Optional<Integer> spCobranzaGuardarPropuestaPaqueteAnual(
+            Integer paqueteAnualId,
+            String membresia,
+            Integer anio,
+            Integer totalBeneficiariosActivos,
+            java.math.BigDecimal porcentajeDescuentoAplicado,
+            java.math.BigDecimal subtotalGeneral,
+            java.math.BigDecimal descuentoGeneral,
+            java.math.BigDecimal totalGeneral,
+            String esquemasAplicadosJson,
+            String movimientosJson,
+            String cuponesJson,
+            java.time.LocalDateTime vigenciaPropuesta,
+            String usuario
+    ) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("paquete_anual_id", paqueteAnualId);
+        params.put("membresia", membresia);
+        params.put("anio", anio);
+        params.put("total_beneficiarios_activos", totalBeneficiariosActivos);
+        params.put("porcentaje_descuento_aplicado", porcentajeDescuentoAplicado);
+        params.put("subtotal_general", subtotalGeneral);
+        params.put("descuento_general", descuentoGeneral);
+        params.put("total_general", totalGeneral);
+        params.put("esquemas_aplicados", esquemasAplicadosJson);
+        params.put("movimientos", movimientosJson);
+        params.put("cupones", cuponesJson);
+        params.put("vigencia_propuesta", vigenciaPropuesta);
+        params.put("usuario", usuario);
+
+        return spExecutor.querySingle(
+                "spCobranzaGuardarPropuestaPaqueteAnual",
+                params,
+                propuestaIdMapper
+        );
+    }
+
+    public Optional<String> spCobranzaObtenerPropuestaPaqueteAnual(String membresia, Integer anio) {
+        Map<String, Object> params = Map.of(
+                "membresia", membresia,
+                "anio", anio
+        );
+
+        List<String> list = spExecutor.queryList("spCobranzaObtenerPropuestaPaqueteAnual", params, jsonStringMapper);
+        if (list.isEmpty() || list.getFirst() == null || list.getFirst().isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.of(String.join("", list));
+    }
 }

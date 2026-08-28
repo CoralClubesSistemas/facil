@@ -5,8 +5,10 @@ import com.coralclubes.facil.modules.clientes.service.SociosService;
 import com.coralclubes.facil.modules.cobranza.dto.request.CotizarPropuestaMovimientoParamDto;
 import com.coralclubes.facil.modules.cobranza.dto.request.CotizarPropuestaPaqueteAnualRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarPaqueteAnualRequest;
+import com.coralclubes.facil.modules.cobranza.dto.request.GuardarPropuestaPaqueteAnualRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.*;
 import com.coralclubes.facil.modules.cobranza.repository.PaqueteAnualRepository;
+import com.coralclubes.facil.modules.sistema.service.PlantillasCuerpoCorreoService;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -16,10 +18,10 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.text.NumberFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -27,11 +29,13 @@ public class PaqueteAnualService {
 
     private static final int MOVIMIENTO_CREDENCIALES = 25;
     private static final String ESQUEMA_ADICIONAL = "ADICIONAL";
+    private static final String CODIGO_PLANTILLA_PROPUESTA = "PROPUESTA_PAQUETE_ANUAL";
     private static final int BASE_BENEFICIARIO = 284;
 
     private final PaqueteAnualRepository repository;
     private final GeneracionMovimientosService generacionMovimientosService;
     private final SociosService sociosService;
+    private final PlantillasCuerpoCorreoService plantillasService;
     private final BusinessLogger businessLogger;
     private final ObjectMapper objectMapper;
 
@@ -325,5 +329,154 @@ public class PaqueteAnualService {
                 descuentosJson,
                 movimientosJson
         ).orElseThrow(() -> new RuntimeException("Error al guardar el paquete anual en la base de datos"));
+    }
+
+    public Integer guardarPropuestaPaqueteAnual(GuardarPropuestaPaqueteAnualRequest request, String usuario) {
+        businessLogger.info(usuario, "Guardando propuesta de paquete anual para membresia: {}, anio: {}, total: {}",
+                request.membresia(), request.anio(), request.totalGeneral());
+
+        String esquemasJson = null;
+        if (request.esquemasAplicados() != null) {
+            try {
+                esquemasJson = objectMapper.writeValueAsString(request.esquemasAplicados());
+            } catch (JsonProcessingException e) {
+                throw new IllegalArgumentException("Error al serializar esquemas aplicados a JSON", e);
+            }
+        }
+
+        String movimientosJson;
+        try {
+            movimientosJson = objectMapper.writeValueAsString(request.movimientos());
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Error al serializar movimientos a JSON", e);
+        }
+
+        String cuponesJson = null;
+        if (request.cupones() != null) {
+            try {
+                cuponesJson = objectMapper.writeValueAsString(request.cupones());
+            } catch (JsonProcessingException e) {
+                throw new IllegalArgumentException("Error al serializar cupones a JSON", e);
+            }
+        }
+
+        return repository.spCobranzaGuardarPropuestaPaqueteAnual(
+                request.paqueteAnualId(),
+                request.membresia(),
+                request.anio(),
+                request.totalBeneficiariosActivos(),
+                request.porcentajeDescuentoAplicado(),
+                request.subtotalGeneral(),
+                request.descuentoGeneral(),
+                request.totalGeneral(),
+                esquemasJson,
+                movimientosJson,
+                cuponesJson,
+                request.vigenciaPropuesta(),
+                usuario
+        ).orElseThrow(() -> new RuntimeException("Error al guardar la propuesta de paquete anual en la base de datos"));
+    }
+
+    public PropuestaPaqueteAnualResponse obtenerPropuestaPaqueteAnual(String membresia, Integer anio) {
+        String jsonPropuesta = repository.spCobranzaObtenerPropuestaPaqueteAnual(membresia, anio)
+                .orElse(null);
+
+        if (jsonPropuesta == null || jsonPropuesta.isBlank()) {
+            return null;
+        }
+
+        try {
+            return objectMapper.readValue(jsonPropuesta, PropuestaPaqueteAnualResponse.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error al deserializar la propuesta guardada de paquete anual", e);
+        }
+    }
+
+    public CuerpoCorreoResponse sintetizarCuerpoCorreoPropuesta(String membresia, Integer anio) {
+        PropuestaPaqueteAnualResponse propuesta = obtenerPropuestaPaqueteAnual(membresia, anio);
+        if (propuesta == null) {
+            throw new IllegalArgumentException("No se encontró ninguna propuesta guardada para la membresía: " + membresia + " y año: " + anio);
+        }
+
+        // 1. Obtener datos del socio
+        ApiResponse<InformacionSocio> socioResponse = sociosService.obtenerSocios(membresia);
+        InformacionSocio socio = socioResponse != null ? socioResponse.data() : null;
+
+        Map<String, Object> variables = new HashMap<>();
+        boolean tieneNombreSocio = socio != null && socio.nombreCompleto() != null && !socio.nombreCompleto().isBlank();
+        variables.put("nombreSocio", tieneNombreSocio ? socio.nombreCompleto() : "");
+        variables.put("membresia", membresia);
+        variables.put("anio", anio != null ? String.valueOf(anio) : "");
+
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        variables.put("fechaEmision", LocalDateTime.now().format(dateFormatter));
+
+        if (propuesta.vigenciaPropuesta() != null) {
+            variables.put("vigenciaPropuesta", propuesta.vigenciaPropuesta().format(dateFormatter));
+        } else {
+            variables.put("vigenciaPropuesta", "");
+        }
+
+        NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("es", "MX"));
+
+        variables.put("subtotalGeneral", propuesta.subtotalGeneral() != null ? currencyFormat.format(propuesta.subtotalGeneral()) : "$0.00");
+        variables.put("descuentoGeneral", propuesta.descuentoGeneral() != null ? currencyFormat.format(propuesta.descuentoGeneral()) : "$0.00");
+        variables.put("totalGeneral", propuesta.totalGeneral() != null ? currencyFormat.format(propuesta.totalGeneral()) : "$0.00");
+        variables.put("porcentajeDescuento", propuesta.porcentajeDescuentoAplicado() != null ? propuesta.porcentajeDescuentoAplicado().stripTrailingZeros().toPlainString() + "%" : "0%");
+
+        // 2. Mapear movimientos
+        List<Map<String, Object>> movimientosList = new ArrayList<>();
+        if (propuesta.movimientos() != null) {
+            for (CotizacionPaqueteAnualMovimientoResponse mov : propuesta.movimientos()) {
+                Map<String, Object> movMap = new HashMap<>();
+                movMap.put("movimiento", mov.movimiento());
+                movMap.put("cantidadMovimientos", mov.cantidadMovimientos() != null ? mov.cantidadMovimientos() : 1);
+                movMap.put("periodicidad", mov.periodicidad() != null ? mov.periodicidad() : "");
+                movMap.put("totalBeneficiarios", mov.totalBeneficiarios() != null ? mov.totalBeneficiarios() : 0);
+                movMap.put("tarifaUnitario", mov.tarifaUnitario() != null ? currencyFormat.format(mov.tarifaUnitario()) : "$0.00");
+                movMap.put("subtotal", mov.subtotal() != null ? currencyFormat.format(mov.subtotal()) : "$0.00");
+                movMap.put("montoDescuento", mov.montoDescuento() != null ? currencyFormat.format(mov.montoDescuento()) : "$0.00");
+                movMap.put("total", mov.total() != null ? currencyFormat.format(mov.total()) : "$0.00");
+                movMap.put("aplicaDescuento", Boolean.TRUE.equals(mov.aplicaDescuento()));
+                movimientosList.add(movMap);
+            }
+        }
+        variables.put("movimientos", movimientosList);
+
+        // 3. Mapear esquemas aplicados
+        List<Map<String, Object>> esquemasList = new ArrayList<>();
+        if (propuesta.esquemasAplicados() != null) {
+            for (PaqueteAnualDescuentoResponse esq : propuesta.esquemasAplicados()) {
+                Map<String, Object> esqMap = new HashMap<>();
+                esqMap.put("label", esq.label() != null ? esq.label() : esq.value());
+                esqMap.put("descuento", esq.descuento() != null ? esq.descuento().stripTrailingZeros().toPlainString() + "%" : "0%");
+                esquemasList.add(esqMap);
+            }
+        }
+        variables.put("esquemasAplicados", esquemasList);
+
+        // 4. Mapear cupones de beneficio
+        List<Map<String, Object>> cuponesList = new ArrayList<>();
+        if (propuesta.cupones() != null) {
+            for (CuponBeneficioPaqueteAnualResponse cup : propuesta.cupones()) {
+                Map<String, Object> cupMap = new HashMap<>();
+                cupMap.put("cupon", cup.cupon());
+                cupMap.put("nomenclatura", cup.nomenclatura() != null ? cup.nomenclatura() : "");
+                cupMap.put("cantidadCupones", cup.cantidadCupones() != null ? cup.cantidadCupones() : 1);
+                cupMap.put("inicioVigenciaPeriodo", cup.inicioVigenciaPeriodo() != null ? cup.inicioVigenciaPeriodo().format(dateFormatter) : "");
+                cupMap.put("finVigenciaPeriodo", cup.finVigenciaPeriodo() != null ? cup.finVigenciaPeriodo().format(dateFormatter) : "");
+                cuponesList.add(cupMap);
+            }
+        }
+        variables.put("cupones", cuponesList);
+
+        // 5. Renderizar plantilla con Pebble
+        String asunto = plantillasService.renderizarAsunto(CODIGO_PLANTILLA_PROPUESTA, variables);
+        String cuerpo = plantillasService.renderizarCuerpo(CODIGO_PLANTILLA_PROPUESTA, variables);
+
+        return CuerpoCorreoResponse.builder()
+                .asunto(asunto)
+                .cuerpo(cuerpo)
+                .build();
     }
 }
