@@ -461,10 +461,7 @@ public class PaqueteAnualService {
             for (CuponBeneficioPaqueteAnualResponse cup : propuesta.cupones()) {
                 Map<String, Object> cupMap = new HashMap<>();
                 cupMap.put("cupon", cup.cupon());
-                cupMap.put("nomenclatura", cup.nomenclatura() != null ? cup.nomenclatura() : "");
                 cupMap.put("cantidadCupones", cup.cantidadCupones() != null ? cup.cantidadCupones() : 1);
-                cupMap.put("inicioVigenciaPeriodo", cup.inicioVigenciaPeriodo() != null ? cup.inicioVigenciaPeriodo().format(dateFormatter) : "");
-                cupMap.put("finVigenciaPeriodo", cup.finVigenciaPeriodo() != null ? cup.finVigenciaPeriodo().format(dateFormatter) : "");
                 cuponesList.add(cupMap);
             }
         }
