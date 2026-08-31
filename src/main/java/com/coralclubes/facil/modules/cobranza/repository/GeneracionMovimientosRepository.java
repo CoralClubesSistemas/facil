@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.cobranza.repository;
 
 import com.coralclubes.facil.modules.cobranza.dto.response.CotizacionCredencialesResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoManualResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoPorTipoMembresiaResponse;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +19,17 @@ import java.util.Map;
 public class GeneracionMovimientosRepository {
 
     private final StoredProcedureExecutor spExecutor;
+
+    private final RowMapper<MovimientoManualResponse> movimientoManualMapper = (rs, rowNum) ->
+            MovimientoManualResponse.builder()
+                    .membresia(rs.getString("membresia"))
+                    .mvtId(rs.getObject("mvt_id") != null ? rs.getInt("mvt_id") : null)
+                    .descripcion(rs.getString("descripcion"))
+                    .fechaVencimiento(rs.getTimestamp("fecha_vencimiento") != null
+                            ? rs.getTimestamp("fecha_vencimiento").toLocalDateTime()
+                            : null)
+                    .cuota(rs.getBigDecimal("cuota"))
+                    .build();
 
     private final RowMapper<MovimientoPorTipoMembresiaResponse> movimientoMapper = (rs, rowNum) -> {
 
@@ -51,6 +64,16 @@ public class GeneracionMovimientosRepository {
                 .build();
     };
 
+    private final RowMapper<CotizacionCredencialesResponse> cotizacionCredencialesMapper = (rs, rowNum) ->
+            CotizacionCredencialesResponse.builder()
+                    .tarifaEstablecida(rs.getBigDecimal("tarifaEstablecida"))
+                    .cantidadBeneficiarios(rs.getObject("cantidadBeneficiarios") != null ? rs.getInt("cantidadBeneficiarios") : null)
+                    .cantidadMovimientosAInsertar(rs.getObject("cantidadMovimientosAInsertar") != null ? rs.getInt("cantidadMovimientosAInsertar") : null)
+                    .cantidadMovimientosAModificar(rs.getObject("cantidadMovimientosAModificar") != null ? rs.getInt("cantidadMovimientosAModificar") : null)
+                    .calculoTotal(rs.getBigDecimal("calculoTotal"))
+                    .cuotaPorRegitro(rs.getBigDecimal("cuotaPorRegitro"))
+                    .build();
+
     public List<MovimientoPorTipoMembresiaResponse> spCobranzaObtenerMovimientosPorTipoMembresia(Integer tipoMembresia) {
         Map<String, Object> params = Map.of(
                 "tipoMembresia", tipoMembresia
@@ -63,13 +86,13 @@ public class GeneracionMovimientosRepository {
         );
     }
 
-    public void spCobranzaInsertaMovimientoManual(
+    public List<MovimientoManualResponse> spCobranzaInsertaMovimientoManual(
             String membresia,
             Integer tipoMovimiento,
             Integer cantidad,
             String descripcion,
             BigDecimal cuota,
-            LocalDate fechaVencimiento,
+            LocalDateTime fechaVencimiento,
             Integer desarrolloConsumo,
             String usuario
     ) {
@@ -84,14 +107,18 @@ public class GeneracionMovimientosRepository {
                 "usuario", usuario
         );
 
-        spExecutor.execute("spCobranzaInsertaMovimientoManual", params);
+        return spExecutor.queryList(
+                "spCobranzaInsertaMovimientoManual",
+                params,
+                movimientoManualMapper
+        );
     }
 
-    public void spCobranzaInsertaMovimientoCredenciales(
+    public List<MovimientoManualResponse> spCobranzaInsertaMovimientoCredenciales(
             String membresia,
             Integer anios,
             Boolean incluirPrevios,
-            LocalDate fechaVencimiento,
+            LocalDateTime fechaVencimiento,
             Integer desarrolloConsumo,
             String usuario
     ) {
@@ -104,18 +131,12 @@ public class GeneracionMovimientosRepository {
                 "usuario", usuario
         );
 
-        spExecutor.execute("spCobranzaInsertaMovimientoCredenciales", params);
+        return spExecutor.queryList(
+                "spCobranzaInsertaMovimientoCredenciales",
+                params,
+                movimientoManualMapper
+        );
     }
-
-    private final RowMapper<CotizacionCredencialesResponse> cotizacionCredencialesMapper = (rs, rowNum) ->
-            CotizacionCredencialesResponse.builder()
-                    .tarifaEstablecida(rs.getBigDecimal("tarifaEstablecida"))
-                    .cantidadBeneficiarios(rs.getObject("cantidadBeneficiarios") != null ? rs.getInt("cantidadBeneficiarios") : null)
-                    .cantidadMovimientosAInsertar(rs.getObject("cantidadMovimientosAInsertar") != null ? rs.getInt("cantidadMovimientosAInsertar") : null)
-                    .cantidadMovimientosAModificar(rs.getObject("cantidadMovimientosAModificar") != null ? rs.getInt("cantidadMovimientosAModificar") : null)
-                    .calculoTotal(rs.getBigDecimal("calculoTotal"))
-                    .cuotaPorRegitro(rs.getBigDecimal("cuotaPorRegitro"))
-                    .build();
 
     public CotizacionCredencialesResponse spCobranzaConsultarCotizacionCredenciales(
             String membresia,

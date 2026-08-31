@@ -411,11 +411,8 @@ public class PaqueteAnualService {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         variables.put("fechaEmision", LocalDateTime.now().format(dateFormatter));
 
-        if (propuesta.vigenciaPropuesta() != null) {
-            variables.put("vigenciaPropuesta", propuesta.vigenciaPropuesta().format(dateFormatter));
-        } else {
-            variables.put("vigenciaPropuesta", "");
-        }
+        LocalDateTime vigenciaPropuesta = propuesta.cupones().getFirst().periodoFin();
+        variables.put("vigenciaPropuesta", vigenciaPropuesta != null ? vigenciaPropuesta.format(dateFormatter) : "");
 
         NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("es", "MX"));
 

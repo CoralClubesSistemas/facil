@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.cobranza.model.generador_movimientos;
 
 import com.coralclubes.facil.modules.cobranza.dto.request.GeneracionMovimientoRequest;
+import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoManualResponse;
 import com.coralclubes.facil.modules.cobranza.repository.GeneracionMovimientosRepository;
 import com.coralclubes.logging.BusinessLogger;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,7 @@ public class MovimientoEstandarStrategy implements GeneracionMovimientoStrategy 
     }
 
     @Override
-    public void generar(GeneracionMovimientoRequest request, String usuario) {
+    public List<MovimientoManualResponse> generar(GeneracionMovimientoRequest request, String usuario) {
         Map<String, Object> params = request.getParametrosEspeciales() != null 
                 ? request.getParametrosEspeciales() 
                 : Map.of();
@@ -73,7 +74,7 @@ public class MovimientoEstandarStrategy implements GeneracionMovimientoStrategy 
                 ? request.getFechaVencimiento() 
                 : LocalDate.now();
 
-        repository.spCobranzaInsertaMovimientoManual(
+        return repository.spCobranzaInsertaMovimientoManual(
                 request.getMembresia(),
                 request.getTipoMovimientoId(),
                 cantidad,

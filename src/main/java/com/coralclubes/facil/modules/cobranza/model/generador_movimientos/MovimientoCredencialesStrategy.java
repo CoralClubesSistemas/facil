@@ -1,12 +1,14 @@
 package com.coralclubes.facil.modules.cobranza.model.generador_movimientos;
 
 import com.coralclubes.facil.modules.cobranza.dto.request.GeneracionMovimientoRequest;
+import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoManualResponse;
 import com.coralclubes.facil.modules.cobranza.repository.GeneracionMovimientosRepository;
 import com.coralclubes.logging.BusinessLogger;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -24,7 +26,7 @@ public class MovimientoCredencialesStrategy implements GeneracionMovimientoStrat
     }
 
     @Override
-    public void generar(GeneracionMovimientoRequest request, String usuario) {
+    public List<MovimientoManualResponse> generar(GeneracionMovimientoRequest request, String usuario) {
         Map<String, Object> params = request.getParametrosEspeciales() != null
                 ? request.getParametrosEspeciales() 
                 : Map.of();
@@ -55,7 +57,7 @@ public class MovimientoCredencialesStrategy implements GeneracionMovimientoStrat
                 ? request.getFechaVencimiento() 
                 : LocalDate.now();
 
-        repository.spCobranzaInsertaMovimientoCredenciales(
+        return repository.spCobranzaInsertaMovimientoCredenciales(
                 request.getMembresia(),
                 anios,
                 incluirPrevios,
