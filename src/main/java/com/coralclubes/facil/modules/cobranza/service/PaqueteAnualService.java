@@ -372,7 +372,7 @@ public class PaqueteAnualService {
                 esquemasJson,
                 movimientosJson,
                 cuponesJson,
-                request.vigenciaPropuesta(),
+                request.vigenciaPropuesta() != null ? Objects.requireNonNull(request.cupones()).getFirst().periodoFin() : null,
                 usuario
         ).orElseThrow(() -> new RuntimeException("Error al guardar la propuesta de paquete anual en la base de datos"));
     }
