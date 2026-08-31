@@ -61,7 +61,7 @@ public class MovimientoCredencialesStrategy implements GeneracionMovimientoStrat
                 request.getMembresia(),
                 anios,
                 incluirPrevios,
-                fechaVencimiento,
+                fechaVencimiento.atStartOfDay(),
                 request.getDesarrolloConsumo(),
                 usuario
         );

@@ -80,7 +80,7 @@ public class MovimientoEstandarStrategy implements GeneracionMovimientoStrategy 
                 cantidad,
                 descripcion,
                 cuota,
-                fechaVencimiento,
+                fechaVencimiento.atStartOfDay(),
                 request.getDesarrolloConsumo(),
                 usuario
         );
