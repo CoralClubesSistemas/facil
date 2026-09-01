@@ -7,6 +7,8 @@ import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -146,5 +148,19 @@ public class RecepcionController {
     ) {
         ApiResponse<UUID> response = ApiResponse.success(recepcionService.generarOrdenSaldosPendientes(request.membresia(), request.folio()));
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/registro-checkin/pdf")
+    @PreAuthorize("hasAuthority('MOD_SMNURESERVACIONES')")
+    public ResponseEntity<byte[]> obtenerRegistroCheckInPdf(
+            @RequestParam String membresia,
+            @RequestParam Integer consecutivo
+    ) {
+        String usuario = userContext.getUsername();
+        byte[] pdf = recepcionService.generarPdfRegistroCheckIn(membresia, consecutivo, usuario);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=registro-checkin-" + membresia + "-" + consecutivo + ".pdf")
+                .body(pdf);
     }
 }

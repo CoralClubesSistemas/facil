@@ -192,6 +192,7 @@ public class ReservacionesRepository {
             .descripcionEstatus(rs.getString("DescripcionEstatus"))
             .importePendiente(rs.getBigDecimal("ImportePendiente"))
             .ultimoReciboPagado(rs.getString("UltimoReciboPagado"))
+            .folioTarjeta(rs.getObject("FolioTarjeta") != null ? rs.getInt("FolioTarjeta") : null)
             .build();
 
     private final RowMapper<EstadisticaDelDiaDto> estadisticasDiaMapper = (rs, rowNum) -> EstadisticaDelDiaDto.builder()
@@ -680,5 +681,19 @@ public class ReservacionesRepository {
         params.put("Membresia", membresia);
 
         return spExecutor.queryList("spResvConsultaReservacionesMembresia", params, reservacionMembresiaMapper);
+    }
+
+    public Integer spResvGuardarTarjetaRegistro(String membresia, Integer consecutivo, String usuario) {
+        Map<String, Object> params = Map.of(
+                "membresia", membresia,
+                "consecutivo", consecutivo,
+                "usuario", usuario
+        );
+
+        return spExecutor.querySingle(
+                "spResvGuardarTarjetaRegistro",
+                params,
+                (rs, rowNum) -> rs.getInt("id")
+        ).orElseThrow(() -> new IllegalStateException("No se pudo registrar la tarjeta de registro para la reservación."));
     }
 }

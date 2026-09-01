@@ -37,7 +37,8 @@ public class TemplatePreviewUtil {
             // Map.entry("ciudad", "CIUDAD DE MÉXICO"),
             // Map.entry("pais", "MÉXICO"),
             Map.entry("telefono", "55 4920 1823"),
-            Map.entry("email", "jruiz@scanda.com.mx")
+            Map.entry("email", "jruiz@scanda.com.mx"),
+            Map.entry("logoBgColor", "#0f3a6f")
     );
 
     public static void main(String[] args) {

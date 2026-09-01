@@ -1,10 +1,13 @@
 package com.coralclubes.facil.modules.reservaciones.service;
 
 import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleDto;
+import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
 import com.coralclubes.facil.modules.clientes.dto.response.PuntosMembresia;
 import com.coralclubes.facil.modules.clientes.service.PuntosService;
+import com.coralclubes.facil.modules.clientes.service.SociosService;
 import com.coralclubes.facil.modules.reservaciones.repository.UnidadesRepository;
 import com.coralclubes.facil.shared.domain.dto.ArchivoDescarga;
+import com.coralclubes.facil.shared.domain.enums.DesarrolloLogoEnum;
 import com.coralclubes.facil.shared.events.dto.ConsumoPuntosReservacionEvent;
 import com.coralclubes.facil.shared.events.dto.ReservacionConfirmadaEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -63,6 +66,7 @@ public class ReservacionesService {
     private final CampanasPuntosService campanasPuntosService;
     private final UserContext userContext;
     private final PuntosService puntosService;
+    private final SociosService sociosService;
     private final BusinessLogger businessLogger;
 
     private final ApplicationEventPublisher eventPublisher;
@@ -87,9 +91,12 @@ public class ReservacionesService {
     @Value("${app.clients.storage.aliases.default}")
     private String aliasStorageDefault;
 
-    @Value("${app.clients.checkout.urls.portal-resv.redirect-success}") private String urlCheckoutSuccess;
-    @Value("${app.clients.checkout.urls.portal-resv.redirect-failure}") private String urlCheckoutFailure;
-    @Value("${app.clients.checkout.urls.portal-resv.redirect-cancel}") private String urlCheckoutCancel;
+    @Value("${app.clients.checkout.urls.portal-resv.redirect-success}")
+    private String urlCheckoutSuccess;
+    @Value("${app.clients.checkout.urls.portal-resv.redirect-failure}")
+    private String urlCheckoutFailure;
+    @Value("${app.clients.checkout.urls.portal-resv.redirect-cancel}")
+    private String urlCheckoutCancel;
 
     // =========================================================================
     // 1. GESTIÓN DE INVENTARIO Y DISPONIBILIDAD
@@ -1150,5 +1157,103 @@ public class ReservacionesService {
         }
 
         enviarNotificacionCartaOcupacion(event, uuid, correosAdicionales);
+    }
+
+    @Transactional
+    public byte[] generarPdfRegistroCheckIn(String membresia, Integer numeroReservacion, String usuario) {
+        // 1. Consultar detalle de la reservación
+        DetalleReservacionDto detalle = repository.obtenerDetalleReservacion(membresia, numeroReservacion);
+        if (detalle == null) {
+            throw new IllegalArgumentException("No se encontró información para la reservación: " + numeroReservacion + " de la membresía: " + membresia);
+        }
+
+        // 2. Validar estatus de la reservación (solo permite la generacion si el estatus no es checkin o checkout)
+        String estatusClave = detalle.estatusClave() != null ? detalle.estatusClave().trim().toUpperCase() : "";
+        String estatusDesc = detalle.estatusDescripcion() != null ? detalle.estatusDescripcion() : estatusClave;
+
+        if (estatusClave.contains("CHECK-IN") || estatusClave.contains("CHECKIN") || estatusClave.contains("CHECK-OUT") || estatusClave.contains("CHECKOUT")) {
+            throw new IllegalArgumentException("No se puede generar el formato de registro Check-In porque la reservación ya se encuentra en estatus " + estatusDesc + ".");
+        }
+
+        if (!estatusClave.contains("CONFIRMAD") && !estatusClave.contains("PENDIENT")) {
+            throw new IllegalArgumentException("La reservación debe estar en estatus CONFIRMADA o PENDIENTE para generar el formato de registro. Estatus actual: " + estatusDesc);
+        }
+
+        // 3. Ejecutar SP para registrar tarjeta de registro y obtener el folio asignado
+        Integer folioTarjetaId = repository.spResvGuardarTarjetaRegistro(membresia, numeroReservacion, usuario);
+
+        // 4. Consultar datos complementarios del socio
+        InformacionSocio socio = null;
+        try {
+            ApiResponse<InformacionSocio> socioResp = sociosService.obtenerSocios(membresia);
+            if (socioResp != null) {
+                socio = socioResp.data();
+            }
+        } catch (Exception e) {
+            log.warn("No se pudo obtener información complementaria del socio {}: {}", membresia, e.getMessage());
+        }
+
+        // 5. Preparar parámetros de la plantilla
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        String nombreCompleto = detalle.nombreHuesped() != null && !detalle.nombreHuesped().isBlank()
+                ? detalle.nombreHuesped()
+                : (socio != null && socio.nombreCompleto() != null ? socio.nombreCompleto() : "");
+
+        String habitacion = detalle.numeroHabitacion() != null && !detalle.numeroHabitacion().isBlank()
+                ? detalle.numeroHabitacion()
+                : (detalle.tipoUnidad() != null && !detalle.tipoUnidad().isBlank() ? detalle.tipoUnidad() : "POR ASIGNAR");
+
+        String desarrollo = detalle.nombreDesarrollo() != null && !detalle.nombreDesarrollo().isBlank()
+                ? detalle.nombreDesarrollo()
+                : (socio != null && socio.desarrollo() != null ? socio.desarrollo() : "CORAL CLUBES");
+
+        String fechaLlegada = detalle.fechaEntrada() != null ? detalle.fechaEntrada().format(dateFormatter) : "";
+        String fechaSalida = detalle.fechaSalida() != null ? detalle.fechaSalida().format(dateFormatter) : "";
+
+        String pax = detalle.numeroSocios() != null && detalle.numeroSocios() > 0
+                ? detalle.numeroSocios().toString()
+                : "1";
+
+        String telefono = socio != null && socio.telefono() != null && !socio.telefono().isBlank()
+                ? socio.telefono()
+                : (socio != null && socio.telefonoAlternativo() != null && !socio.telefonoAlternativo().isBlank()
+                   ? socio.telefonoAlternativo()
+                   : "-----");
+
+        String email = socio != null && socio.correo() != null && !socio.correo().isBlank()
+                ? socio.correo()
+                : (socio != null && socio.correoAlternativo() != null && !socio.correoAlternativo().isBlank()
+                   ? socio.correoAlternativo()
+                   : "-----");
+
+        String direccion = socio != null && socio.direccion() != null ? socio.direccion() : "";
+
+        DesarrolloLogoEnum logoEnum = detalle.desarrolloId() != null
+                ? DesarrolloLogoEnum.fromDesarrolloId(detalle.desarrolloId())
+                : DesarrolloLogoEnum.fromNombre(desarrollo);
+
+        String logoBase64 = logoEnum.getLogoBase64DataUri();
+
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("logoUrl", logoBase64);
+        variables.put("desarrollo", desarrollo);
+        variables.put("habitacion", habitacion);
+        variables.put("socio", membresia);
+        variables.put("pax", pax);
+        variables.put("folio", folioTarjetaId != null ? folioTarjetaId.toString() : numeroReservacion.toString());
+        variables.put("nombre", nombreCompleto);
+        variables.put("fechaLlegada", fechaLlegada);
+        variables.put("fechaSalida", fechaSalida);
+        variables.put("direccion", direccion);
+        variables.put("cp", "");
+        variables.put("ciudad", "");
+        variables.put("pais", "MÉXICO");
+        variables.put("telefono", telefono);
+        variables.put("email", email);
+        variables.put("logoBgColor", logoEnum.getBgColor());
+
+        // 6. Renderizar y convertir a PDF
+        return pdfGeneratorService.generarPdfDesdeHtml("REGISTRO_CHECKIN", variables);
     }
 }

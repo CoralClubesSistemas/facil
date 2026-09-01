@@ -18,5 +18,6 @@ public record OperacionDiaDto(
         String estatusReservacion,   // Ej: "CHECK-IN", "PENDIENTE"
         String descripcionEstatus,   // Ej: "Hospedado", "Por Llegar"
         BigDecimal importePendiente,
-        String ultimoReciboPagado
+        String ultimoReciboPagado,
+        Integer folioTarjeta
 ) {}

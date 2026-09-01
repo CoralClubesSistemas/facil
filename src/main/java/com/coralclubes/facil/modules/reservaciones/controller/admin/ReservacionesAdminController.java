@@ -13,6 +13,8 @@ import com.coralclubes.responses.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -110,5 +112,19 @@ public class ReservacionesAdminController {
             ) {
         service.reenviarCartaOcupacion(membresia, consecutivo, correos);
         return ResponseEntity.ok(ApiResponse.success("Carta de ocupación reenviada correctamente", true));
+    }
+
+    @GetMapping("/registro-checkin/pdf")
+    @PreAuthorize("hasAuthority('MOD_SMNURESERVACIONES')")
+    public ResponseEntity<byte[]> obtenerRegistroCheckInPdf(
+            @RequestParam String membresia,
+            @RequestParam Integer numeroReservacion
+    ) {
+        String usuario = userContext.getUsername();
+        byte[] pdf = service.generarPdfRegistroCheckIn(membresia, numeroReservacion, usuario);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=registro-checkin-" + membresia + "-" + numeroReservacion + ".pdf")
+                .body(pdf);
     }
 }

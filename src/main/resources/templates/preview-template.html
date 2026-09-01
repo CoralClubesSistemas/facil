@@ -38,37 +38,61 @@
         }
 
         .header-logo {
-            max-height: 42px;
+            max-height: 60px;
             max-width: 180px;
             display: block;
+            z-index: 100;
+            margin-left: 15px;
+        }
+
+        .logo {
+            position: relative;
+        }
+
+        .logo::after {
+            position: absolute;
+            width: 200px;
+            height: 130px;
+            top: 0;
+            left: 0;
+            content: "";
+            display: block;
+            clip-path: polygon(0 0, 0% 100%, 100% 0);
+            z-index: -1;
+            background: var(--logo-bg, #0f172a);
         }
 
         .header-title {
-            text-align: right;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            min-height: 60px;
+            justify-content: center;
+            align-items: flex-end;
         }
 
         .header-title h2 {
-            margin: 0 0 2px 0;
             font-size: 15px;
             color: #0f172a;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            margin: 0;
         }
 
         .header-title p {
-            margin: 0;
             color: #64748b;
             font-size: 9px;
             font-weight: bold;
             text-transform: uppercase;
+            margin: 0;
         }
 
         /* ============================================================
            BARRA PRINCIPAL DE DATOS (HAB / SOCIO / PAX / FOLIO)
            ============================================================ */
         .top-stats-table {
-            background-color: #0f172a;
-            color: #ffffff;
+            background-color: #ebebeb;
+            color: #000000;
             border-radius: 4px;
             margin-bottom: 10px;
         }
@@ -76,7 +100,7 @@
         .top-stats-table td {
             padding: 6px 10px;
             text-align: center;
-            border-right: 1px solid #334155;
+            border-right: 1px solid #bababa;
         }
 
         .top-stats-table td:last-child {
@@ -86,7 +110,7 @@
         .stat-label {
             font-size: 7.5px;
             text-transform: uppercase;
-            color: #94a3b8;
+            color: #a3a3a3;
             display: block;
             margin-bottom: 2px;
             font-weight: 600;
@@ -95,7 +119,7 @@
         .stat-value {
             font-size: 11px;
             font-weight: 900;
-            color: #ffffff;
+            color: #000000;
             letter-spacing: 0.5px;
         }
 
@@ -270,10 +294,10 @@
 <!-- CABECERA -->
 <table class="header-table">
     <tr>
-        <td style="width: 50%; vertical-align: middle;">
-            <img src="{{ logoUrl | default('logo.png') }}" alt="Logo" class="header-logo"/>
+        <td style="width: 50%; vertical-align: middle; --logo-bg: {{ logoBgColor | default('#0f172a') }};" class="logo">
+            <img src="{{ logoUrl }}" alt="Logo" class="header-logo"/>
         </td>
-        <td style="width: 50%;" class="header-title">
+        <td class="header-title">
             <h2>TARJETA DE REGISTRO</h2>
             <p>{{ desarrollo | default('CORAL CLUBES') }}</p>
         </td>
