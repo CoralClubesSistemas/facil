@@ -4,8 +4,12 @@ import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
 import com.coralclubes.facil.modules.clientes.service.SociosService;
 import com.coralclubes.facil.modules.cobranza.dto.request.CotizarPropuestaMovimientoParamDto;
 import com.coralclubes.facil.modules.cobranza.dto.request.CotizarPropuestaPaqueteAnualRequest;
+import com.coralclubes.facil.modules.cobranza.dto.request.GeneracionMovimientoRequest;
+import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaMovimientoRequest;
+import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarPaqueteAnualRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarPropuestaPaqueteAnualRequest;
+import com.coralclubes.facil.modules.cobranza.dto.request.VenderPaqueteAnualRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.*;
 import com.coralclubes.facil.modules.cobranza.repository.PaqueteAnualRepository;
 import com.coralclubes.facil.modules.sistema.service.PlantillasCuerpoCorreoService;
@@ -19,6 +23,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -34,6 +39,7 @@ public class PaqueteAnualService {
 
     private final PaqueteAnualRepository repository;
     private final GeneracionMovimientosService generacionMovimientosService;
+    private final CobranzaService cobranzaService;
     private final SociosService sociosService;
     private final PlantillasCuerpoCorreoService plantillasService;
     private final BusinessLogger businessLogger;
@@ -471,6 +477,162 @@ public class PaqueteAnualService {
         return CuerpoCorreoResponse.builder()
                 .asunto(asunto)
                 .cuerpo(cuerpo)
+                .build();
+    }
+
+    public VenderPaqueteAnualResponse venderPaqueteAnual(VenderPaqueteAnualRequest request, String usuario) {
+        String membresia = request.membresia();
+        Integer anio = request.anio();
+
+        businessLogger.info(usuario, "Iniciando venta de paquete anual para membresía: {}, año: {}", membresia, anio);
+
+        // 1. Extraer la propuesta activa
+        PropuestaPaqueteAnualResponse propuesta = obtenerPropuestaPaqueteAnual(membresia, anio);
+        if (propuesta == null) {
+            throw new IllegalArgumentException("No se encontró ninguna propuesta activa de paquete anual para la membresía: " + membresia + " y año: " + anio);
+        }
+
+        if (propuesta.movimientos() == null || propuesta.movimientos().isEmpty()) {
+            throw new IllegalStateException("La propuesta de paquete anual no contiene movimientos configurados.");
+        }
+
+        // 2. Consultar desarrollo del socio
+        ApiResponse<InformacionSocio> socioResponse = sociosService.obtenerSocios(membresia);
+        InformacionSocio socio = socioResponse != null ? socioResponse.data() : null;
+        Integer desarrolloId = socio != null ? socio.desarrolloId() : null;
+
+        LocalDate fechaVencimiento = propuesta.vigenciaPropuesta() != null
+                ? propuesta.vigenciaPropuesta().toLocalDate()
+                : LocalDate.now();
+
+        List<MovimientoGeneradoPaqueteAnualDto> movimientosGeneradosDto = new ArrayList<>();
+        List<GenerarOrdenCobranzaMovimientoRequest> movimientosParaOrden = new ArrayList<>();
+
+        // 3. Generar cada movimiento mediante el servicio de generación de movimientos
+        for (CotizacionPaqueteAnualMovimientoResponse mov : propuesta.movimientos()) {
+            Map<String, Object> paramsEspeciales = new HashMap<>();
+
+            if (mov.configuracionAdicional() != null) {
+                paramsEspeciales.putAll(mov.configuracionAdicional());
+            }
+
+            if (mov.movimientoId() != null && mov.movimientoId() == MOVIMIENTO_CREDENCIALES) {
+                // Caso especial credenciales: asegurar parámetros anios e incluyePrevios
+                if (!paramsEspeciales.containsKey("anios")) {
+                    paramsEspeciales.put("anios", 1);
+                }
+                if (paramsEspeciales.containsKey("incluirPrevios") && !paramsEspeciales.containsKey("incluyePrevios")) {
+                    paramsEspeciales.put("incluyePrevios", paramsEspeciales.get("incluirPrevios"));
+                }
+            } else {
+                paramsEspeciales.put("cantidadMovimientos", mov.cantidadMovimientos() != null ? mov.cantidadMovimientos() : 1);
+                paramsEspeciales.put("descripcion", mov.movimiento() != null ? mov.movimiento() : "");
+                paramsEspeciales.put("cuota", mov.tarifaUnitario() != null ? mov.tarifaUnitario() : BigDecimal.ZERO);
+            }
+
+            GeneracionMovimientoRequest genReq = GeneracionMovimientoRequest.builder()
+                    .membresia(membresia)
+                    .tipoMovimientoId(mov.movimientoId())
+                    .fechaVencimiento(fechaVencimiento)
+                    .desarrolloConsumo(desarrolloId)
+                    .parametrosEspeciales(paramsEspeciales)
+                    .build();
+
+            List<MovimientoManualResponse> movimientosInsertados = generacionMovimientosService.generarMovimiento(genReq, usuario);
+
+            if (movimientosInsertados == null || movimientosInsertados.isEmpty()) {
+                businessLogger.warn(usuario, "No se retornaron registros insertados para el tipo de movimiento: {}", mov.movimientoId());
+                continue;
+            }
+
+            // Distribuir el descuento total del concepto entre los movimientos generados
+            BigDecimal totalDescuentoConcepto = mov.montoDescuento() != null ? mov.montoDescuento() : BigDecimal.ZERO;
+            int totalGenerados = movimientosInsertados.size();
+            BigDecimal descuentoUnitarioBase = totalDescuentoConcepto.divide(BigDecimal.valueOf(totalGenerados), 2, RoundingMode.HALF_UP);
+            BigDecimal descuentoAcumulado = BigDecimal.ZERO;
+
+            for (int i = 0; i < totalGenerados; i++) {
+                MovimientoManualResponse m = movimientosInsertados.get(i);
+
+                BigDecimal descuentoMov;
+                if (i == totalGenerados - 1) {
+                    descuentoMov = totalDescuentoConcepto.subtract(descuentoAcumulado).setScale(2, RoundingMode.HALF_UP);
+                } else {
+                    descuentoMov = descuentoUnitarioBase;
+                    descuentoAcumulado = descuentoAcumulado.add(descuentoMov);
+                }
+
+                BigDecimal cuotaUnitario = m.cuota() != null ? m.cuota() : BigDecimal.ZERO;
+                BigDecimal totalMov = cuotaUnitario.subtract(descuentoMov).setScale(2, RoundingMode.HALF_UP);
+
+                movimientosGeneradosDto.add(MovimientoGeneradoPaqueteAnualDto.builder()
+                        .mvtId(m.mvtId())
+                        .tipoMovimientoId(mov.movimientoId())
+                        .descripcion(m.descripcion())
+                        .cuota(cuotaUnitario)
+                        .montoDescuento(descuentoMov)
+                        .total(totalMov)
+                        .fechaVencimiento(m.fechaVencimiento())
+                        .build());
+
+                String justificacionDescuento = descuentoMov.compareTo(BigDecimal.ZERO) > 0
+                        ? ("Descuento Paquete Anual " + anio + (propuesta.porcentajeDescuentoAplicado() != null ? " (" + propuesta.porcentajeDescuentoAplicado().stripTrailingZeros().toPlainString() + "%)" : ""))
+                        : null;
+
+                movimientosParaOrden.add(GenerarOrdenCobranzaMovimientoRequest.builder()
+                        .idMovimiento(m.mvtId())
+                        .montoCapital(cuotaUnitario)
+                        .montoInteres(BigDecimal.ZERO)
+                        .interesPago(BigDecimal.ZERO)
+                        .interesesBonificados(BigDecimal.ZERO)
+                        .totalDescuento(descuentoMov)
+                        .justificacionDescuento(justificacionDescuento)
+                        .usuarioAutoriza(usuario)
+                        .build());
+            }
+        }
+
+        if (movimientosParaOrden.isEmpty()) {
+            throw new IllegalStateException("No se pudieron generar movimientos para crear la orden de cobranza.");
+        }
+
+        // 4. Generar orden de cobranza usando CobranzaService
+        String mensajeAdicional = request.mensajeAdicional() != null && !request.mensajeAdicional().isBlank()
+                ? request.mensajeAdicional()
+                : ("Orden de cobranza para Paquete Anual " + anio);
+
+        GenerarOrdenCobranzaRequest ordenRequest = GenerarOrdenCobranzaRequest.builder()
+                .membresia(membresia)
+                .movimientos(movimientosParaOrden)
+                .agregarIva(false)
+                .ivaIncluido(false)
+                .mensajeAdicional(mensajeAdicional)
+                .build();
+
+        ApiResponse<GenerarOrdenCobranzaResponse> ordenResponse = cobranzaService.generarOrdenCobranza(ordenRequest, usuario);
+        GenerarOrdenCobranzaResponse ordenData = ordenResponse != null ? ordenResponse.data() : null;
+
+        businessLogger.info(usuario, "Orden de cobranza {} ({}) generada exitosamente para venta de paquete anual membresía: {}",
+                ordenData != null ? ordenData.numeroOrden() : null,
+                ordenData != null ? ordenData.ordenUuid() : null,
+                membresia);
+
+        // 5. Retornar respuesta consolidada
+        return VenderPaqueteAnualResponse.builder()
+                .propuestaId(propuesta.propuestaId())
+                .paqueteAnualId(propuesta.paqueteAnualId())
+                .membresia(membresia)
+                .anio(anio)
+                .numeroOrden(ordenData != null ? ordenData.numeroOrden() : null)
+                .ordenUuid(ordenData != null ? ordenData.ordenUuid() : null)
+                .desarrolloId(ordenData != null && ordenData.desarrolloId() != null ? ordenData.desarrolloId() : desarrolloId)
+                .subtotalGeneral(propuesta.subtotalGeneral())
+                .descuentoGeneral(propuesta.descuentoGeneral())
+                .totalGeneral(propuesta.totalGeneral())
+                .porcentajeDescuentoAplicado(propuesta.porcentajeDescuentoAplicado())
+                .movimientosGenerados(movimientosGeneradosDto)
+                .esquemasAplicados(propuesta.esquemasAplicados())
+                .cupones(propuesta.cupones())
                 .build();
     }
 }

@@ -1,420 +1,510 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estado de Cuenta - {{ razonSocial }}</title>
+    <meta charset="UTF-8"/>
+    <title>Tarjeta de Registro Check-In</title>
+
     <style>
         @page {
             size: letter portrait;
-            margin: 0.8cm;
+            margin: 1cm 1.2cm;
         }
 
         body {
-            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            font-size: 11px;
-            color: #0f172a;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #334155;
+            font-size: 8.5px;
+            line-height: 1.3;
             margin: 0;
             padding: 0;
-            line-height: 1.3;
-            background-color: #f8fafc;
-            -webkit-font-smoothing: antialiased;
         }
 
-        @media print {
-            body {
-                background-color: #ffffff;
-                color: #000000;
-                font-size: 10px;
-            }
-            .page-break {
-                page-break-inside: avoid;
-            }
-            /* Asegura que las filas de la tabla no se corten entre páginas */
-            .mov-table tr {
-                page-break-inside: avoid;
-                break-inside: avoid;
-            }
-        }
-
-        /* Contenedor principal sin ancho fijo para ocupar todo el espacio disponible */
-        .container {
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .card {
-            background-color: #ffffff;
-            border-radius: 4px;
-            border: 1px solid #cbd5e1;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-        }
-
-        /* Encabezado */
-        .header-section {
-            background-color: #ffffff;
-            color: #0f172a;
-            padding: 12px 24px;
-            border-bottom: 2px solid #0f172a;
-        }
-
-        .flex-container {
-            display: table;
-            width: 100%;
-        }
-
-        .flex-col-left {
-            display: table-cell;
-            vertical-align: middle;
-        }
-
-        .flex-col-right {
-            display: table-cell;
-            text-align: right;
-            vertical-align: middle;
-        }
-
-        .company-title {
-            font-size: 16px;
-            font-weight: 900;
-            letter-spacing: -0.025em;
-            margin: 0;
-            color: #0f172a;
-        }
-
-        .company-slogan {
-            color: #64748b;
-            font-size: 8px;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            font-weight: 600;
-            margin: 0;
-            line-height: 1;
-        }
-
-        .doc-title {
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin: 0;
-            color: #0f172a;
-        }
-
-        .period-text {
-            color: #475569;
-            margin-top: 2px;
-        }
-
-        .period-bold {
-            font-weight: 600;
-            color: #0f172a;
-        }
-
-        .emission-text {
-            font-size: 9px;
-            color: #94a3b8;
-            margin-top: 2px;
-        }
-
-        /* Bloque de Información General */
-        .info-section {
-            padding: 12px 24px;
-            border-bottom: 1px solid #e2e8f0;
-            background-color: rgba(248, 250, 252, 0.7);
-            display: table;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .info-col {
-            display: table-cell;
-            width: 33.333%;
-            vertical-align: top;
-        }
-
-        .info-col-border {
-            border-left: 1px solid #e2e8f0;
-            padding-left: 16px;
-        }
-
-        .section-label {
-            font-size: 9px;
-            font-weight: 700;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        .client-name {
-            font-size: 14px;
-            font-weight: 700;
-            color: #0f172a;
-        }
-
-        .badge {
-            display: inline-block;
-            background-color: rgba(226, 232, 240, 0.8);
-            color: #1e293b;
-            font-size: 10px;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-top: 2px;
-            margin-right: 4px;
-        }
-
-        .contact-row {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            margin-top: 4px;
-            color: #1e293b;
-        }
-
-        .address-text {
-            line-height: 1.5;
-            color: #475569;
-        }
-
-        /* Tabla de Movimientos */
-        .table-section {
-            padding: 24px;
-        }
-
-        .mov-table {
+        table {
             width: 100%;
             border-collapse: collapse;
-            text-align: left;
-            border: 1px solid #e2e8f0;
-            table-layout: auto;
         }
 
-        .mov-table th {
-            font-size: 10px;
-            font-weight: 700;
-            color: #475569;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            background-color: rgba(241, 245, 249, 0.9);
-            padding: 6px 12px;
-            border-bottom: 1px solid #cbd5e1;
-            white-space: nowrap;
-        }
-
-        .mov-table td {
-            padding: 6px 12px;
-            border-bottom: 1px solid #e2e8f0;
+        td {
             vertical-align: top;
         }
 
-        /* Anchos ajustados por contenido, priorizando la descripción */
-        .col-fecha-gen { width: 85px; white-space: nowrap; }
-        .col-fecha-venc { width: 85px; white-space: nowrap; }
-        .col-monto { width: 100px; text-align: right; white-space: nowrap; }
-
-        .font-mono {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        /* ============================================================
+           CABECERA
+           ============================================================ */
+        .header-table {
+            margin-bottom: 12px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
         }
 
-        .text-muted {
-            color: #64748b;
+        .header-logo {
+            max-height: 42px;
+            max-width: 180px;
+            display: block;
         }
 
-        .concept-title {
-            font-weight: 700;
-            color: #0f172a;
-        }
-
-        .text-right {
+        .header-title {
             text-align: right;
         }
 
-        .font-bold { font-weight: 700; }
-        .text-slate-400 { color: #94a3b8; }
-        .text-slate-900 { color: #0f172a; }
+        .header-title h2 {
+            margin: 0 0 2px 0;
+            font-size: 15px;
+            color: #0f172a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
-        /* Footer y Desglose */
-        .footer-section {
+        .header-title p {
+            margin: 0;
+            color: #64748b;
+            font-size: 9px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* ============================================================
+           BARRA PRINCIPAL DE DATOS (HAB / SOCIO / PAX / FOLIO)
+           ============================================================ */
+        .top-stats-table {
+            background-color: #0f172a;
+            color: #ffffff;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .top-stats-table td {
+            padding: 6px 10px;
+            text-align: center;
+            border-right: 1px solid #334155;
+        }
+
+        .top-stats-table td:last-child {
+            border-right: none;
+        }
+
+        .stat-label {
+            font-size: 7.5px;
+            text-transform: uppercase;
+            color: #94a3b8;
+            display: block;
+            margin-bottom: 2px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 11px;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+        }
+
+        /* ============================================================
+           FORMULARIO DE HUÉSPED & IDENTIFICACIÓN
+           ============================================================ */
+        .main-info-table {
+            margin-bottom: 10px;
+        }
+
+        .guest-data-box {
+            border: 1px solid #cbd5e1;
+            background-color: #f8fafc;
+            border-radius: 4px;
+            padding: 8px 10px;
+        }
+
+        .field-label {
+            font-size: 7.5px;
+            font-weight: bold;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            display: block;
+            margin-bottom: 1px;
+        }
+
+        .field-value {
+            font-size: 9.5px;
+            font-weight: bold;
+            color: #0f172a;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 2px;
+            min-height: 12px;
+            text-transform: uppercase;
+        }
+
+        /* Cuadro de Identificación Presentada */
+        .id-box {
+            border: 1px solid #0f172a;
             background-color: #ffffff;
-            padding: 24px;
-            border-top: 1px solid #e2e8f0;
-            display: table;
-            width: 100%;
+            border-radius: 4px;
+            padding: 8px 10px;
+            height: 100%;
             box-sizing: border-box;
         }
 
-        /* Contenedor alineado a la derecha que ocupa el 50% de ancho */
-        .footer-col-right {
-            display: table-cell;
-            width: 50%;
-            vertical-align: top;
-            float: right;
-        }
-
-        .totals-box {
-            padding: 16px;
-            border-radius: 4px;
-            border: 1px solid #cbd5e1;
-            background-color: rgba(248, 250, 252, 0.3);
-        }
-
-        .totals-title {
+        .id-box-title {
             font-size: 9px;
-            font-weight: 700;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin: 0 0 4px 0;
+            font-weight: 900;
+            color: #0f172a;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #e2e8f0;
         }
 
-        .totals-row {
-            display: flex;
-            justify-content: space-between;
+        .id-option {
+            margin-bottom: 6px;
+            font-size: 8.5px;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .id-circle {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            border: 1.2px solid #475569;
+            border-radius: 50%;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        .id-line {
+            display: inline-block;
+            border-bottom: 1px solid #0f172a;
+            width: 55px;
+            height: 8px;
+            vertical-align: middle;
+        }
+
+        /* Firma Check-In */
+        .sig-box-top {
+            text-align: center;
+            padding-top: 14px;
+        }
+
+        .sig-line-top {
+            border-top: 1px solid #64748b;
+            width: 85%;
+            margin: 0 auto 3px auto;
+        }
+
+        /* ============================================================
+           REGLAMENTO GENERAL
+           ============================================================ */
+        .rules-section {
+            border-top: 1px solid #e2e8f0;
+            padding-top: 6px;
+            margin-bottom: 10px;
+        }
+
+        .rules-title {
+            font-size: 8.5px;
+            font-weight: 900;
+            color: #0f172a;
+            text-transform: uppercase;
+            text-align: center;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            background-color: #f1f5f9;
+            padding: 3px 0;
+            border-radius: 2px;
+        }
+
+        .rule-item {
             margin-bottom: 4px;
+            font-size: 7.2px;
+            line-height: 1.25;
+            color: #475569;
+            text-align: justify;
+            padding-left: 8px;
+            text-indent: -8px;
         }
 
-        .text-emerald {
-            color: #047857;
-            font-weight: 500;
+        .rule-item strong {
+            color: #0f172a;
         }
 
-        .grand-total-section {
-            border-top: 2px solid #0f172a;
-            padding-top: 8px;
-            margin-top: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
+        /* ============================================================
+           TALÓN INFERIOR (AUTORIZACIÓN DE CARGO A HABITACIÓN)
+           ============================================================ */
+        .cutoff-divider {
+            border-top: 1px dashed #94a3b8;
+            margin: 8px 0 10px 0;
+            position: relative;
         }
 
-        .total-label {
-            font-size: 12px;
-            font-weight: 900;
+        .cutoff-label {
+            position: absolute;
+            top: -6px;
+            right: 0;
+            font-size: 6.5px;
+            color: #94a3b8;
             text-transform: uppercase;
-            color: #0f172a;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.5px;
+            background: #ffffff;
+            padding-left: 4px;
         }
 
-        .total-amount {
-            font-size: 24px;
+        .bottom-auth-box {
+            border: 1px solid #cbd5e1;
+            background-color: #f8fafc;
+            border-radius: 4px;
+            padding: 8px 10px;
+        }
+
+        .bottom-auth-title {
+            font-size: 9px;
             font-weight: 900;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             color: #0f172a;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 3px;
         }
     </style>
 </head>
+
 <body>
 
-<div class="container">
-    <div class="card">
+<!-- CABECERA -->
+<table class="header-table">
+    <tr>
+        <td style="width: 50%; vertical-align: middle;">
+            <img src="{{ logoUrl | default('logo.png') }}" alt="Logo" class="header-logo"/>
+        </td>
+        <td style="width: 50%;" class="header-title">
+            <h2>TARJETA DE REGISTRO</h2>
+            <p>{{ desarrollo | default('CORAL CLUBES') }}</p>
+        </td>
+    </tr>
+</table>
 
-        <div class="header-section">
-            <div class="flex-container">
-                <div class="flex-col-left">
-                    <h1 class="company-title">{{ razonSocial }}</h1>
-                    <p class="company-slogan">{{ slogan }}</p>
+<!-- BARRA PRINCIPAL DE CONTROL -->
+<table class="top-stats-table">
+    <tr>
+        <td style="width: 25%;">
+            <span class="stat-label">HABITACIÓN</span>
+            <span class="stat-value">{{ habitacion }}</span>
+        </td>
+        <td style="width: 25%;">
+            <span class="stat-label">SOCIO / MEMBRESIA</span>
+            <span class="stat-value">{{ socio }}</span>
+        </td>
+        <td style="width: 25%;">
+            <span class="stat-label">PAX</span>
+            <span class="stat-value">{{ pax }}</span>
+        </td>
+        <td style="width: 25%;">
+            <span class="stat-label">FOLIO</span>
+            <span class="stat-value">{{ folio | default('0') }}</span>
+        </td>
+    </tr>
+</table>
+
+<!-- DATOS DEL HUÉSPED & IDENTIFICACIÓN -->
+<table class="main-info-table">
+    <tr>
+        <!-- Columna Datos Principales (68%) -->
+        <td style="width: 68%; padding-right: 8px;">
+            <div class="guest-data-box">
+                <table style="width: 100%;">
+                    <tr>
+                        <td colspan="2" style="padding-bottom: 5px;">
+                            <span class="field-label">Nombre Completo:</span>
+                            <div class="field-value">{{ nombre }}</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width: 50%; padding-bottom: 5px; padding-right: 5px;">
+                            <span class="field-label">Fecha de Llegada:</span>
+                            <div class="field-value">{{ fechaLlegada }}</div>
+                        </td>
+                        <td style="width: 50%; padding-bottom: 5px; padding-left: 5px;">
+                            <span class="field-label">Fecha de Salida:</span>
+                            <div class="field-value">{{ fechaSalida }}</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding-bottom: 5px; padding-right: 5px;">
+                            <span class="field-label">Dirección:</span>
+                            <div class="field-value">{{ direccion | default('') }}</div>
+                        </td>
+                        <td style="padding-bottom: 5px; padding-left: 5px;">
+                            <span class="field-label">C.P.:</span>
+                            <div class="field-value">{{ cp | default('') }}</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding-bottom: 5px; padding-right: 5px;">
+                            <span class="field-label">Ciudad / Estado:</span>
+                            <div class="field-value">{{ ciudad | default('') }}</div>
+                        </td>
+                        <td style="padding-bottom: 5px; padding-left: 5px;">
+                            <span class="field-label">País:</span>
+                            <div class="field-value">{{ pais | default('MÉXICO') }}</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding-bottom: 5px; padding-right: 5px;">
+                            <span class="field-label">Celular / Teléfono:</span>
+                            <div class="field-value">{{ telefono | default('-----') }}</div>
+                        </td>
+                        <td style="padding-bottom: 5px; padding-left: 5px;">
+                            <span class="field-label">Email:</span>
+                            <div class="field-value" style="text-transform: lowercase;">{{ email | default('-----') }}
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding-bottom: 4px;">
+                            <span class="field-label">Datos del Auto (Marca, Modelo, Placas):</span>
+                            <div class="field-value"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width: 50%; padding-top: 3px; padding-right: 5px;">
+                            <span class="field-label">Recepción Check-In:</span>
+                            <div class="field-value"></div>
+                        </td>
+                        <td style="width: 50%; padding-top: 3px; padding-left: 5px;">
+                            <span class="field-label">Recepción Check-Out:</span>
+                            <div class="field-value"></div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </td>
+
+        <!-- Columna Identificación & Firma (32%) -->
+        <td style="width: 32%;">
+            <div class="id-box">
+                <div class="id-box-title">Identificación presentada:</div>
+
+                <div class="id-option">
+                    <span class="id-circle"></span> INE
                 </div>
-                <div class="flex-col-right">
-                    <h2 class="doc-title">Estado de Cuenta Mensual</h2>
-                    <div class="period-text">
-                        Periodo: <span class="period-bold">{{ periodoInicio }} al {{ periodoFin }}</span>
-                    </div>
-                    <div class="emission-text">
-                        Emisión: {{ fechaEmision }}
-                    </div>
+                <div class="id-option">
+                    <span class="id-circle"></span> Licencia de conducir
+                </div>
+                <div class="id-option">
+                    <span class="id-circle"></span> Pasaporte
+                </div>
+                <div class="id-option">
+                    <span class="id-circle"></span> Otro: <span class="id-line"></span>
+                </div>
+
+                <div class="sig-box-top">
+                    <div class="sig-line-top"></div>
+                    <span class="field-label" style="font-size: 7px;">Firma Autorizada Huésped</span>
                 </div>
             </div>
-        </div>
+        </td>
+    </tr>
+</table>
 
-        <div class="info-section">
-            <div class="info-col">
-                <span class="section-label">Socio Titular</span>
-                <div class="client-name">{{ titular }}</div>
-                <div style="margin-top: 2px;">
-                    <span class="badge">Membresía: {{ membresia }}</span>
-                    <span class="badge">{{ tipoMembresia }}</span>
+<!-- REGLAMENTO -->
+<div class="rules-section">
+    <div class="rules-title">DISPOSICIONES GENERALES DEL CLUB</div>
+
+    <table>
+        <tr>
+            <td style="width: 50%; padding-right: 8px;">
+                <div class="rule-item">
+                    • <strong>Horarios:</strong> Check-in: 15:00 hrs. / Check-out: 12:00 hrs. Desocupar fuera de horario
+                    generará cargo extra determinado por administración.
                 </div>
-            </div>
-
-            <div class="info-col info-col-border">
-                <span class="section-label">Contacto Directo</span>
-                <div class="contact-row">
-                    <span>{{ telefonoContacto }}</span>
+                <div class="rule-item">
+                    • <strong>Llaves y Controles:</strong> Entregar llaves y control de TV en RECEPCIÓN al momento del
+                    cierre de habitación.
                 </div>
-                <div class="contact-row">
-                    <span>{{ correoContacto }}</span>
+                <div class="rule-item">
+                    • <strong>Mascotas:</strong> Queda estrictamente prohibido el acceso a mascotas.
                 </div>
-            </div>
-
-            <div class="info-col info-col-border">
-                <span class="section-label">Domicilio Registrado</span>
-                <div class="address-text">{{ domicilioSocio }}</div>
-            </div>
-        </div>
-
-        <div class="table-section">
-            <table class="mov-table">
-                <thead>
-                <tr>
-                    <th class="col-fecha-gen">Fecha Gen.</th>
-                    <th class="col-fecha-venc">Fecha Venc.</th>
-                    <th>Descripción del Cargo</th>
-                    <th class="col-monto">Monto Cargo</th>
-                    <th class="col-monto">Intereses</th>
-                    <th class="col-monto">Monto Abonado</th>
-                    <th class="col-monto">Monto Pendiente</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for mov in movimientos %}
-                <tr>
-                    <td class="font-mono text-muted">{{ mov.fecha }}</td>
-                    <td class="font-mono text-muted">{{ mov.fechaVencimiento }}</td>
-                    <td>
-                        <span class="concept-title">{{ mov.concepto }}</span>
-                    </td>
-                    <td class="text-right font-mono text-slate-800">${{ mov.montoCargo }}</td>
-                    <td class="text-right font-mono text-slate-800">${{ mov.montoAbonado }}</td>
-                    <td class="text-right font-mono text-muted">${{ mov.montoInteres }}</td>
-                    <td class="text-right font-mono font-bold {% if mov.montoPendiente == '0.00' %}text-slate-400{% else %}text-slate-900{% endif %}">
-                        ${{ mov.montoPendiente }}
-                    </td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <div class="footer-section page-break">
-            <div class="footer-col-right">
-                <div class="totals-box">
-                    <h4 class="totals-title">Desglose de Saldos</h4>
-                    <div class="totals-row">
-                        <span class="text-muted">Total Cargos del Mes:</span>
-                        <span class="font-mono text-slate-800">${{ resumenTotales.totalCargos }}</span>
-                    </div>
-                    <div class="totals-row">
-                        <span class="text-muted">Total Intereses Moratorios:</span>
-                        <span class="font-mono text-slate-800">+${{ resumenTotales.totalIntereses }}</span>
-                    </div>
-                    <div class="totals-row text-emerald">
-                        <span>Pagado / Abonado:</span>
-                        <span class="font-mono">-${{ resumenTotales.totalAbonado }}</span>
-                    </div>
-
-                    <div class="grand-total-section">
-                        <span class="total-label">Total Adeudo:</span>
-                        <span class="total-amount">${{ resumenTotales.totalNetoExigible }}</span>
-                    </div>
+                <div class="rule-item">
+                    • <strong>Menores:</strong> Niños mayores de 3 años cuentan como adultos para efectos de tarifa y
+                    capacidad.
                 </div>
-            </div>
-        </div>
+                <div class="rule-item">
+                    • <strong>Capacidad:</strong> No exceder el límite permitido por habitación. El ingreso no
+                    registrado causará cobro adicional de invitado.
+                </div>
+            </td>
 
-    </div>
+            <td style="width: 50%; padding-left: 8px;">
+                <div class="rule-item">
+                    • <strong>Instalaciones:</strong> El titular se compromete a cubrir daños ocasionados a equipo o
+                    inmuebles del Desarrollo.
+                </div>
+                <div class="rule-item">
+                    • <strong>Convivencia:</strong> Prohibido ruidos molestos en habitaciones y pasillos a partir de las
+                    22:00 hrs.
+                </div>
+                <div class="rule-item">
+                    • <strong>Balcones:</strong> Prohibido colgar toallas o prendas en barandales de balcones.
+                </div>
+                <div class="rule-item">
+                    • <strong>Valores:</strong> Usar cajas de seguridad. El club no responde por objetos no depositados
+                    en ellas.
+                </div>
+                <div class="rule-item">
+                    • <strong>Alimentos y Bebidas:</strong> Prohibido introducir alimentos y bebidas ajenos (excepto
+                    agua natural). Incurrir en esto causará suspensión del servicio y sanción.
+                </div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- DIVISOR DESPRENDIBLE -->
+<div class="cutoff-divider">
+    <span class="cutoff-label">Corte aquí (Uso Administrativo)</span>
+</div>
+
+<!-- AUTORIZACIÓN DE CARGO A HABITACIONES -->
+<div class="bottom-auth-box">
+    <div class="bottom-auth-title">AUTORIZACIÓN DE CARGO A HABITACIONES</div>
+
+    <table style="width: 100%;">
+        <tr>
+            <td style="width: 60%; padding-right: 15px;">
+                <table style="width: 100%;">
+                    <tr>
+                        <td colspan="2" style="padding-bottom: 4px;">
+                            <span class="field-label">Nombre del Titular:</span>
+                            <div class="field-value">{{ nombre }}</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width: 50%; padding-bottom: 4px; padding-right: 4px;">
+                            <span class="field-label">Habitación:</span>
+                            <div class="field-value">{{ habitacion }}</div>
+                        </td>
+                        <td style="width: 50%; padding-bottom: 4px; padding-left: 4px;">
+                            <span class="field-label">Folio:</span>
+                            <div class="field-value">{{ folio | default('0') }}</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding-right: 4px;">
+                            <span class="field-label">Fecha de Llegada:</span>
+                            <div class="field-value">{{ fechaLlegada }}</div>
+                        </td>
+                        <td style="padding-left: 4px;">
+                            <span class="field-label">Fecha de Salida:</span>
+                            <div class="field-value">{{ fechaSalida }}</div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+
+            <td style="width: 40%; text-align: center; vertical-align: bottom; padding-left: 10px;">
+                <div style="border-top: 1px solid #475569; width: 90%; margin: 0 auto 3px auto;"></div>
+                <span class="field-label" style="font-size: 7.5px;">Nombre y Firma Autorizada</span>
+                <span style="font-size: 6.5px; color: #94a3b8; display: block;">Acepto cargos derivados del consumo / estancia</span>
+            </td>
+        </tr>
+    </table>
 </div>
 
 </body>

@@ -3,6 +3,7 @@ package com.coralclubes.facil.modules.cobranza.controller.admin;
 import com.coralclubes.facil.modules.cobranza.dto.request.CotizarPropuestaPaqueteAnualRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarPaqueteAnualRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarPropuestaPaqueteAnualRequest;
+import com.coralclubes.facil.modules.cobranza.dto.request.VenderPaqueteAnualRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.*;
 import com.coralclubes.facil.modules.cobranza.service.PaqueteAnualService;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
@@ -122,5 +123,15 @@ public class PaqueteAnualAdminController {
         String usuario = userContext.getUsername();
         Integer idPaquete = service.guardarPaqueteAnual(request, usuario);
         return ResponseEntity.ok(ApiResponse.success("Paquete anual guardado exitosamente.", idPaquete));
+    }
+
+    @PostMapping("/vender")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<VenderPaqueteAnualResponse>> venderPaqueteAnual(
+            @Valid @RequestBody VenderPaqueteAnualRequest request
+    ) {
+        String usuario = userContext.getUsername();
+        VenderPaqueteAnualResponse response = service.venderPaqueteAnual(request, usuario);
+        return ResponseEntity.ok(ApiResponse.success("Paquete anual vendido y orden de cobranza generada exitosamente.", response));
     }
 }
