@@ -30,9 +30,9 @@ public class GeneracionMovimientosAdminController {
     @GetMapping("/tipos-movimientos")
     @PreAuthorize("hasAuthority('MOD_SMNUGENERAMOVIMIENTOS')")
     public ResponseEntity<ApiResponse<List<MovimientoPorTipoMembresiaResponse>>> obtenerTiposMovimientos(
-            @RequestParam Integer tipoMembresia
+            @RequestParam String membresia
     ) {
-        List<MovimientoPorTipoMembresiaResponse> movimientos = service.obtenerMovimientosPorTipoMembresia(tipoMembresia);
+        List<MovimientoPorTipoMembresiaResponse> movimientos = service.obtenerMovimientosPorTipoMembresia(membresia);
         return ResponseEntity.ok(ApiResponse.success(
                 "Tipos de movimientos obtenidos exitosamente.",
                 movimientos

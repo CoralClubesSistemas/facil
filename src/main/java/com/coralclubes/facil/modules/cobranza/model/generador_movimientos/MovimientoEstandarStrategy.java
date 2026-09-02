@@ -19,7 +19,8 @@ public class MovimientoEstandarStrategy implements GeneracionMovimientoStrategy 
     private final BusinessLogger logger;
 
     private static final List<Integer> IDS_ESPECIALES = List.of(
-            MovimientoCredencialesStrategy.TIPO_MOVIMIENTO_CREDENCIALES // 25
+            MovimientoCredencialesStrategy.TIPO_MOVIMIENTO_CREDENCIALES, // 25
+            MovimientoMantenimientoStrategy.MOVIMIENTO_MANTENIMIENTO      // 10
     );
 
     @Override

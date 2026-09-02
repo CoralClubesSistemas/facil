@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 public record MovimientoPorTipoMembresiaResponse(
         Integer id,
         String descripcion,
+        Integer periodicidadId,
         String periodicidad,
         String baseDeCobro,
         Boolean generaInteres,
