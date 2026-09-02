@@ -50,8 +50,10 @@ public class CobranzaCatalogosController {
 
     @GetMapping("/tipos-movimientos")
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
-    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerCatalogoTiposMovimientos() {
-        return ResponseEntity.ok(service.obtenerCatalogoTiposMovimientos());
+    public ResponseEntity<ApiResponse<List<SelectGenerico<Integer>>>> obtenerCatalogoTiposMovimientos(
+            @RequestParam(required = false) Integer tipoMembresia
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(service.obtenerCatalogoTiposMovimientos(tipoMembresia)));
     }
 
     @GetMapping("/estatus-movimientos")

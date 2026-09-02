@@ -46,8 +46,11 @@ public class CobranzaCatalogosRepository {
         return spExecutor.queryList("spCobranzaCatalogoBancos", Collections.emptyMap(), selectGenericoMapper);
     }
 
-    public List<SelectGenerico<Integer>> spCobranzaCatalogoTiposMovimientos() {
-        return spExecutor.queryList("spCobranzaCatalogoTiposMovimientos", Collections.emptyMap(), selectGenericoMapper);
+    public List<SelectGenerico<Integer>> spCobranzaCatalogoTiposMovimientos(Integer tipoMembresia) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("tipo_membresia", tipoMembresia);
+
+        return spExecutor.queryList("spCobranzaCatalogoTiposMovimientos", params, selectGenericoMapper);
     }
 
     public List<SelectGenerico<Integer>> spCobranzaCatalogoEstatusMovimientos() {

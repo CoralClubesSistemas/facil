@@ -65,6 +65,8 @@ public class SociosService {
                 .alertaConsultaFechaRegistro(socio.alertaConsultaFechaRegistro())
                 .convenioCie(obtenerConvenioCIECadena(socio.membresia()))
                 .direccion(socio.direccion())
+                .periodicidadMantenimientoId(socio.periodicidadMantenimientoId())
+                .periodicidadMantenimiento(socio.periodicidadMantenimiento())
                 .build();
 
         return ApiResponse.success("Socio obtenido exitosamente", socioFinal);

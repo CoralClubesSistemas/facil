@@ -24,6 +24,8 @@ public record MembresiaDetallesPlanVentaDto(
         Integer mensualidadesPendientes,
         BigDecimal importeUltimaMensualidad,
         LocalDateTime inicioMensualidades,
-        LocalDateTime fechaVenta
+        LocalDateTime fechaVenta,
+        Integer periodicidadMantenimientoId,
+        String periodicidadMantenimiento
 ) {
 }

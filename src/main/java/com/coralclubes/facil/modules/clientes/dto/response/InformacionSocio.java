@@ -35,5 +35,7 @@ public record InformacionSocio (
     String alertaConsultaNota,
     LocalDateTime alertaConsultaFechaRegistro,
     String convenioCie,
-    String direccion
+    String direccion,
+    Integer periodicidadMantenimientoId,
+    String periodicidadMantenimiento
 ){}

@@ -77,6 +77,8 @@ public class MembresiaRepository {
             .importeUltimaMensualidad(rs.getBigDecimal("importeUltimaMensualidad"))
             .inicioMensualidades(rs.getTimestamp("inicioMensualidades") != null ? rs.getTimestamp("inicioMensualidades").toLocalDateTime() : null)
             .fechaVenta(rs.getTimestamp("fechaVenta") != null ? rs.getTimestamp("fechaVenta").toLocalDateTime() : null)
+            .periodicidadMantenimientoId(rs.getObject("idPeriodicidadMantenimiento") != null ? rs.getInt("idPeriodicidadMantenimiento") : null)
+            .periodicidadMantenimiento(rs.getString("periodicidadMantenimiento"))
             .build();
 
 

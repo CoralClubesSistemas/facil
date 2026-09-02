@@ -91,7 +91,9 @@ public class SociosRepository {
                     rs.getTimestamp("AlertaConsultaFechaRegistro") != null
                             ? rs.getTimestamp("AlertaConsultaFechaRegistro").toLocalDateTime()
                             : null,
-                    rs.getString("direccion")
+                    rs.getString("direccion"),
+                    rs.getObject("periodicidadMantenimientoId", Integer.class),
+                    rs.getString("periodicidadMantenimiento")
             );
 
     private final RowMapper<InformacionSocioBusqueda> informacionSocioBusquedaRowMapper = (rs, rowNum) ->
