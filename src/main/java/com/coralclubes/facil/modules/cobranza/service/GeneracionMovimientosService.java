@@ -1,7 +1,9 @@
 package com.coralclubes.facil.modules.cobranza.service;
 
+import com.coralclubes.facil.modules.cobranza.dto.request.CotizacionMovimientoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GeneracionMovimientoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.CotizacionCredencialesResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.CotizacionMovimientoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.MapeoPeriodicidadResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoManualResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoPorTipoMembresiaResponse;
@@ -44,6 +46,17 @@ public class GeneracionMovimientosService {
                 ));
 
         return strategy.generar(request, usuario);
+    }
+
+    public CotizacionMovimientoResponse cotizarMovimiento(CotizacionMovimientoRequest request) {
+        GeneracionMovimientoStrategy strategy = strategies.stream()
+                .filter(s -> s.soporta(request.tipoMovimientoId()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "No se encontró una estrategia para cotizar el tipo de movimiento: " + request.tipoMovimientoId()
+                ));
+
+        return strategy.cotizar(request);
     }
 
     public Optional<UltimoMovimientoResponse> obtenerUltimoMovimiento(

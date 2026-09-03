@@ -2,6 +2,7 @@ package com.coralclubes.facil.modules.cobranza.service;
 
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
 import com.coralclubes.facil.modules.clientes.service.SociosService;
+import com.coralclubes.facil.modules.cobranza.dto.request.CotizacionMovimientoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.CotizarPropuestaMovimientoParamDto;
 import com.coralclubes.facil.modules.cobranza.dto.request.CotizarPropuestaPaqueteAnualRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GeneracionMovimientoRequest;
@@ -35,7 +36,6 @@ public class PaqueteAnualService {
     private static final int MOVIMIENTO_CREDENCIALES = 25;
     private static final String ESQUEMA_ADICIONAL = "ADICIONAL";
     private static final String CODIGO_PLANTILLA_PROPUESTA = "PROPUESTA_PAQUETE_ANUAL";
-    private static final int BASE_BENEFICIARIO = 284;
 
     private final PaqueteAnualRepository repository;
     private final GeneracionMovimientosService generacionMovimientosService;
@@ -109,19 +109,10 @@ public class PaqueteAnualService {
         Integer desarrolloId = socio != null ? socio.desarrolloId() : paqueteDetalle.desarrolloId();
         Integer tipoMembresiaId = socio != null ? socio.tipoMembresiaId() : paqueteDetalle.tipoMembresiaId();
 
-        // 4. Obtener catálogo de movimientos para paquete anual (contiene aplicaPeriodicidad, baseDeCobroId, cuota, etc.)
-        List<MovimientoPaqueteAnualResponse> catalogoMovimientos = repository.spCobranzaCatalogoMovimientosPaqueteAnual(anio, tipoMembresiaId);
-        Map<Integer, MovimientoPaqueteAnualResponse> catalogoMap = catalogoMovimientos.stream()
-                .collect(java.util.stream.Collectors.toMap(MovimientoPaqueteAnualResponse::id, m -> m, (m1, m2) -> m1));
-
-        // 5. Consultar total de beneficiarios computables (activos o bloqueados)
+        // 4. Consultar total de beneficiarios computables (activos o bloqueados)
         Integer totalBeneficiarios = repository.spCobranzaObtenerBeneficiariosPaqueteAnual(membresia);
 
-        // 6. Consultar periodicidad de mantenimiento para la membresía
-        List<PeriodicidadMantenimientoResponse> periodicidades = repository.spCobranzaObtenerPeriodicidadMantenimiento(membresia);
-        PeriodicidadMantenimientoResponse periodicidadSocio = periodicidades.isEmpty() ? null : periodicidades.getFirst();
-
-        // 7. Determinar esquemas aplicados y sumar el porcentaje total de descuento
+        // 5. Determinar esquemas aplicados y sumar el porcentaje total de descuento
         List<PaqueteAnualDescuentoResponse> esquemasConfigurados = paqueteDetalle.configuracionDescuentos() != null
                 ? paqueteDetalle.configuracionDescuentos()
                 : Collections.emptyList();
@@ -133,9 +124,7 @@ public class PaqueteAnualService {
             esquemasConfigurados.stream()
                     .filter(d -> d.value() != null && d.value().equalsIgnoreCase(esquemaKey))
                     .findFirst()
-                    .ifPresent(d -> {
-                        esquemasAplicados.add(d);
-                    });
+                    .ifPresent(esquemasAplicados::add);
         }
 
         for (PaqueteAnualDescuentoResponse d : esquemasAplicados) {
@@ -144,7 +133,7 @@ public class PaqueteAnualService {
             }
         }
 
-        // 8. Procesar y calcular cada movimiento configurado en el paquete anual
+        // 6. Procesar y cotizar cada movimiento mediante la capa de generación de movimientos
         List<PaqueteAnualMovimientoResponse> movimientosConfigurados = paqueteDetalle.movimientos() != null
                 ? paqueteDetalle.movimientos()
                 : Collections.emptyList();
@@ -165,105 +154,43 @@ public class PaqueteAnualService {
 
         for (PaqueteAnualMovimientoResponse pam : movimientosConfigurados) {
             Integer movId = pam.movimientoId();
-            MovimientoPaqueteAnualResponse catalogoItem = catalogoMap.get(movId);
 
-            boolean aplicaPeriodicidad = catalogoItem != null && Boolean.TRUE.equals(catalogoItem.aplicaPeriodicidad());
-            Integer baseDeCobroId = catalogoItem != null ? catalogoItem.baseDeCobroId() : null;
-            String baseDeCobro = catalogoItem != null ? catalogoItem.baseDeCobro() : "";
-            BigDecimal tarifaUnitario = (pam.cuotaVigente() != null)
-                    ? pam.cuotaVigente()
-                    : (catalogoItem != null && catalogoItem.cuota() != null ? catalogoItem.cuota() : BigDecimal.ZERO);
-            Integer anioVigenciaCuota = (pam.anioVigenciaCuota() != null)
-                    ? pam.anioVigenciaCuota()
-                    : (catalogoItem != null ? catalogoItem.anioVigencia() : null);
-
-            // Calcular cantidad de movimientos (por periodicidad o 1 por defecto)
-            int cantidadMovimientos = 1;
-            String periodicidadTexto = "";
-            if (aplicaPeriodicidad && periodicidadSocio != null) {
-                if (periodicidadSocio.cantidadPorPeriodo() != null && periodicidadSocio.cantidadPorPeriodo() > 0) {
-                    cantidadMovimientos = periodicidadSocio.cantidadPorPeriodo();
-                }
-                periodicidadTexto = periodicidadSocio.periodicidad() != null ? periodicidadSocio.periodicidad() : "";
+            Map<String, Object> configAdicional = new HashMap<>();
+            if (pam.configuracionAdicional() != null) {
+                configAdicional.putAll(pam.configuracionAdicional());
+            }
+            if (paramsPorMovimiento.containsKey(movId)) {
+                configAdicional.putAll(paramsPorMovimiento.get(movId));
+            }
+            if (pam.cuotaVigente() != null && !configAdicional.containsKey("cuota")) {
+                configAdicional.put("cuota", pam.cuotaVigente());
+            }
+            if (!configAdicional.containsKey("anioCompleto")) {
+                configAdicional.put("anioCompleto", anio);
             }
 
-            // Evaluar base de cobro por beneficiario nombre BENEFICIARIO
-            boolean esBaseBeneficiario = baseDeCobroId != null && baseDeCobroId == BASE_BENEFICIARIO;
-            int totalBeneficiariosMov = esBaseBeneficiario ? (totalBeneficiarios != null ? totalBeneficiarios : 0) : 0;
+            CotizacionMovimientoRequest cotReq = CotizacionMovimientoRequest.builder()
+                    .membresia(membresia)
+                    .tipoMovimientoId(movId)
+                    .desarrolloConsumo(desarrolloId)
+                    .parametrosEspeciales(configAdicional)
+                    .build();
 
-            // Obtener configuración adicional (del request o del paquete)
-            Map<String, Object> configAdicional = paramsPorMovimiento.containsKey(movId)
-                    ? paramsPorMovimiento.get(movId)
-                    : pam.configuracionAdicional();
+            CotizacionMovimientoResponse cotizacionMov = generacionMovimientosService.cotizarMovimiento(cotReq);
 
-            BigDecimal subtotal;
+            BigDecimal subtotal = cotizacionMov.subtotal() != null
+                    ? cotizacionMov.subtotal().setScale(2, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+
             BigDecimal montoDescuento;
-            BigDecimal total;
-
-            if (movId != null && movId == MOVIMIENTO_CREDENCIALES) {
-                // Caso especial: CREDENCIALES -> Llama al servicio de cotizar credenciales
-                int aniosCredencial = 1;
-                boolean incluirPrevios = false;
-                if (configAdicional != null && configAdicional.containsKey("anios") && configAdicional.containsKey("incluirPrevios")) {
-                    Object aniosObj = configAdicional.get("anios");
-                    Object incluirPreviosObj = configAdicional.get("incluirPrevios");
-                    if (aniosObj instanceof Number num) {
-                        aniosCredencial = num.intValue();
-                    } else if (aniosObj != null) {
-                        try {
-                            aniosCredencial = Integer.parseInt(aniosObj.toString());
-                        } catch (NumberFormatException ignored) {
-                        }
-                    }
-
-                    if (incluirPreviosObj instanceof Boolean bool) {
-                        incluirPrevios = bool;
-                    } else if (incluirPreviosObj != null) {
-                        incluirPrevios = Boolean.parseBoolean(incluirPreviosObj.toString());
-                    }
-                }
-
-                CotizacionCredencialesResponse cotizacionCred = generacionMovimientosService.cotizarCredenciales(
-                        membresia,
-                        aniosCredencial,
-                        incluirPrevios,
-                        desarrolloId
-                );
-
-                BigDecimal calculoTotalCred = cotizacionCred != null && cotizacionCred.calculoTotal() != null
-                        ? cotizacionCred.calculoTotal()
-                        : BigDecimal.ZERO;
-
-                subtotal = calculoTotalCred.setScale(2, RoundingMode.HALF_UP);
-
-                if (Boolean.TRUE.equals(pam.aplicaDescuento()) && porcentajeDescuentoTotal.compareTo(BigDecimal.ZERO) > 0) {
-                    montoDescuento = subtotal.multiply(porcentajeDescuentoTotal)
-                            .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-                } else {
-                    montoDescuento = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
-                }
-
-                total = subtotal.subtract(montoDescuento).setScale(2, RoundingMode.HALF_UP);
-                if (cotizacionCred != null && cotizacionCred.tarifaEstablecida() != null) {
-                    tarifaUnitario = cotizacionCred.tarifaEstablecida();
-                }
+            if (Boolean.TRUE.equals(pam.aplicaDescuento()) && porcentajeDescuentoTotal.compareTo(BigDecimal.ZERO) > 0) {
+                montoDescuento = subtotal.multiply(porcentajeDescuentoTotal)
+                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
             } else {
-                // Cálculo convencional
-                BigDecimal baseImporte = tarifaUnitario.multiply(BigDecimal.valueOf(cantidadMovimientos));
-                if (esBaseBeneficiario) {
-                    baseImporte = baseImporte.multiply(BigDecimal.valueOf(totalBeneficiariosMov));
-                }
-                subtotal = baseImporte.setScale(2, RoundingMode.HALF_UP);
-
-                if (Boolean.TRUE.equals(pam.aplicaDescuento()) && porcentajeDescuentoTotal.compareTo(BigDecimal.ZERO) > 0) {
-                    montoDescuento = subtotal.multiply(porcentajeDescuentoTotal)
-                            .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-                } else {
-                    montoDescuento = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
-                }
-
-                total = subtotal.subtract(montoDescuento).setScale(2, RoundingMode.HALF_UP);
+                montoDescuento = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
             }
+
+            BigDecimal total = subtotal.subtract(montoDescuento).setScale(2, RoundingMode.HALF_UP);
 
             subtotalGeneral = subtotalGeneral.add(subtotal);
             descuentoGeneral = descuentoGeneral.add(montoDescuento);
@@ -273,15 +200,15 @@ public class PaqueteAnualService {
                     .paqueteAnualMovimientoId(pam.paqueteAnualMovimientoId())
                     .movimientoId(pam.movimientoId())
                     .movimiento(pam.movimiento())
-                    .cantidadMovimientos(cantidadMovimientos)
-                    .baseDeCobroId(baseDeCobroId)
-                    .baseDeCobro(baseDeCobro)
-                    .periodicidad(periodicidadTexto)
-                    .totalBeneficiarios(totalBeneficiariosMov)
+                    .cantidadMovimientos(cotizacionMov.cantidadMovimientos())
+                    .baseDeCobroId(cotizacionMov.baseDeCobroId())
+                    .baseDeCobro(cotizacionMov.baseDeCobro())
+                    .periodicidad(cotizacionMov.periodicidad())
+                    .totalBeneficiarios(cotizacionMov.totalBeneficiarios())
                     .aplicaDescuento(pam.aplicaDescuento())
                     .obligatorio(pam.obligatorio())
-                    .tarifaUnitario(tarifaUnitario)
-                    .anioVigenciaCuota(anioVigenciaCuota)
+                    .tarifaUnitario(cotizacionMov.tarifaUnitario())
+                    .anioVigenciaCuota(cotizacionMov.anioVigenciaCuota())
                     .subtotal(subtotal)
                     .montoDescuento(montoDescuento)
                     .total(total)
