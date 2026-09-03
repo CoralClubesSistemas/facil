@@ -85,11 +85,16 @@ public class GeneracionMovimientosRepository {
         boolean esValido = !cuotaForzosa
                 || rs.getBigDecimal("cuota") != null;
 
+        Integer baseDeCobroId = rs.getObject("baseDeCobroId") != null
+                ? rs.getInt("baseDeCobroId")
+                : null;
+
         return MovimientoPorTipoMembresiaResponse.builder()
                 .id(rs.getInt("id"))
                 .descripcion(rs.getString("descripcion"))
                 .periodicidadId(rs.getObject("periodicidad_id") != null ? rs.getInt("periodicidad_id") : null)
                 .periodicidad(rs.getString("periodicidad"))
+                .baseDeCobroId(baseDeCobroId)
                 .baseDeCobro(rs.getString("baseDeCobro"))
                 .generaInteres(
                         rs.getObject("generaInteres") != null

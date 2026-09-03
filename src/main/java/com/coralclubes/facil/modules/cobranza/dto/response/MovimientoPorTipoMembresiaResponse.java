@@ -10,6 +10,7 @@ public record MovimientoPorTipoMembresiaResponse(
         String descripcion,
         Integer periodicidadId,
         String periodicidad,
+        Integer baseDeCobroId,
         String baseDeCobro,
         Boolean generaInteres,
         BigDecimal cuota,

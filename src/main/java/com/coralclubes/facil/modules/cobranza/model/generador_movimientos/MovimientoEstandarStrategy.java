@@ -1,5 +1,6 @@
 package com.coralclubes.facil.modules.cobranza.model.generador_movimientos;
 
+import com.coralclubes.facil.modules.clientes.repository.BeneficiariosRepository;
 import com.coralclubes.facil.modules.cobranza.dto.request.GeneracionMovimientoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.MapeoPeriodicidadResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoManualResponse;
@@ -24,6 +25,7 @@ import java.util.regex.Pattern;
 public class MovimientoEstandarStrategy implements GeneracionMovimientoStrategy {
 
     public static final int PERIODICIDAD_NO_APLICA = 301;
+    public static final int BASE_COBRO_POR_BENEFICIARIO = 284;
     public static final String PERIODO_ANUAL = "YEAR";
 
     private static final List<Integer> IDS_ESPECIALES = List.of(
@@ -34,6 +36,7 @@ public class MovimientoEstandarStrategy implements GeneracionMovimientoStrategy 
     private static final Pattern PATTERN_ANIO = Pattern.compile("\\b(19\\d{2}|20\\d{2})\\b");
 
     private final GeneracionMovimientosRepository repository;
+    private final BeneficiariosRepository beneficiariosRepository;
     private final BusinessLogger logger;
 
     @Override
@@ -45,7 +48,6 @@ public class MovimientoEstandarStrategy implements GeneracionMovimientoStrategy 
     public List<MovimientoManualResponse> generar(GeneracionMovimientoRequest request, String usuario) {
         String membresia = request.getMembresia();
         Integer tipoMovimientoId = request.getTipoMovimientoId();
-        Integer desarrolloConsumo = request.getDesarrolloConsumo() != null ? request.getDesarrolloConsumo() : 0;
 
         Map<String, Object> params = request.getParametrosEspeciales() != null
                 ? request.getParametrosEspeciales()
@@ -105,6 +107,9 @@ public class MovimientoEstandarStrategy implements GeneracionMovimientoStrategy 
         } else if (movimientoConfig != null && movimientoConfig.cuota() != null) {
             cuota = movimientoConfig.cuota();
         }
+
+        // Ajustar cuota si la base de cobro es por beneficiario (284)
+        cuota = ajustarCuotaSegunBaseDeCobro(request.getMembresia(), cuota, movimientoConfig);
 
         LocalDate fechaVencimiento = request.getFechaVencimiento() != null
                 ? request.getFechaVencimiento()
@@ -170,7 +175,7 @@ public class MovimientoEstandarStrategy implements GeneracionMovimientoStrategy 
                 ? movimientoConfig.periodicidad().trim()
                 : "";
 
-        // 1. Obtener mapeo de periodicidad
+        // 1. Mapeo de periodicidad
         MapeoPeriodicidadResponse periodicidadMapeo = repository.spCobranzaMapeoPeriodicidad(movimientoConfig.periodicidadId(), PERIODO_ANUAL)
                 .stream()
                 .findFirst()
@@ -180,7 +185,7 @@ public class MovimientoEstandarStrategy implements GeneracionMovimientoStrategy 
                 ? periodicidadMapeo.cantidadXPeriodo()
                 : 1;
 
-        // 0. Obtener último movimiento
+        // 0. Último movimiento
         UltimoMovimientoResponse ultimoMovimiento = repository.spCobranzaObtenerUltimoMovimiento(
                 membresia,
                 desarrolloConsumo,
@@ -253,6 +258,9 @@ public class MovimientoEstandarStrategy implements GeneracionMovimientoStrategy 
                     .map(TarifaMovimientoResponse::cuota)
                     .orElse(movimientoConfig.cuota() != null ? movimientoConfig.cuota() : BigDecimal.ZERO);
 
+            // Ajustar cuota si la base de cobro es por beneficiario (284)
+            cuota = ajustarCuotaSegunBaseDeCobro(membresia, cuota, movimientoConfig);
+
             logger.info(usuario, "Generando movimiento periódico #{}: Descripción='{}', Cuota={}, Vencimiento={}",
                     contador, descripcion, cuota, fechaVencimiento);
 
@@ -275,15 +283,31 @@ public class MovimientoEstandarStrategy implements GeneracionMovimientoStrategy 
         return movimientosGenerados;
     }
 
-    private record EstadoUltimoMovimiento(int anio, int periodoActual) {
+    private BigDecimal ajustarCuotaSegunBaseDeCobro(
+            String membresia,
+            BigDecimal cuotaBase,
+            MovimientoPorTipoMembresiaResponse movimientoConfig
+    ) {
+        if (cuotaBase == null) {
+            cuotaBase = BigDecimal.ZERO;
+        }
+
+        if (movimientoConfig != null && Integer.valueOf(BASE_COBRO_POR_BENEFICIARIO).equals(movimientoConfig.baseDeCobroId())) {
+            List<?> beneficiarios = beneficiariosRepository.spClienteObtenerBeneficiariosMembresia(membresia);
+            int totalBeneficiarios = beneficiarios != null ? beneficiarios.size() : 0;
+            return cuotaBase.multiply(BigDecimal.valueOf(totalBeneficiarios));
+        }
+
+        return cuotaBase;
     }
+
+    private record EstadoUltimoMovimiento(int anio, int periodoActual) {}
 
     private EstadoUltimoMovimiento parsearUltimoMovimiento(String descripcion, int periodosPorAnio) {
         if (descripcion == null || descripcion.isBlank()) {
             return new EstadoUltimoMovimiento(LocalDate.now().getYear(), 0);
         }
 
-        // Buscar patrón tipo "1/4 2026" o "2/2 2025"
         Matcher matcherPeriodoAnio = PATTERN_PERIODICIDAD_ANIO.matcher(descripcion);
         if (matcherPeriodoAnio.find()) {
             int periodo = Integer.parseInt(matcherPeriodoAnio.group(1));
@@ -291,7 +315,6 @@ public class MovimientoEstandarStrategy implements GeneracionMovimientoStrategy 
             return new EstadoUltimoMovimiento(anio, periodo);
         }
 
-        // Si no tiene "X/Y" (por ejemplo movimientos anuales sin 1/1), buscamos el año
         Matcher matcherAnio = PATTERN_ANIO.matcher(descripcion);
         int anioEncontrado = LocalDate.now().getYear();
         boolean encontroAnio = false;
@@ -300,7 +323,6 @@ public class MovimientoEstandarStrategy implements GeneracionMovimientoStrategy 
             encontroAnio = true;
         }
 
-        // Si solo se encontró el año, se toma en cuenta que ya se generó el movimiento de ese año obtenido
         if (encontroAnio) {
             return new EstadoUltimoMovimiento(anioEncontrado, periodosPorAnio);
         }
