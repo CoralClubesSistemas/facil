@@ -3,6 +3,7 @@ package com.coralclubes.facil.modules.cobranza.dto.response;
 import lombok.Builder;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -21,6 +22,7 @@ public record PropuestaPaqueteAnualResponse(
         List<CotizacionPaqueteAnualMovimientoResponse> movimientos,
         List<CuponBeneficioPaqueteAnualResponse> cupones,
         LocalDateTime vigenciaPropuesta,
+        LocalDate fechaPrevistaCompra,
         LocalDateTime fechaRegistro,
         String usuarioRegistro
 ) {}

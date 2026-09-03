@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -212,6 +213,7 @@ public class PaqueteAnualRepository {
             String movimientosJson,
             String cuponesJson,
             java.time.LocalDateTime vigenciaPropuesta,
+            LocalDate fechaPrevistaCompra,
             String usuario
     ) {
         Map<String, Object> params = new HashMap<>();
@@ -227,6 +229,7 @@ public class PaqueteAnualRepository {
         params.put("movimientos", movimientosJson);
         params.put("cupones", cuponesJson);
         params.put("vigencia_propuesta", vigenciaPropuesta);
+        params.put("fecha_prevista_compra", fechaPrevistaCompra);
         params.put("usuario", usuario);
 
         return spExecutor.querySingle(

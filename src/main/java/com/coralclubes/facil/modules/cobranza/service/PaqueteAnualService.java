@@ -293,6 +293,11 @@ public class PaqueteAnualService {
             }
         }
 
+        // definimos la fecha de vigencia de la propuesta como el ultimo dia del periodo valido de cupones
+        LocalDateTime fechaVigencia = request.cupones() != null && !request.cupones().isEmpty()
+                ? request.cupones().getFirst().periodoFin()
+                : null;
+
         return repository.spCobranzaGuardarPropuestaPaqueteAnual(
                 request.paqueteAnualId(),
                 request.membresia(),
@@ -305,7 +310,8 @@ public class PaqueteAnualService {
                 esquemasJson,
                 movimientosJson,
                 cuponesJson,
-                request.vigenciaPropuesta() != null ? Objects.requireNonNull(request.cupones()).getFirst().periodoFin() : null,
+                fechaVigencia,
+                request.fechaPrevistaCompra(),
                 usuario
         ).orElseThrow(() -> new RuntimeException("Error al guardar la propuesta de paquete anual en la base de datos"));
     }
@@ -344,7 +350,7 @@ public class PaqueteAnualService {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         variables.put("fechaEmision", LocalDateTime.now().format(dateFormatter));
 
-        LocalDateTime vigenciaPropuesta = propuesta.cupones().getFirst().periodoFin();
+        LocalDateTime vigenciaPropuesta = propuesta.vigenciaPropuesta();
         variables.put("vigenciaPropuesta", vigenciaPropuesta != null ? vigenciaPropuesta.format(dateFormatter) : "");
 
         NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("es", "MX"));
