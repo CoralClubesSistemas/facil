@@ -21,5 +21,7 @@ public record VenderPaqueteAnualResponse(
         BigDecimal porcentajeDescuentoAplicado,
         List<MovimientoGeneradoPaqueteAnualDto> movimientosGenerados,
         List<PaqueteAnualDescuentoResponse> esquemasAplicados,
-        List<CuponBeneficioPaqueteAnualResponse> cupones
+        List<CuponBeneficioPaqueteAnualResponse> cupones,
+        String linkPagoCheckoutUrl,
+        Integer intentoPagoId
 ) {}

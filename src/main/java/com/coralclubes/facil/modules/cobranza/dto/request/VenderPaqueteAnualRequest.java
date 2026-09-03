@@ -6,7 +6,13 @@ import lombok.Builder;
 
 @Builder
 public record VenderPaqueteAnualRequest(
+        @NotNull Integer propuestaId,
         @NotBlank String membresia,
-        @NotNull Integer anio,
+        @NotNull Integer procedenciaId,
+        @NotBlank String procedencia,
+        Boolean generarOrdenLinkPago,
+        String correoEnvioLinkPago,
+        Integer anio,
         String mensajeAdicional
 ) {}
+
