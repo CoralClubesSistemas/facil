@@ -32,7 +32,8 @@ public class MovimientoEstandarStrategy implements GeneracionMovimientoStrategy 
     public static final String PERIODO_ANUAL = "YEAR";
 
     private static final List<Integer> IDS_ESPECIALES = List.of(
-            MovimientoCredencialesStrategy.TIPO_MOVIMIENTO_CREDENCIALES // 25
+            MovimientoCredencialesStrategy.TIPO_MOVIMIENTO_CREDENCIALES, // 25
+            MovimientoPaqueteAnualStrategy.TIPO_MOVIMIENTO_PAQUETE_ANUAL  // 1000
     );
 
     private static final Pattern PATTERN_PERIODICIDAD_ANIO = Pattern.compile("(\\d+)/(\\d+)\\s+(\\d{4})");
@@ -182,7 +183,7 @@ public class MovimientoEstandarStrategy implements GeneracionMovimientoStrategy 
             descripcion = movimientoConfig.descripcion();
         }
 
-        BigDecimal cuotaUnitaria = BigDecimal.ZERO;
+        BigDecimal cuotaUnitaria = BigDecimal.ONE;
         if (params.containsKey("cuota") && params.get("cuota") != null) {
             Object cuotaVal = params.get("cuota");
             if (cuotaVal instanceof BigDecimal bigDecimal) {
@@ -484,7 +485,7 @@ public class MovimientoEstandarStrategy implements GeneracionMovimientoStrategy 
 
             BigDecimal cuotaBase = repository.spCobranzaObtenerTarifaMovimiento(membresia, tipoMovimientoId, anioCursor)
                     .map(TarifaMovimientoResponse::cuota)
-                    .orElse(movimientoConfig.cuota() != null ? movimientoConfig.cuota() : BigDecimal.ZERO);
+                    .orElse(movimientoConfig.cuota() != null ? movimientoConfig.cuota() : BigDecimal.ONE);
 
             if (primeraTarifaUnitaria == null) {
                 primeraTarifaUnitaria = cuotaBase;

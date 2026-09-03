@@ -68,4 +68,8 @@ public class CobranzaCatalogosService {
     public ApiResponse<List<SelectGenerico<String>>> obtenerCatalogoEsquemasPagoPaqueteAnual() {
         return ApiResponse.success("Catálogo de esquemas de pago de paquete anual obtenido correctamente.", repository.spCobranzaCatalogoEsquemasPagoPaqueteAnual());
     }
+
+    public ApiResponse<List<SelectGenerico<Integer>>> obtenerCatalogoProcedenciaPaqueteAnual() {
+        return ApiResponse.success("Catálogo de procedencia de paquete anual obtenido correctamente.", repository.spCobranzaCatalogoProcedenciaPaqueteAnual());
+    }
 }
