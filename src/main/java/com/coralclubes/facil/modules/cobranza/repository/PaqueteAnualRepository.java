@@ -241,15 +241,9 @@ public class PaqueteAnualRepository {
 
     public Optional<String> spCobranzaObtenerPropuestaPaqueteAnual(String membresia, Integer anio, Integer propuestaId) {
         Map<String, Object> params = new HashMap<>();
-        if (membresia != null) {
-            params.put("membresia", membresia);
-        }
-        if (anio != null) {
-            params.put("anio", anio);
-        }
-        if (propuestaId != null) {
-            params.put("propuestaId", propuestaId);
-        }
+        params.put("membresia", membresia);
+        params.put("anio", anio);
+        params.put("propuestaId", propuestaId);
 
         List<String> list = spExecutor.queryList("spCobranzaObtenerPropuestaPaqueteAnual", params, jsonStringMapper);
         if (list.isEmpty() || list.getFirst() == null || list.getFirst().isBlank()) {

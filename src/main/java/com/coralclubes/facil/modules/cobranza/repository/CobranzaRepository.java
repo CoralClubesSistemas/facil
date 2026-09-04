@@ -132,7 +132,7 @@ public class CobranzaRepository {
             Integer tipoSerieRecibo,
             String usuario
     ) {
-        return spExecutor.querySingle(
+        List<String> chunks = spExecutor.queryList(
                 "spCobranzaFinalizarOrdenYGenerarRecibo",
                 Map.of(
                         "OrdenUuid", ordenUuid,
@@ -141,14 +141,22 @@ public class CobranzaRepository {
                 ),
                 jsonStringMapper
         );
+        if (chunks.isEmpty() || chunks.getFirst() == null || chunks.getFirst().isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.of(String.join("", chunks));
     }
 
     public Optional<String> spFacilConsultarOrdenCobranzaJson(UUID ordenUuid) {
-        return spExecutor.querySingle(
+        List<String> chunks = spExecutor.queryList(
                 "spFacilConsultarOrdenCobranzaJson",
                 Map.of("OrdenUuid", ordenUuid),
                 jsonStringMapper
         );
+        if (chunks.isEmpty() || chunks.getFirst() == null || chunks.getFirst().isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.of(String.join("", chunks));
     }
 
     public Optional<UUID> spCobranzaRecuperarOrdenCobranza(Integer movimientoId, String membresia) {
@@ -160,7 +168,7 @@ public class CobranzaRepository {
     }
 
     public Optional<String> spCobranzaObtenerDatosRecibo(Integer numeroRecibo, Integer serieReciboId, String membresia) {
-        return spExecutor.querySingle(
+        List<String> chunks = spExecutor.queryList(
                 "spCobranzaObtenerDatosRecibo",
                 Map.of(
                         "NumeroRecibo", numeroRecibo,
@@ -169,6 +177,10 @@ public class CobranzaRepository {
                 ),
                 jsonStringMapper
         );
+        if (chunks.isEmpty() || chunks.getFirst() == null || chunks.getFirst().isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.of(String.join("", chunks));
     }
 
     public List<FormaPagoDto> spCobranzaCatalogoFormasDePago() {

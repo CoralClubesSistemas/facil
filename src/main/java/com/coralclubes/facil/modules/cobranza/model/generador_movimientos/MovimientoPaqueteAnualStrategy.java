@@ -147,8 +147,22 @@ public class MovimientoPaqueteAnualStrategy implements GeneracionMovimientoStrat
     }
 
     private Integer extraerAnio(Map<String, Object> params) {
+        if (params.containsKey("anio") && params.get("anio") != null) {
+            Object anioVal = params.get("anio");
+            if (anioVal instanceof Number num) {
+                return num.intValue();
+            }
+            return Integer.parseInt(anioVal.toString().trim());
+        }
         if (params.containsKey("anioCompleto") && params.get("anioCompleto") != null) {
             Object anioVal = params.get("anioCompleto");
+            if (anioVal instanceof Number num) {
+                return num.intValue();
+            }
+            return Integer.parseInt(anioVal.toString().trim());
+        }
+        if (params.containsKey("year") && params.get("year") != null) {
+            Object anioVal = params.get("year");
             if (anioVal instanceof Number num) {
                 return num.intValue();
             }
@@ -158,6 +172,12 @@ public class MovimientoPaqueteAnualStrategy implements GeneracionMovimientoStrat
     }
 
     private String extraerProcedenciaLabel(Map<String, Object> params) {
+        if (params.containsKey("procedenciaLabel") && params.get("procedenciaLabel") != null && !params.get("procedenciaLabel").toString().isBlank()) {
+            return params.get("procedenciaLabel").toString().trim();
+        }
+        if (params.containsKey("labelProcedencia") && params.get("labelProcedencia") != null && !params.get("labelProcedencia").toString().isBlank()) {
+            return params.get("labelProcedencia").toString().trim();
+        }
         if (params.containsKey("procedencia") && params.get("procedencia") != null && !params.get("procedencia").toString().isBlank()) {
             return params.get("procedencia").toString().trim();
         }

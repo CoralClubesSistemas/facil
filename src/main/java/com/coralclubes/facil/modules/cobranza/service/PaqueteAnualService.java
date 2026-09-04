@@ -22,6 +22,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -420,6 +421,7 @@ public class PaqueteAnualService {
                 .build();
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public VenderPaqueteAnualResponse venderPaqueteAnual(VenderPaqueteAnualRequest request, String usuario) {
         String membresia = request.membresia();
         Integer propuestaId = request.propuestaId();
@@ -659,7 +661,9 @@ public class PaqueteAnualService {
     ) {
         Map<String, Object> paramsPaquete = new HashMap<>();
         paramsPaquete.put("anio", propuesta.anio());
+        paramsPaquete.put("anioCompleto", propuesta.anio());
         paramsPaquete.put("procedenciaId", request.procedenciaId());
+        paramsPaquete.put("procedencia", request.procedencia());
         paramsPaquete.put("procedenciaLabel", request.procedencia());
         paramsPaquete.put("cuota", BigDecimal.ONE);
 
