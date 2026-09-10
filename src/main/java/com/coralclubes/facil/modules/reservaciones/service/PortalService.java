@@ -28,12 +28,6 @@ public class PortalService {
     private final StorageClient storageClient;
     private final NotificationClient notificationClient;
 
-    @Value("${app.clients.storage.aliases.default}")
-    private String aliasConfiguracion;
-
-    @Value("${app.clients.notifications.aliases.default}")
-    private String aliasNotificaciones;
-
     private static final String STORAGE_FOLDER = "reservaciones/portal";
 
     public List<ExperienciaPortalDto> obtenerExperienciasPortal() {
@@ -70,16 +64,15 @@ public class PortalService {
 
     public RespuestaCargaDto solicitarUrlCarga(SolicitarUrlRequest request, String usuario) {
         Map<String, String> metadata = Map.of(
-                "modulo", "PORTAL RESERVACIONES",
-                "experienciaId", String.valueOf(request.id() != null ? request.id() : "NUEVO"),
-                "subidoPor", usuario
+            "modulo", "PORTAL RESERVACIONES",
+            "experienciaId", String.valueOf(request.id() != null ? request.id() : "NUEVO"),
+            "subidoPor", usuario
         );
 
         SolicitudCargaDto solicitud = SolicitudCargaDto.builder()
                 .nombreArchivo(request.nombreArchivo())
                 .contentType(request.contentType())
                 .tamanoBytes(request.tamanoBytes())
-                .aliasConfiguracion(aliasConfiguracion)
                 .esPublico(true)
                 .rutaLogica(STORAGE_FOLDER)
                 .metadatos(metadata)
@@ -97,7 +90,6 @@ public class PortalService {
         variables.put("mensaje", request.mensaje());
 
         SolicitudNotificacionDto notificacion = SolicitudNotificacionDto.builder()
-                .aliasConfig(aliasNotificaciones)
                 .destinatarios(List.of("lvivar@coralclubes.com"))
                 .asunto("Nuevo contacto desde el portal - " + request.nombre())
                 .codigoPlantilla("contacto-portal-v1")

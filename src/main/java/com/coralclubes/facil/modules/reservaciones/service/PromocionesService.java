@@ -36,9 +36,6 @@ public class PromocionesService {
 
     private static final String STORAGE_FOLDER = "reservaciones/promociones";
 
-    @Value("${app.clients.storage.aliases.default}")
-    private String aliasConfiguracion;
-
     // =========================================================================
     // MÉTODOS ADMINISTRATIVOS
     // =========================================================================
@@ -93,7 +90,7 @@ public class PromocionesService {
 
         Map<String, String> metadata = Map.of("modulo", "RESERVACIONES - PROMOCIONES", "promocion", String.valueOf(request.id()), "subidoPor", usuario);
 
-        SolicitudCargaDto solicitud = SolicitudCargaDto.builder().nombreArchivo(request.nombreArchivo()).contentType(request.contentType()).tamanoBytes(request.tamanoBytes()).aliasConfiguracion(aliasConfiguracion).esPublico(true) // Las imágenes de promociones son públicas para que el portal las pueda mostrar sin complicaciones
+        SolicitudCargaDto solicitud = SolicitudCargaDto.builder().nombreArchivo(request.nombreArchivo()).contentType(request.contentType()).tamanoBytes(request.tamanoBytes()).esPublico(true) // Las imágenes de promociones son públicas para que el portal las pueda mostrar sin complicaciones
                 .rutaLogica(STORAGE_FOLDER).metadatos(metadata).build();
 
         RespuestaCargaDto respuesta = storageClient.solicitarUrlCarga(solicitud);

@@ -28,17 +28,14 @@ public class FilesClientesMigrationService {
     private final JdbcTemplate jdbcTemplate;
     private final StorageClient storageClient;
     private final NotasClientesRepository repository;
-    private final String aliasStorageDefault;
 
     public FilesClientesMigrationService(
             JdbcTemplate jdbcTemplate,
             @Qualifier("migrationStorageClient") StorageClient storageClient,
-            NotasClientesRepository repository,
-            @Value("${app.clients.storage.aliases.default}") String aliasStorageDefault) {
+            NotasClientesRepository repository) {
         this.jdbcTemplate = jdbcTemplate;
         this.storageClient = storageClient;
         this.repository = repository;
-        this.aliasStorageDefault = aliasStorageDefault;
     }
 
     /**
@@ -131,7 +128,6 @@ public class FilesClientesMigrationService {
 
                 SolicitudCargaLegacyDto solicitud = SolicitudCargaLegacyDto.builder()
                         .idCorrelacion(membresia + "-" + consecutivo + "-" + orden)
-                        .aliasConfiguracion(aliasStorageDefault)
                         .metadatos(Map.of(
                                 "modulo", "CLIENTES",
                                 "membresia", membresia,
@@ -243,7 +239,6 @@ public class FilesClientesMigrationService {
 
                 SolicitudCargaLegacyDto solicitud = SolicitudCargaLegacyDto.builder()
                         .idCorrelacion(membresia + "-" + credencialId + "-" + beneficiario + "-" + anioVigencia)
-                        .aliasConfiguracion(aliasStorageDefault)
                         .metadatos(Map.of(
                                 "modulo", "CLIENTES",
                                 "membresia", membresia,

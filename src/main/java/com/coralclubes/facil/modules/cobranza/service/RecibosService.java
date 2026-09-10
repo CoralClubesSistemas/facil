@@ -42,10 +42,7 @@ public class RecibosService {
     private final CobranzaPostProcesoAsyncService postProceso;
     private final CobranzaGeneradorDocumentosService generador;
 
-    private final StorageClient storageClient; 
-
-    @Value("${app.clients.storage.aliases.default}")
-    private String aliasStorageDefault;
+    private final StorageClient storageClient;
 
     /**
      * Busca recibos de cobranza con múltiples filtros opcionales.
@@ -214,7 +211,6 @@ public class RecibosService {
                             .nombreArchivo(solicitud.nombreArchivo())
                             .contentType(solicitud.contentType())
                             .tamanoBytes(solicitud.tamanoBytes())
-                            .aliasConfiguracion(aliasStorageDefault)
                             .esPublico(false)
                             .rutaLogica(ruta)
                             .metadatos(Map.of(

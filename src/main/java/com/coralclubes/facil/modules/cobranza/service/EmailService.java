@@ -44,9 +44,6 @@ public class EmailService {
     private final MovimientosClienteService movimientosClienteService;
     private final PuntosService puntosService;
 
-    @Value("${app.clients.notifications.aliases.default}")
-    private String aliasConfig;
-
     public void enviarCorreo(EmailRequestDto request, String username) {
         // 1. Obtener datos de correo del usuario y validar
         var datosCorreo = usuarioService.obtenerDatosCorreoUsuario(username)
@@ -84,7 +81,6 @@ public class EmailService {
 
         // 4. Construir solicitud de notificación mandando contrasenaCorreo en el campo password
         SolicitudNotificacionDto solicitud = SolicitudNotificacionDto.builder()
-                .aliasConfig(aliasConfig)
                 .destinatarios(request.destinatarios())
                 .asunto(request.asunto())
                 .codigoPlantilla("email-corporativo-v1")

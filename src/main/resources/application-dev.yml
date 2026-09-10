@@ -49,8 +49,7 @@ app:
     storage:
       url: http://localhost:8081
       api-key: FACIL_4dkQZoLmzOZ2Ynob6GnIeYbPR3O0yyEq
-      aliases:
-        default: MINIO_MAIN
+      alias: MINIO_MAIN
 
     checkout:
       url: http://localhost:8083
@@ -66,9 +65,7 @@ app:
     notifications:
       url: http://localhost:8082
       api-key: FACIL_4dkQZoLmzOZ2Ynob6GnIeYbPR3O0yyEq
-      aliases:
-        default: SMTP_GENERAL
-        aws-ses: SES_GENERAL
+      alias: SMTP_GENERAL
       templates:
         reset-password: reset-pass-v1
         reserva-creada: reserva-creada-v1

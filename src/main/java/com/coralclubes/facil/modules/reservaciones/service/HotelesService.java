@@ -42,9 +42,6 @@ public class HotelesService {
     private final StorageClient storageClient;
     private final StorageUrlsCacheService storageUrlsCacheService;
 
-    @Value("${app.clients.storage.aliases.default}")
-    private String aliasStorageDefault;
-
     // =========================================================================
     // MÉTODOS DE ESCRITURA (Write)
     // =========================================================================
@@ -228,7 +225,6 @@ public class HotelesService {
                 .nombreArchivo(request.nombreArchivo())
                 .contentType(request.contentType())
                 .tamanoBytes(request.tamanoBytes())
-                .aliasConfiguracion(aliasStorageDefault)
                 .esPublico(true)
                 .rutaLogica(rutaLogica)
                 .metadatos(Map.of(

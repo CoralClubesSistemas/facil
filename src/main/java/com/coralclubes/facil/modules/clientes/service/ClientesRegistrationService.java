@@ -33,9 +33,6 @@ public class ClientesRegistrationService {
     private final NotificationClient notificationClient;
     private final PasswordResetRepository passRepo;
 
-    @Value("${app.clients.notifications.aliases.default}")
-    private String defaultAlias;
-
     public Boolean registroValido(String membresia, String email) {
         ClienteValidacionMembresiaResult result = validarMembresia(membresia, email);
         Boolean isValid = !result.registroUserSystem();
@@ -55,7 +52,6 @@ public class ClientesRegistrationService {
 
             // Creamos el cuerpo de la solicitud de notificación
             var solicitud = SolicitudNotificacionDto.builder()
-                    .aliasConfig(defaultAlias)
                     .destinatarios(List.of(email))
                     .codigoPlantilla("codigo-verificacion-v1")
                     .variables(
@@ -143,7 +139,6 @@ public class ClientesRegistrationService {
 
         // 5. Enviar notificación
         var solicitud = SolicitudNotificacionDto.builder()
-                .aliasConfig(defaultAlias)
                 .destinatarios(List.of(email))
                 .codigoPlantilla("codigo-verificacion-v1")
                 .variables(

@@ -39,9 +39,6 @@ public class PasswordResetService {
     @Value("${app.url.password-reset}")
     private String passwordResetUrl;
 
-    @Value("${app.clients.notifications.aliases.default}")
-    private String aliasConfig;
-
     @Value("${app.clients.notifications.templates.reset-password}")
     private String templateCode;
 
@@ -127,7 +124,6 @@ public class PasswordResetService {
         String resetLink = passwordResetUrl + "?token=" + token;
 
         SolicitudNotificacionDto solicitud = SolicitudNotificacionDto.builder()
-                .aliasConfig(aliasConfig)
                 .destinatarios(List.of(email))
                 .codigoPlantilla(templateCode)
                 .prioridad(10) // Alta prioridad

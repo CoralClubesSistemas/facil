@@ -36,9 +36,6 @@ public class LinkPaymentStrategy implements PaymentStrategy {
 
     private final NotificationClient notificationClient;
 
-    @Value("${app.clients.notifications.aliases.default}")
-    private String aliasConfig;
-
     @Value("${app.clients.checkout.is-sandbox}")
     private boolean isSandbox;
 
@@ -211,7 +208,6 @@ public class LinkPaymentStrategy implements PaymentStrategy {
 
         // Construir el cuerpo de la solicitud
         SolicitudNotificacionDto solicitud = SolicitudNotificacionDto.builder()
-                .aliasConfig(aliasConfig)
                 .destinatarios(List.of(email))
                 .codigoPlantilla("link-checkout-pago-v1")
                 .variables(variables)

@@ -26,9 +26,6 @@ public class CobranzaGeneradorDocumentosService {
     private final PdfGeneratorService pdfGenerator;
     private final StorageClient storageClient;
 
-    @Value("${app.clients.storage.aliases.default}")
-    private String aliasConfiguracion;
-
     public byte[] generarPdfRecibo(DatosReciboResponse recibo, String tipo, String cadenaSeguridad) {
         // Formatear decimales en Java
         DecimalFormat df = new DecimalFormat("$#,##0.00");
@@ -94,7 +91,6 @@ public class CobranzaGeneradorDocumentosService {
         SolicitudCargaLegacyDto solicitud = SolicitudCargaLegacyDto.builder()
                 .requiereDepuracion(false)
                 .esPublico(false)
-                .aliasConfiguracion(aliasConfiguracion)
                 .rutaLogica("cobranza/recibos/" + membresia + "/" + folio)
                 .metadatos(Map.of(
                         "folio", folio,

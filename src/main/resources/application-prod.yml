@@ -51,15 +51,12 @@ app:
     storage:
       url: ${STORAGE_SERVICE_URL}
       api-key: ${STORAGE_API_KEY}
-      aliases:
-        default: ${APP_CLIENTS_STORAGE_ALIASES_DEFAULT}
+      alias: ${APP_CLIENTS_STORAGE_ALIAS:S3}
 
     notifications:
       url: ${NOTIFICATIONS_SERVICE_URL}
       api-key: ${NOTIFICATIONS_API_KEY}
-      aliases:
-        default: ${APP_CLIENTS_NOTIFICATIONS_ALIASES_DEFAULT}
-        aws-ses: ${APP_CLIENTS_NOTIFICATIONS_ALIASES_AWS_SES}
+      alias: ${APP_CLIENTS_NOTIFICATIONS_ALIAS:SES}
       templates:
         reset-password: ${APP_CLIENTS_NOTIFICATIONS_TEMPLATES_RESET_PASSWORD}
         reserva-creada: ${APP_CLIENTS_NOTIFICATIONS_TEMPLATES_RESERVA_CREADA}

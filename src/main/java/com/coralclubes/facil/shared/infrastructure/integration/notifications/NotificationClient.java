@@ -37,11 +37,15 @@ public class NotificationClient {
     @Value("${app.clients.notifications.api-key}")
     private String apiKey;
 
+    @Value("${app.clients.notifications.alias}")
+    private String defaultAlias;
+
     /**
      * Envía una solicitud al microservicio de notificaciones.
      * Patrón Fire-and-Forget (no bloqueamos si la respuesta es 202).
      */
     public void enviarNotificacion(SolicitudNotificacionDto solicitud) {
+        SolicitudNotificacionDto solicitudFinal = asegurarAlias(solicitud);
         RestClient restClient = RestClient.builder()
                 .baseUrl(serviceUrl)
                 .defaultHeader("X-API-KEY", apiKey)
@@ -52,7 +56,7 @@ public class NotificationClient {
             ApiResponse<RespuestaNotificacionDto> response = restClient.post()
                     .uri("/api/v1/notificaciones/enviar")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(solicitud)
+                    .body(solicitudFinal)
                     .retrieve()
                     // Mapeamos la respuesta genérica ApiResponse<RespuestaNotificacionDto>
                     .body(new ParameterizedTypeReference<>() {});
@@ -72,6 +76,7 @@ public class NotificationClient {
      * Envía una notificación junto con archivos adjuntos directamente al microservicio (Multipart).
      */
     public void enviarNotificacionConAdjuntos(SolicitudNotificacionDto solicitud, Map<String, byte[]> archivos) {
+        SolicitudNotificacionDto solicitudFinal = asegurarAlias(solicitud);
         RestClient restClient = RestClient.builder()
                 .baseUrl(serviceUrl)
                 .defaultHeader("X-API-KEY", apiKey)
@@ -83,7 +88,7 @@ public class NotificationClient {
             // 1. Agregar la solicitud como JSON
             HttpHeaders jsonHeaders = new HttpHeaders();
             jsonHeaders.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<SolicitudNotificacionDto> solicitudPart = new HttpEntity<>(solicitud, jsonHeaders);
+            HttpEntity<SolicitudNotificacionDto> solicitudPart = new HttpEntity<>(solicitudFinal, jsonHeaders);
             body.add("solicitud", solicitudPart);
 
             // 2. Agregar los archivos adjuntos
@@ -118,5 +123,27 @@ public class NotificationClient {
             logger.error("NOTIF_CLIENT", "Error al conectar con Coral Notificaciones en endpoint multipart: " + e.getMessage(), e);
             throw new ServiceUnavailableException("No se pudo enviar el correo con adjuntos");
         }
+    }
+
+    private SolicitudNotificacionDto asegurarAlias(SolicitudNotificacionDto solicitud) {
+        if (solicitud == null) {
+            return null;
+        }
+        if (solicitud.aliasConfig() != null && !solicitud.aliasConfig().isBlank()) {
+            return solicitud;
+        }
+        return SolicitudNotificacionDto.builder()
+                .aliasConfig(defaultAlias)
+                .destinatarios(solicitud.destinatarios())
+                .asunto(solicitud.asunto())
+                .cuerpo(solicitud.cuerpo())
+                .codigoPlantilla(solicitud.codigoPlantilla())
+                .variables(solicitud.variables())
+                .remitenteOverride(solicitud.remitenteOverride())
+                .metadatos(solicitud.metadatos())
+                .prioridad(solicitud.prioridad())
+                .adjuntos(solicitud.adjuntos())
+                .password(solicitud.password())
+                .build();
     }
 }

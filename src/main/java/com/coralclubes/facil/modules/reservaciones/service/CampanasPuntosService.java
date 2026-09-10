@@ -26,9 +26,6 @@
         private final UserContext userContext;
         private final StorageClient storageClient;
 
-        @Value("${app.clients.storage.aliases.default}")
-        private String aliasConfiguracion;
-
         private static final String STORAGE_FOLDER = "reservaciones/promociones";
 
         public ApiResponse<List<CampanaPuntosResponse>> obtenerCampanas() {
@@ -76,7 +73,6 @@
                     .nombreArchivo(request.nombreArchivo())
                     .contentType(request.contentType())
                     .tamanoBytes(request.tamanoBytes())
-                    .aliasConfiguracion(aliasConfiguracion)
                     .esPublico(true)
                     .rutaLogica(STORAGE_FOLDER)
                     .metadatos(metadata)

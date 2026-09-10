@@ -30,9 +30,6 @@ public class ManualesService {
     private final UserContext userContext;
     private final BusinessLogger businessLogger;
 
-    @Value("${app.clients.storage.aliases.default}")
-    private String aliasStorageDefault;
-
     public ApiResponse<List<ManualResponse>> listarManuales(Integer moduloPadreId, Integer moduloId, Integer numeroPagina) {
         List<ManualResponse> manuales = repository.obtenerManuales(moduloPadreId, moduloId, numeroPagina);
         return ApiResponse.success("Manuales obtenidos correctamente", manuales);
@@ -100,7 +97,6 @@ public class ManualesService {
                 .nombreArchivo(request.nombreArchivo())
                 .contentType(request.contentType())
                 .tamanoBytes(request.tamanoBytes())
-                .aliasConfiguracion(aliasStorageDefault)
                 .esPublico(false)
                 .rutaLogica(rutaLogica)
                 .metadatos(Map.of(

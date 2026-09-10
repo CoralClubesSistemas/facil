@@ -31,9 +31,6 @@ public class NotasClientesService {
     private final BusinessLogger businessLogger;
     private final StorageClient storageClient;
 
-    @Value("${app.clients.storage.aliases.default}")
-    private String aliasStorageDefault;
-
     public ApiResponse<List<NotasClienteResponse>> buscarNotasCliente(
             String numeroMembresia,
             LocalDateTime fechaRangoInicial,
@@ -106,7 +103,6 @@ public class NotasClientesService {
                             .nombreArchivo(solicitud.nombreArchivo())
                             .contentType(solicitud.contentType())
                             .tamanoBytes(solicitud.tamanoBytes())
-                            .aliasConfiguracion(aliasStorageDefault)
                             .esPublico(false)
                             .rutaLogica(rutaLogica)
                             .metadatos(Map.of(

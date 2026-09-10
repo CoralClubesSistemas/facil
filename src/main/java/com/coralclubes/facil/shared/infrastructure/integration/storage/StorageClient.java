@@ -41,6 +41,9 @@ public class StorageClient {
     @Value("${app.clients.storage.api-key}")
     private String apiKey;
 
+    @Value("${app.clients.storage.alias}")
+    private String defaultAlias;
+
     /**
      * Negocia una URL de carga directa con el microservicio de almacenamiento (flujo asíncrono - Valet Key).
      *
@@ -49,13 +52,14 @@ public class StorageClient {
      * @throws ServiceUnavailableException Si el servicio de almacenamiento no responde o responde con un error.
      */
     public RespuestaCargaDto solicitarUrlCarga(SolicitudCargaDto solicitud) {
+        SolicitudCargaDto solicitudFinal = asegurarAlias(solicitud);
         try {
 
             ApiResponse<RespuestaCargaDto> response = restClient.post()
                     .uri(serviceUrl + "/api/v1/storage/sign-upload")
                     .header("X-API-KEY", apiKey)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(solicitud)
+                    .body(solicitudFinal)
                     .retrieve()
                     .body(new ParameterizedTypeReference<>() {
                     });
@@ -80,12 +84,13 @@ public class StorageClient {
      * @throws ServiceUnavailableException Si el servicio de almacenamiento no responde o responde con un error.
      */
     public RespuestaBatchDto<RespuestaCargaDto> solicitarCargaBatch(SolicitudCargaBatchDto batchDto) {
+        SolicitudCargaBatchDto batchDtoFinal = asegurarAliasBatch(batchDto);
         try {
             ApiResponse<RespuestaBatchDto<RespuestaCargaDto>> response = restClient.post()
                     .uri(serviceUrl + "/api/v1/storage/sign-upload/batch")
                     .header("X-API-KEY", apiKey)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(batchDto)
+                    .body(batchDtoFinal)
                     .retrieve()
                     .body(new ParameterizedTypeReference<>() {
                     });
@@ -286,6 +291,7 @@ public class StorageClient {
      * @throws ServiceUnavailableException Si el servicio de almacenamiento no responde o responde con un error.
      */
     public InfoArchivoDto cargarArchivoSincrono(byte[] archivoBytes, String nombreArchivo, String contentType, SolicitudCargaLegacyDto solicitudLegacy) {
+        SolicitudCargaLegacyDto solicitudLegacyFinal = asegurarAliasLegacy(solicitudLegacy);
         try {
             ByteArrayResource fileResource = new ByteArrayResource(archivoBytes) {
                 @Override
@@ -302,7 +308,7 @@ public class StorageClient {
 
             HttpHeaders metadataHeaders = new HttpHeaders();
             metadataHeaders.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<SolicitudCargaLegacyDto> metadataPart = new HttpEntity<>(solicitudLegacy, metadataHeaders);
+            HttpEntity<SolicitudCargaLegacyDto> metadataPart = new HttpEntity<>(solicitudLegacyFinal, metadataHeaders);
 
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
             body.add("file", filePart);
@@ -326,5 +332,52 @@ public class StorageClient {
             logger.error("STORAGE_CLIENT", "Error al cargar archivo síncrono (legacy): " + e.getMessage(), e);
             throw new ServiceUnavailableException("El servicio de almacenamiento no está disponible en este momento.");
         }
+    }
+
+    private SolicitudCargaDto asegurarAlias(SolicitudCargaDto solicitud) {
+        if (solicitud == null) {
+            return null;
+        }
+        if (solicitud.aliasConfiguracion() != null && !solicitud.aliasConfiguracion().isBlank()) {
+            return solicitud;
+        }
+        return SolicitudCargaDto.builder()
+                .idCorrelacion(solicitud.idCorrelacion())
+                .nombreArchivo(solicitud.nombreArchivo())
+                .contentType(solicitud.contentType())
+                .tamanoBytes(solicitud.tamanoBytes())
+                .aliasConfiguracion(defaultAlias)
+                .metadatos(solicitud.metadatos())
+                .esPublico(solicitud.esPublico())
+                .rutaLogica(solicitud.rutaLogica())
+                .requiereDepuracion(solicitud.requiereDepuracion())
+                .build();
+    }
+
+    private SolicitudCargaBatchDto asegurarAliasBatch(SolicitudCargaBatchDto batchDto) {
+        if (batchDto == null || batchDto.solicitudes() == null) {
+            return batchDto;
+        }
+        var normalizadas = batchDto.solicitudes().stream()
+                .map(this::asegurarAlias)
+                .toList();
+        return new SolicitudCargaBatchDto(normalizadas);
+    }
+
+    private SolicitudCargaLegacyDto asegurarAliasLegacy(SolicitudCargaLegacyDto solicitudLegacy) {
+        if (solicitudLegacy == null) {
+            return null;
+        }
+        if (solicitudLegacy.aliasConfiguracion() != null && !solicitudLegacy.aliasConfiguracion().isBlank()) {
+            return solicitudLegacy;
+        }
+        return SolicitudCargaLegacyDto.builder()
+                .idCorrelacion(solicitudLegacy.idCorrelacion())
+                .aliasConfiguracion(defaultAlias)
+                .metadatos(solicitudLegacy.metadatos())
+                .esPublico(solicitudLegacy.esPublico())
+                .rutaLogica(solicitudLegacy.rutaLogica())
+                .requiereDepuracion(solicitudLegacy.requiereDepuracion())
+                .build();
     }
 }

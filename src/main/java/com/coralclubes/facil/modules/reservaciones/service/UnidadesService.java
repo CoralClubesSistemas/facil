@@ -45,9 +45,6 @@ public class UnidadesService {
     private final ObjectMapper objectMapper;
     private final AmaDeLlavesService amaDeLlavesService;
 
-    @Value("${app.clients.storage.aliases.default}")
-    private String aliasStorageDefault;
-
     // =========================================================================
     // MÉTODOS DE ESCRITURA (Write) - TIPOS DE UNIDAD
     // =========================================================================
@@ -212,7 +209,6 @@ public class UnidadesService {
                 .nombreArchivo(request.nombreArchivo())
                 .contentType(request.contentType())
                 .tamanoBytes(request.tamanoBytes())
-                .aliasConfiguracion(aliasStorageDefault)
                 .esPublico(true)
                 .rutaLogica(rutaLogica)
                 .metadatos(Map.of(

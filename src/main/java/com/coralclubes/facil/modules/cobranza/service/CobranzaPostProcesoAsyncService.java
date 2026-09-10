@@ -116,7 +116,6 @@ public class CobranzaPostProcesoAsyncService {
         log.info("Enviando email a {} con asunto '{}' y adjunto directo", destinatario, asunto);
 
         SolicitudNotificacionDto solicitud = SolicitudNotificacionDto.builder()
-                .aliasConfig("SMTP_GENERAL")
                 .destinatarios(List.of(destinatario))
                 .asunto(asunto)
                 .cuerpo("Estimado cliente,\n\nAdjunto encontrará el documento relacionado con su recibo.\n\nSaludos cordiales,\nEquipo de Cobranza")

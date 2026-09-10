@@ -38,9 +38,6 @@ public class ReportesAsyncService {
     // Constantes de configuración
     private static final String MIME_TYPE_EXCEL = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-    @Value("${app.clients.storage.aliases.default}")
-    private String aliasStorage;
-
     /**
      * Procesa la generación del reporte, genera el Excel, lo sube al microservicio de almacenamiento,
      * actualiza la bitácora y envía una notificación en tiempo real al usuario.
@@ -61,7 +58,6 @@ public class ReportesAsyncService {
 
             SolicitudCargaLegacyDto solicitud = SolicitudCargaLegacyDto.builder()
                     .idCorrelacion(String.valueOf(idBitacora))
-                    .aliasConfiguracion(aliasStorage)
                     .metadatos(Map.of(
                             "idBitacora", String.valueOf(idBitacora),
                             "subidoPor", usuario,

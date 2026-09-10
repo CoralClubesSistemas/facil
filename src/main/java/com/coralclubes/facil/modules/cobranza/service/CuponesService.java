@@ -41,9 +41,6 @@ public class CuponesService {
     private final StorageClient storageClient;
     private final BusinessLogger logger;
 
-    @Value("${app.clients.storage.aliases.default}")
-    private String aliasStorageDefault;
-
     public List<CuponesCatalogoElementoResponse> obtenerCatalogoCondiciones() {
         return repository.spCuponesCatalogoCondiciones();
     }
@@ -86,7 +83,6 @@ public class CuponesService {
                 .nombreArchivo(request.nombreArchivo())
                 .contentType(request.contentType())
                 .tamanoBytes(request.tamanoBytes())
-                .aliasConfiguracion(aliasStorageDefault)
                 .esPublico(false)
                 .rutaLogica(rutaLogica)
                 .metadatos(Map.of(

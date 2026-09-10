@@ -79,17 +79,11 @@ public class ReservacionesService {
     private final UnidadesRepository unidadesRepo;
     private final IntentoPagoService intentoPagoService;
 
-    @Value("${app.clients.notifications.aliases.default}")
-    private String aliasConfigNotificaciones;
-
     @Value("${app.clients.notifications.templates.reserva-cancelada}")
     private String templateReservaCancelada;
 
     @Value("${app.clients.notifications.templates.reserva-creada}")
     private String templateReservaCreada;
-
-    @Value("${app.clients.storage.aliases.default}")
-    private String aliasStorageDefault;
 
     @Value("${app.clients.checkout.urls.portal-resv.redirect-success}")
     private String urlCheckoutSuccess;
@@ -958,7 +952,6 @@ public class ReservacionesService {
         urlVariables.put("nombreUsuario", nombreCliente);
 
         SolicitudNotificacionDto solicitudNotificacion = SolicitudNotificacionDto.builder()
-                .aliasConfig(aliasConfigNotificaciones)
                 .destinatarios(List.of(destinatario))
                 .codigoPlantilla(templateReservaCancelada)
                 .remitenteOverride("reservaciones@lvivardev.com")
@@ -1066,7 +1059,6 @@ public class ReservacionesService {
 
         SolicitudCargaLegacyDto solicitudCarga = SolicitudCargaLegacyDto.builder()
                 .idCorrelacion(event.membresia() + "_" + event.foliosGenerados().getFirst())
-                .aliasConfiguracion(aliasStorageDefault)
                 .esPublico(false)
                 .rutaLogica("reservaciones/cartas-ocupacion/" + event.membresia())
                 .metadatos(Map.of(
@@ -1111,7 +1103,6 @@ public class ReservacionesService {
         String foliosStr = event.foliosGenerados().toString().replace("[", "").replace("]", "");
 
         SolicitudNotificacionDto solicitudNotificacion = SolicitudNotificacionDto.builder()
-                .aliasConfig(aliasConfigNotificaciones)
                 .destinatarios(destinatarios)
                 .codigoPlantilla(templateReservaCreada)
                 // .remitenteOverride("reservaciones@lvivardev.com")
