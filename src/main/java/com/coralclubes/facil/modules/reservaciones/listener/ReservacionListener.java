@@ -124,14 +124,19 @@ public class ReservacionListener {
                                 if (intento.metadata() != null && !intento.metadata().isBlank()) {
                                     Map<String, Object> meta = JsonUtils.fromJson(intento.metadata(), Map.class);
 
-                                    ConfirmarReservaRequest originalRequest = JsonUtils.fromJson(
+                                    ConfirmarReservaRequest originalRequest = meta.get("request") != null ? JsonUtils.fromJson(
                                             JsonUtils.toJson(meta.get("request")), ConfirmarReservaRequest.class
-                                    );
+                                    ) : null;
 
-                                    List<DetallePagoCheckoutRequest> detallePago = JsonUtils.fromJson(
+                                    List<DetallePagoCheckoutRequest> detallePago = meta.get("detallePago") != null ? JsonUtils.fromJson(
                                             JsonUtils.toJson(meta.get("detallePago")),
                                             new TypeReference<List<DetallePagoCheckoutRequest>>() {}
-                                    );
+                                    ) : null;
+
+                                    if (originalRequest == null || detallePago == null) {
+                                        log.error("No se encontraron 'request' o 'detallePago' en los metadatos del intento de pago ID: {}. No se puede materializar la reservación física.", intento.intentoPagoId());
+                                        return;
+                                    }
 
                                     log.info("Materializando reservación física desde el Listener para membresía: {}", originalRequest.membresia());
 

@@ -362,6 +362,25 @@ public class ReservacionesService {
         intentoMetadata.put("redirectFailure", urlCheckoutFailure);
         intentoMetadata.put("redirectCancel", urlCheckoutCancel);
 
+        // Guardamos el request original (con la membresía final asignada) y el detallePago
+        // para que ReservacionListener pueda materializar la reservación física al confirmarse el pago
+        ConfirmarReservaRequest requestParaMetadatos = new ConfirmarReservaRequest(
+                request.groupId(),
+                request.nombreReserva(),
+                request.email(),
+                membresiaFinal,
+                request.email2(),
+                request.telefono1(),
+                request.telefono2(),
+                request.peticionEspecial(),
+                request.totalPersonas(),
+                request.codigoPromocion(),
+                request.cupon(),
+                request.rrtIdsPagoPuntos()
+        );
+        intentoMetadata.put("request", requestParaMetadatos);
+        intentoMetadata.put("detallePago", detallePago);
+
         BigDecimal totalPagar = movimientos.stream()
                 .map(GenerarOrdenCobranzaMovimientoRequest::montoCapital)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

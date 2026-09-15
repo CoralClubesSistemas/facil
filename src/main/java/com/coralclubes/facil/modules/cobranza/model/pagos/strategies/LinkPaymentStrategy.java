@@ -112,6 +112,9 @@ public class LinkPaymentStrategy implements PaymentStrategy {
         // 5. Registrar el intento de pago en la base de datos en estatus PENDIENTE
         // Guardamos el uuid del checkout y los metadatos originales
         Map<String, Object> metadataMap = new HashMap<>();
+        if (request.metadata() != null) {
+            metadataMap.putAll(request.metadata());
+        }
         metadataMap.put("checkoutUuid", checkoutResponse.uuid());
         metadataMap.put("checkoutUrl", checkoutResponse.checkoutUrl());
         metadataMap.put("redirectSuccess", redirectSuccess);
