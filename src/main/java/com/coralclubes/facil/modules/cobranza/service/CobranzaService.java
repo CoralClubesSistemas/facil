@@ -46,6 +46,8 @@ public class CobranzaService {
     public ApiResponse<GenerarOrdenCobranzaResponse> generarOrdenCobranza(GenerarOrdenCobranzaRequest request, String usuario) {
         String movimientosJson = serializarMovimientos(request);
 
+        log.info(usuario, "Generando orden de cobranza para membresía {} con movimientos: {}", request.membresia(), movimientosJson);
+
         GenerarOrdenCobranzaResponse result = repository
                 .spCobranzaGenerarOrdenCobranza(request.membresia(), usuario, movimientosJson, request.agregarIva(), request.ivaIncluido(), request.mensajeAdicional())
                 .orElseThrow(() -> new IllegalStateException("No se pudo generar la orden de cobranza."));

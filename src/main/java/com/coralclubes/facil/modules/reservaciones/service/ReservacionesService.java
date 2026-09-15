@@ -338,16 +338,21 @@ public class ReservacionesService {
                     .build();
         }).toList();
 
-        String mensaje = "Orden de cobranza para pago inmediato de reservación portal. Membresía: " + request.membresia();
-
+        // Asegurar que la membresía sea la misma con la que se crearon los cargos en base de datos
+        String membresiaFinal = (contexto.getMembresia() != null && !contexto.getMembresia().isBlank())
+                ? contexto.getMembresia()
+                : request.membresia();
+        log.info("Iniciando generación de orden de cobranza para groupId: {}. Membresía contexto: '{}', request: '{}', seleccionada: '{}'",
+                request.groupId(), contexto.getMembresia(), request.membresia(), membresiaFinal);
+        String mensaje = "Orden de cobranza para pago inmediato de reservación portal. Membresía: " + membresiaFinal;
         var ordenRequest = GenerarOrdenCobranzaRequest.builder()
-                .membresia(request.membresia())
+                .membresia(membresiaFinal)
                 .movimientos(movimientos)
                 .agregarIva(false)
                 .ivaIncluido(false)
                 .mensajeAdicional(mensaje)
                 .build();
-
+        log.info("Datos de ordenRequest: membresia='{}', movimientosCount={}", ordenRequest.membresia(), movimientos.size());
         // 6. Registrar la orden de cobranza
         UUID uuidOrden = cobranzaService.generarOrdenCobranza(ordenRequest, usuario).data().ordenUuid();
 

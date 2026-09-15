@@ -63,7 +63,7 @@ app:
         reserva-cancelada: ${APP_CLIENTS_NOTIFICATIONS_TEMPLATES_RESERVA_CANCELADA}
 
     checkout:
-      url: http://10.10.3.154:8083
+      url: ${CHECKOUT_SERVICE_URL}
       api-key: FACIL_4dkQZoLmzOZ2Ynob6GnIeYbPR3O0yyEq
       urls:
         portal-resv:
