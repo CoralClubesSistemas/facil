@@ -30,6 +30,9 @@ public class PortalService {
 
     private static final String STORAGE_FOLDER = "reservaciones/portal";
 
+    @Value("${app.email.reservations}")
+    private String emailReservations;
+
     public List<ExperienciaPortalDto> obtenerExperienciasPortal() {
         List<ExperienciaPortalProjection> projs = repo.spResvObtenerExperienciasPortal();
         return projs.stream().map(p -> {
@@ -90,7 +93,7 @@ public class PortalService {
         variables.put("mensaje", request.mensaje());
 
         SolicitudNotificacionDto notificacion = SolicitudNotificacionDto.builder()
-                .destinatarios(List.of("lvivar@coralclubes.com"))
+                .destinatarios(List.of(emailReservations))
                 .asunto("Nuevo contacto desde el portal - " + request.nombre())
                 .codigoPlantilla("contacto-portal-v1")
                 .variables(variables)

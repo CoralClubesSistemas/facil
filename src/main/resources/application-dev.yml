@@ -92,6 +92,10 @@ app:
     zoho:
       webhook-url: https://sandbox.zohoapis.com/crm/v7/functions/receiver_result/actions/execute?auth_type=apikey&zapikey=1003.f7e2178f61364f4334bab20df5e2600f.60496ce27353b741e3c88fb81367a440
 
+  email:
+    audit-default: lvivar@coralclubes.com
+    reservations: lvivar@coralclubes.com
+
 logging:
   level:
     com.coralclubes.facil: DEBUG

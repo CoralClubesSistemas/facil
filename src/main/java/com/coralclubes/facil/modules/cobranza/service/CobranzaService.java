@@ -17,6 +17,7 @@ import com.coralclubes.responses.ApiResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +43,9 @@ public class CobranzaService {
     private final ApplicationEventPublisher eventPublisher;
 
     // private final AnalisisDeInformacion bedrockClient;
+
+    @Value("${app.email.audit-default")
+    private String emailAuditDefault;
 
     public ApiResponse<GenerarOrdenCobranzaResponse> generarOrdenCobranza(GenerarOrdenCobranzaRequest request, String usuario) {
         String movimientosJson = serializarMovimientos(request);
@@ -131,7 +135,7 @@ public class CobranzaService {
             String usuario,
             List<String> correos
     ) {
-        String correoAuditoria = usuarioService.obtenerCorreoUsuario(usuario).orElse("facil@coralclubes.com");
+        String correoAuditoria = usuarioService.obtenerCorreoUsuario(usuario).orElse(emailAuditDefault);
 
         // 1. Ejecutar transacción CORE en SQL (Genera Recibo y Movimientos)
         ReciboPagado r = finalizarOrdenDeCobranza(ordenUuid, tipoSerieRecibo, usuario);

@@ -87,7 +87,11 @@ app:
   crm:
     provider: ${CRM_PROVIDER:zoho}
     zoho:
-      webhook-url: ${ZOHO_EVENTS_WEBHOOK_URL:}
+      webhook-url: ${ZOHO_EVENTS_WEBHOOK_URL}
+
+  email:
+    audit-default: ${EMAIL_AUDIT_DEFAULT:facil@coralclubes.com}
+    reservations: ${EMAIL_RESERVATIONS:reservaciones@coralclubes.com}
 
 logging:
   level:
