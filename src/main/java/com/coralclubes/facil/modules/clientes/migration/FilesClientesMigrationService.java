@@ -29,6 +29,15 @@ public class FilesClientesMigrationService {
     private final StorageClient storageClient;
     private final NotasClientesRepository repository;
 
+    private static final int BATCH_SIZE = 50;
+
+    private record NotaPendienteRef(String membresia, Integer consecutivo, Integer orden, String nombreArchivo) {
+    }
+
+    private record CredencialPendienteRef(String membresia, String credencialId, Integer beneficiario,
+                                          Integer anioVigencia) {
+    }
+
     public FilesClientesMigrationService(
             JdbcTemplate jdbcTemplate,
             @Qualifier("migrationStorageClient") StorageClient storageClient,
@@ -69,19 +78,17 @@ public class FilesClientesMigrationService {
     }
 
     /**
-     * Realiza la migración de imágenes de la tabla IMAGENES_NOTAS_CLIENTES a la tabla ADJUNTOS_NOTAS_CLIENTES.
+     * Realiza la migración de imágenes de la tabla IMAGENES_NOTAS_CLIENTES a la tabla ADJUNTOS_NOTAS_CLIENTES
+     * mediante procesamiento por lotes y carga diferida de Base64 para evitar desbordar el heap de la JVM.
      */
     private void migrarNotasClientes() {
-        log.info("--- Iniciando migración de Notas de Clientes ---");
+        log.info("--- Iniciando migración de Notas de Clientes por lotes ---");
 
-        String query = "SELECT " +
+        String queryCandidatos = "SELECT " +
                 "  img.IMGNOT_NTC_MEM_MEMBRESIA AS membresia, " +
                 "  img.IMGNOT_NTC_CONSECUTIVO AS consecutivo, " +
-                "  img.IMGNOT_LSV_TIPOS_DOCUMENTOS AS tipoDocumento, " +
                 "  img.IMGNOT_NUMERO_ORDEN_IMAGEN AS orden, " +
-                "  img.IMGNOT_NOMBRE_ARCHIVO_FOTO AS nombreArchivo, " +
-                "  img.IMGNOT_PATH_NOMBRE_FOTO_IMAGEN AS contenidoBase64, " +
-                "  img.IMGNOT_USR_USUARIO AS usuario " +
+                "  img.IMGNOT_NOMBRE_ARCHIVO_FOTO AS nombreArchivo " +
                 "FROM IMAGENES_NOTAS_CLIENTES img " +
                 "WHERE img.IMGNOT_PATH_NOMBRE_FOTO_IMAGEN IS NOT NULL " +
                 "  AND img.IMGNOT_PATH_NOMBRE_FOTO_IMAGEN <> '' " +
@@ -92,74 +99,115 @@ public class FilesClientesMigrationService {
                 "      AND adj.ANC_NOMBRE_ARCHIVO = img.IMGNOT_NOMBRE_ARCHIVO_FOTO " +
                 "  )";
 
-        List<Map<String, Object>> records;
+        List<NotaPendienteRef> candidatos;
         try {
-            records = jdbcTemplate.queryForList(query);
+            candidatos = jdbcTemplate.query(queryCandidatos, (rs, rowNum) -> new NotaPendienteRef(
+                    rs.getString("membresia"),
+                    rs.getInt("consecutivo"),
+                    rs.getInt("orden"),
+                    rs.getString("nombreArchivo")
+            ));
         } catch (Exception e) {
             log.error("Error al consultar la tabla IMAGENES_NOTAS_CLIENTES. ¿Existe la tabla en este entorno?", e);
             return;
         }
 
-        log.info("Registros de notas elegibles encontrados: {}", records.size());
+        int total = candidatos.size();
+        log.info("Registros de notas elegibles encontrados: {}", total);
+
+        if (total == 0) {
+            return;
+        }
 
         int exitos = 0;
         int fallos = 0;
+        int totalLotes = (int) Math.ceil((double) total / BATCH_SIZE);
 
-        for (Map<String, Object> record : records) {
-            String membresia = (String) record.get("membresia");
-            Integer consecutivo = (Integer) record.get("consecutivo");
-            String nombreArchivo = (String) record.get("nombreArchivo");
-            String contenidoBase64 = (String) record.get("contenidoBase64");
-            String usuario = (String) record.get("usuario");
-            Integer orden = (Integer) record.get("orden");
+        String queryDetalle = "SELECT " +
+                "  img.IMGNOT_LSV_TIPOS_DOCUMENTOS AS tipoDocumento, " +
+                "  img.IMGNOT_PATH_NOMBRE_FOTO_IMAGEN AS contenidoBase64, " +
+                "  img.IMGNOT_USR_USUARIO AS usuario " +
+                "FROM IMAGENES_NOTAS_CLIENTES img " +
+                "WHERE img.IMGNOT_NTC_MEM_MEMBRESIA = ? " +
+                "  AND img.IMGNOT_NTC_CONSECUTIVO = ? " +
+                "  AND img.IMGNOT_NUMERO_ORDEN_IMAGEN = ? " +
+                "  AND img.IMGNOT_NOMBRE_ARCHIVO_FOTO = ?";
 
-            log.info("Procesando nota: Membresía={}, Consecutivo={}, Archivo='{}'", membresia, consecutivo, nombreArchivo);
+        for (int i = 0; i < total; i += BATCH_SIZE) {
+            int loteActual = (i / BATCH_SIZE) + 1;
+            int end = Math.min(i + BATCH_SIZE, total);
+            List<NotaPendienteRef> lote = candidatos.subList(i, end);
 
-            try {
-                byte[] fileBytes = decodeBase64(contenidoBase64);
-                if (fileBytes == null || fileBytes.length == 0) {
-                    log.warn("Contenido decodificado vacío para Membresía {}, Consecutivo {}. Saltando.", membresia, consecutivo);
+            log.info("Procesando lote de notas {}/{} (registros {} a {} de {})...",
+                    loteActual, totalLotes, i + 1, end, total);
+
+            for (NotaPendienteRef ref : lote) {
+                String membresia = ref.membresia();
+                Integer consecutivo = ref.consecutivo();
+                Integer orden = ref.orden();
+                String nombreArchivo = ref.nombreArchivo();
+
+                log.info("Procesando nota: Membresía={}, Consecutivo={}, Archivo='{}'", membresia, consecutivo, nombreArchivo);
+
+                try {
+                    Map<String, Object> detalle;
+                    try {
+                        detalle = jdbcTemplate.queryForMap(queryDetalle, membresia, consecutivo, orden, nombreArchivo);
+                    } catch (Exception e) {
+                        log.warn("No se pudo obtener el detalle de la imagen para Membresía {}, Consecutivo {}: {}",
+                                membresia, consecutivo, e.getMessage());
+                        fallos++;
+                        continue;
+                    }
+
+                    String contenidoBase64 = (String) detalle.get("contenidoBase64");
+                    String usuario = (String) detalle.get("usuario");
+
+                    byte[] fileBytes = decodeBase64(contenidoBase64);
+                    if (fileBytes == null || fileBytes.length == 0) {
+                        log.warn("Contenido decodificado vacío para Membresía {}, Consecutivo {}. Saltando.", membresia, consecutivo);
+                        fallos++;
+                        continue;
+                    }
+
+                    String contentType = determinarMimeType(nombreArchivo);
+                    String rutaLogica = "notas/archivos-socios/" + membresia + "/" + consecutivo;
+
+                    SolicitudCargaLegacyDto solicitud = SolicitudCargaLegacyDto.builder()
+                            .idCorrelacion(membresia + "-" + consecutivo + "-" + orden)
+                            .metadatos(Map.of(
+                                    "modulo", "CLIENTES",
+                                    "membresia", membresia,
+                                    "notaConsecutivo", String.valueOf(consecutivo),
+                                    "subidoPor", usuario != null ? usuario : "MIGRACION"
+                            ))
+                            .esPublico(false)
+                            .rutaLogica(rutaLogica)
+                            .requiereDepuracion(true)
+                            .build();
+
+                    InfoArchivoDto response = storageClient.cargarArchivoSincrono(fileBytes, nombreArchivo, contentType, solicitud);
+                    UUID uuid = response.uuid();
+
+                    if (uuid == null) {
+                        throw new IllegalStateException("El servicio de almacenamiento no retornó un UUID válido.");
+                    }
+
+                    repository.spRegistrarArhivosNotas(
+                            membresia,
+                            consecutivo,
+                            nombreArchivo,
+                            uuid.toString(),
+                            contentType,
+                            usuario != null ? usuario : "MIGRACION"
+                    );
+
+                    log.info("Migración de nota exitosa para: Membresía={}, Consecutivo={}, UUID={}", membresia, consecutivo, uuid);
+                    exitos++;
+                } catch (Exception e) {
+                    log.error("Error al migrar nota para Membresía: {}, Consecutivo: {}. Detalle: {}", membresia, consecutivo, e.getMessage(), e);
                     fallos++;
-                    continue;
                 }
-
-                String contentType = determinarMimeType(nombreArchivo);
-                String rutaLogica = "notas/archivos-socios/" + membresia + "/" + consecutivo;
-
-                SolicitudCargaLegacyDto solicitud = SolicitudCargaLegacyDto.builder()
-                        .idCorrelacion(membresia + "-" + consecutivo + "-" + orden)
-                        .metadatos(Map.of(
-                                "modulo", "CLIENTES",
-                                "membresia", membresia,
-                                "notaConsecutivo", String.valueOf(consecutivo),
-                                "subidoPor", usuario != null ? usuario : "MIGRACION"
-                        ))
-                        .esPublico(false)
-                        .rutaLogica(rutaLogica)
-                        .requiereDepuracion(true)
-                        .build();
-
-                InfoArchivoDto response = storageClient.cargarArchivoSincrono(fileBytes, nombreArchivo, contentType, solicitud);
-                UUID uuid = response.uuid();
-
-                if (uuid == null) {
-                    throw new IllegalStateException("El servicio de almacenamiento no retornó un UUID válido.");
-                }
-
-                repository.spRegistrarArhivosNotas(
-                        membresia,
-                        consecutivo,
-                        nombreArchivo,
-                        uuid.toString(),
-                        contentType,
-                        usuario != null ? usuario : "MIGRACION"
-                );
-
-                log.info("Migración de nota exitosa para: Membresía={}, Consecutivo={}, UUID={}", membresia, consecutivo, uuid);
-                exitos++;
-            } catch (Exception e) {
-                log.error("Error al migrar nota para Membresía: {}, Consecutivo: {}. Detalle: {}", membresia, consecutivo, e.getMessage(), e);
-                fallos++;
             }
         }
 
@@ -167,113 +215,152 @@ public class FilesClientesMigrationService {
     }
 
     /**
-     * Realiza la migración de imágenes de la tabla CREDENCIALES_SOCIOS a Coral Storage, actualizando su UUID.
+     * Realiza la migración de imágenes de la tabla CREDENCIALES_SOCIOS a Coral Storage, actualizando su UUID
+     * mediante procesamiento por lotes y carga diferida de Base64.
      */
     private void migrarCredencialesSocios() {
-        log.info("--- Iniciando migración de Credenciales de Socios ---");
+        log.info("--- Iniciando migración de Credenciales de Socios por lotes ---");
 
-        String query = "SELECT " +
+        String queryCandidatos = "SELECT " +
                 "  crd.CRD_MEM_MEMBRESIA AS membresia, " +
                 "  crd.CRD_NUMERO_CREDENCIAL_ID AS credencialId, " +
                 "  crd.CRD_BEN_NUMBENEFICIARIO AS beneficiario, " +
-                "  crd.CRD_AÑO_VIGENCIA AS anioVigencia, " +
-                "  crd.CRD_FOTO AS foto, " +
-                "  crd.CRD_PATHFOTO AS contenidoBase64, " +
-                "  crd.CRD_USR_USUARIO AS usuario " +
+                "  crd.CRD_AÑO_VIGENCIA AS anioVigencia " +
                 "FROM CREDENCIALES_SOCIOS crd " +
                 "WHERE crd.CRD_PATHFOTO IS NOT NULL " +
                 "  AND crd.CRD_PATHFOTO <> '' " +
                 "  AND crd.CRD_UUID_CREDENCIAL IS NULL " +
                 "  AND crd.CRD_AÑO_VIGENCIA >= YEAR(GETDATE())";
 
-        List<Map<String, Object>> records;
+        List<CredencialPendienteRef> candidatos;
         try {
-            records = jdbcTemplate.queryForList(query);
+            candidatos = jdbcTemplate.query(queryCandidatos, (rs, rowNum) -> new CredencialPendienteRef(
+                    rs.getString("membresia"),
+                    rs.getString("credencialId"),
+                    rs.getInt("beneficiario"),
+                    rs.getInt("anioVigencia")
+            ));
         } catch (Exception e) {
             log.error("Error al consultar la tabla CREDENCIALES_SOCIOS. ¿Existe la tabla en este entorno?", e);
             return;
         }
 
-        log.info("Registros de credenciales elegibles encontrados: {}", records.size());
+        int total = candidatos.size();
+        log.info("Registros de credenciales elegibles encontrados: {}", total);
+
+        if (total == 0) {
+            return;
+        }
 
         int exitos = 0;
         int fallos = 0;
+        int totalLotes = (int) Math.ceil((double) total / BATCH_SIZE);
 
-        for (Map<String, Object> record : records) {
-            String membresia = (String) record.get("membresia");
-            String credencialId = (String) record.get("credencialId");
-            Integer beneficiario = (Integer) record.get("beneficiario");
-            Integer anioVigencia = (Integer) record.get("anioVigencia");
-            String foto = (String) record.get("foto");
-            String contenidoBase64 = (String) record.get("contenidoBase64");
-            String usuario = (String) record.get("usuario");
+        String queryDetalle = "SELECT " +
+                "  crd.CRD_FOTO AS foto, " +
+                "  crd.CRD_PATHFOTO AS contenidoBase64, " +
+                "  crd.CRD_USR_USUARIO AS usuario " +
+                "FROM CREDENCIALES_SOCIOS crd " +
+                "WHERE crd.CRD_MEM_MEMBRESIA = ? " +
+                "  AND crd.CRD_NUMERO_CREDENCIAL_ID = ? " +
+                "  AND crd.CRD_BEN_NUMBENEFICIARIO = ? " +
+                "  AND crd.CRD_AÑO_VIGENCIA = ?";
 
-            log.info("Procesando credencial: Membresía={}, CredencialId='{}', Beneficiario={}, Año={}",
-                    membresia, credencialId, beneficiario, anioVigencia);
+        for (int i = 0; i < total; i += BATCH_SIZE) {
+            int loteActual = (i / BATCH_SIZE) + 1;
+            int end = Math.min(i + BATCH_SIZE, total);
+            List<CredencialPendienteRef> lote = candidatos.subList(i, end);
 
-            try {
-                byte[] fileBytes = decodeBase64(contenidoBase64);
-                if (fileBytes == null || fileBytes.length == 0) {
-                    log.warn("Contenido decodificado vacío para Membresía {}, CredencialId {}. Saltando.", membresia, credencialId);
+            log.info("Procesando lote de credenciales {}/{} (registros {} a {} de {})...",
+                    loteActual, totalLotes, i + 1, end, total);
+
+            for (CredencialPendienteRef ref : lote) {
+                String membresia = ref.membresia();
+                String credencialId = ref.credencialId();
+                Integer beneficiario = ref.beneficiario();
+                Integer anioVigencia = ref.anioVigencia();
+
+                log.info("Procesando credencial: Membresía={}, CredencialId='{}', Beneficiario={}, Año={}",
+                        membresia, credencialId, beneficiario, anioVigencia);
+
+                try {
+                    Map<String, Object> detalle;
+                    try {
+                        detalle = jdbcTemplate.queryForMap(queryDetalle, membresia, credencialId, beneficiario, anioVigencia);
+                    } catch (Exception e) {
+                        log.warn("No se pudo obtener el detalle de la credencial para Membresía {}, CredencialId {}: {}",
+                                membresia, credencialId, e.getMessage());
+                        fallos++;
+                        continue;
+                    }
+
+                    String foto = (String) detalle.get("foto");
+                    String contenidoBase64 = (String) detalle.get("contenidoBase64");
+                    String usuario = (String) detalle.get("usuario");
+
+                    byte[] fileBytes = decodeBase64(contenidoBase64);
+                    if (fileBytes == null || fileBytes.length == 0) {
+                        log.warn("Contenido decodificado vacío para Membresía {}, CredencialId {}. Saltando.", membresia, credencialId);
+                        fallos++;
+                        continue;
+                    }
+
+                    // Determinar tipo MIME y Extensión
+                    String contentType;
+                    String extension;
+                    if (foto != null && !foto.trim().isEmpty()) {
+                        contentType = determinarMimeType(foto);
+                        int dotIdx = foto.lastIndexOf('.');
+                        extension = (dotIdx != -1) ? foto.substring(dotIdx) : determinarExtensionPorMimeType(contentType);
+                    } else {
+                        contentType = determinarMimeTypePorBytes(fileBytes);
+                        extension = determinarExtensionPorMimeType(contentType);
+                    }
+
+                    // Generar nombre de archivo si no existe
+                    String nombreArchivo = (foto != null && !foto.trim().isEmpty()) ? foto.trim() : (credencialId + extension);
+
+                    // Ruta lógica para credenciales de socios
+                    String rutaLogica = "socios/credenciales/" + membresia + "/" + beneficiario;
+
+                    SolicitudCargaLegacyDto solicitud = SolicitudCargaLegacyDto.builder()
+                            .idCorrelacion(membresia + "-" + credencialId + "-" + beneficiario + "-" + anioVigencia)
+                            .metadatos(Map.of(
+                                    "modulo", "CLIENTES",
+                                    "membresia", membresia,
+                                    "credencialId", credencialId,
+                                    "beneficiarioId", String.valueOf(beneficiario),
+                                    "anioVigencia", String.valueOf(anioVigencia),
+                                    "subidoPor", usuario != null ? usuario : "MIGRACION"
+                            ))
+                            .esPublico(false)
+                            .rutaLogica(rutaLogica)
+                            .requiereDepuracion(true)
+                            .build();
+
+                    InfoArchivoDto response = storageClient.cargarArchivoSincrono(fileBytes, nombreArchivo, contentType, solicitud);
+                    UUID uuid = response.uuid();
+
+                    if (uuid == null) {
+                        throw new IllegalStateException("El servicio de almacenamiento no retornó un UUID válido.");
+                    }
+
+                    // Actualizar directamente en la tabla CREDENCIALES_SOCIOS
+                    String updateSql = "UPDATE CREDENCIALES_SOCIOS " +
+                            "SET CRD_UUID_CREDENCIAL = ? " +
+                            "WHERE CRD_MEM_MEMBRESIA = ? " +
+                            "  AND CRD_NUMERO_CREDENCIAL_ID = ? " +
+                            "  AND CRD_BEN_NUMBENEFICIARIO = ? " +
+                            "  AND CRD_AÑO_VIGENCIA = ?";
+
+                    jdbcTemplate.update(updateSql, uuid, membresia, credencialId, beneficiario, anioVigencia);
+
+                    log.info("Migración de credencial exitosa para: Membresía={}, CredencialId='{}', UUID={}", membresia, credencialId, uuid);
+                    exitos++;
+                } catch (Exception e) {
+                    log.error("Error al migrar credencial para Membresía: {}, CredencialId: {}. Detalle: {}", membresia, credencialId, e.getMessage(), e);
                     fallos++;
-                    continue;
                 }
-
-                // Determinar tipo MIME y Extensión
-                String contentType;
-                String extension;
-                if (foto != null && !foto.trim().isEmpty()) {
-                    contentType = determinarMimeType(foto);
-                    int dotIdx = foto.lastIndexOf('.');
-                    extension = (dotIdx != -1) ? foto.substring(dotIdx) : determinarExtensionPorMimeType(contentType);
-                } else {
-                    contentType = determinarMimeTypePorBytes(fileBytes);
-                    extension = determinarExtensionPorMimeType(contentType);
-                }
-
-                // Generar nombre de archivo si no existe
-                String nombreArchivo = (foto != null && !foto.trim().isEmpty()) ? foto.trim() : (credencialId + extension);
-
-                // Ruta lógica para credenciales de socios
-                String rutaLogica = "socios/credenciales/" + membresia + "/" + beneficiario;
-
-                SolicitudCargaLegacyDto solicitud = SolicitudCargaLegacyDto.builder()
-                        .idCorrelacion(membresia + "-" + credencialId + "-" + beneficiario + "-" + anioVigencia)
-                        .metadatos(Map.of(
-                                "modulo", "CLIENTES",
-                                "membresia", membresia,
-                                "credencialId", credencialId,
-                                "beneficiarioId", String.valueOf(beneficiario),
-                                "anioVigencia", String.valueOf(anioVigencia),
-                                "subidoPor", usuario != null ? usuario : "MIGRACION"
-                        ))
-                        .esPublico(false)
-                        .rutaLogica(rutaLogica)
-                        .requiereDepuracion(true)
-                        .build();
-
-                InfoArchivoDto response = storageClient.cargarArchivoSincrono(fileBytes, nombreArchivo, contentType, solicitud);
-                UUID uuid = response.uuid();
-
-                if (uuid == null) {
-                    throw new IllegalStateException("El servicio de almacenamiento no retornó un UUID válido.");
-                }
-
-                // Actualizar directamente en la tabla CREDENCIALES_SOCIOS
-                String updateSql = "UPDATE CREDENCIALES_SOCIOS " +
-                        "SET CRD_UUID_CREDENCIAL = ? " +
-                        "WHERE CRD_MEM_MEMBRESIA = ? " +
-                        "  AND CRD_NUMERO_CREDENCIAL_ID = ? " +
-                        "  AND CRD_BEN_NUMBENEFICIARIO = ? " +
-                        "  AND CRD_AÑO_VIGENCIA = ?";
-
-                jdbcTemplate.update(updateSql, uuid, membresia, credencialId, beneficiario, anioVigencia);
-
-                log.info("Migración de credencial exitosa para: Membresía={}, CredencialId='{}', UUID={}", membresia, credencialId, uuid);
-                exitos++;
-            } catch (Exception e) {
-                log.error("Error al migrar credencial para Membresía: {}, CredencialId: {}. Detalle: {}", membresia, credencialId, e.getMessage(), e);
-                fallos++;
             }
         }
 

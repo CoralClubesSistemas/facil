@@ -29,4 +29,10 @@ public class PortalPublicController {
         service.enviarContacto(request);
         return ResponseEntity.ok(ApiResponse.success("Mensaje de contacto enviado exitosamente", null));
     }
+
+    @GetMapping("/compra-membresia/imagen")
+    public ResponseEntity<ApiResponse<String>> obtenerImagenPortalCompraMembresia() {
+        String url = service.obtenerImagenPortalCompraMembresia();
+        return ResponseEntity.ok(ApiResponse.success(url));
+    }
 }

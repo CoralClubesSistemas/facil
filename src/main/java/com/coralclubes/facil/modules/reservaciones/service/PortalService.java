@@ -3,6 +3,7 @@ package com.coralclubes.facil.modules.reservaciones.service;
 import com.coralclubes.facil.modules.reservaciones.dto.projection.ExperienciaPortalProjection;
 import com.coralclubes.facil.modules.reservaciones.dto.request.ContactoDto;
 import com.coralclubes.facil.modules.reservaciones.dto.request.GuardarExperienciaRequest;
+import com.coralclubes.facil.modules.reservaciones.dto.request.GuardarImagenPortalCompraMembresiaRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.response.ExperienciaPortalDto;
 import com.coralclubes.facil.modules.reservaciones.repository.PortalRepository;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.NotificationClient;
@@ -100,5 +101,22 @@ public class PortalService {
                 .build();
 
         notificationClient.enviarNotificacion(notificacion);
+    }
+
+    public void guardarImagenPortalCompraMembresia(GuardarImagenPortalCompraMembresiaRequest request, String usuario) {
+        repo.spResvGuardarImagenPortalCompraMembresia(request.img(), usuario);
+    }
+
+    public String obtenerImagenPortalCompraMembresia() {
+        String valor = repo.spResvObtenerImagenPortalCompraMembresia().orElse(null);
+        if (valor == null || valor.isBlank()) {
+            return null;
+        }
+        try {
+            UUID uuid = UUID.fromString(valor.trim());
+            return storageClient.obtenerUrlDescarga(uuid).urlDescarga();
+        } catch (IllegalArgumentException e) {
+            return valor;
+        }
     }
 }

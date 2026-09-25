@@ -67,9 +67,9 @@ app:
       api-key: FACIL_4dkQZoLmzOZ2Ynob6GnIeYbPR3O0yyEq
       urls:
         portal-resv:
-          redirect-success: http://localhost:4200/reserva/exito
-          redirect-failure: http://localhost:4200/reserva/fallo
-          redirect-cancel: http://localhost:4200/reserva/detalle
+          redirect-success: ${PORTAL_RESV_REDIRECT_SUCCESS:http://localhost:4200/reserva/exito}
+          redirect-failure: ${PORTAL_RESV_REDIRECT_FAILURE:http://localhost:4200/reserva/fallo}
+          redirect-cancel: ${PORTAL_RESV_REDIRECT_CANCEL:http://localhost:4200/reserva/detalle}
       is-sandbox: true
       default-tipo-serie-recibo: 1235
 

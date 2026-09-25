@@ -19,6 +19,7 @@ public class PortalRepository {
     private final StoredProcedureExecutor spExecutor;
 
     private final RowMapper<Integer> scalarIntMapper = (rs, rowNum) -> rs.getInt(1);
+    private final RowMapper<String> scalarStringMapper = (rs, rowNum) -> rs.getString("PW_VALOR");
 
     private final RowMapper<ExperienciaPortalProjection> experienciaMapper = (rs, rowNum) ->
             ExperienciaPortalProjection.builder()
@@ -43,7 +44,7 @@ public class PortalRepository {
         params.put("link", request.link());
         params.put("img", request.img());
 
-        return spExecutor.querySingleLog("spResvGuardarExperienciasPortal", params, scalarIntMapper, usuario, false, true);
+        return spExecutor.querySingle("spResvGuardarExperienciasPortal", params, scalarIntMapper);
     }
 
     public void spResvEliminarExperienciasPortal(Integer id, String usuario) {
@@ -51,5 +52,17 @@ public class PortalRepository {
         params.put("id", id);
 
         spExecutor.executeLog("spResvEliminarExperienciasPortal", params, usuario, false, true);
+    }
+
+    public void spResvGuardarImagenPortalCompraMembresia(String img, String usuario) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("img", img);
+        params.put("usuario", usuario);
+
+        spExecutor.execute("spResvGuardarImagenPortalCompraMembresia", params);
+    }
+
+    public Optional<String> spResvObtenerImagenPortalCompraMembresia() {
+        return spExecutor.querySingle("spResvObtenerImagenPortalCompraMembresia", Map.of(), scalarStringMapper);
     }
 }
