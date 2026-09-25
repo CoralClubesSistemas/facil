@@ -35,4 +35,10 @@ public class PortalPublicController {
         String url = service.obtenerImagenPortalCompraMembresia();
         return ResponseEntity.ok(ApiResponse.success(url));
     }
+
+    @PostMapping("/solicitud-informacion")
+    public ResponseEntity<ApiResponse<Void>> enviarSolicitudInformacion(@Valid @RequestBody ContactoDto request) {
+        service.enviarSolicitudInformacion(request);
+        return ResponseEntity.ok(ApiResponse.success("Solicitud de información enviada exitosamente", null));
+    }
 }

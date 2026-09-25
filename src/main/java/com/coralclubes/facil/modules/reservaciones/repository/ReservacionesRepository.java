@@ -8,6 +8,7 @@ import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExe
 import com.coralclubes.utils.json.JsonUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -23,6 +24,7 @@ public class ReservacionesRepository {
 
     private final StoredProcedureExecutor spExecutor;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
     private final RowMapper<DisponibilidadUnidadProjection> disponibilidadMapper = (rs, rowNum) -> {
         String uuidStr = rs.getString("uuidImagen");
@@ -695,5 +697,15 @@ public class ReservacionesRepository {
                 params,
                 (rs, rowNum) -> rs.getInt("id")
         ).orElseThrow(() -> new IllegalStateException("No se pudo registrar la tarjeta de registro para la reservación."));
+    }
+
+    public Optional<String> fnResvObtenerValorParametroWeb(String claveParametro) {
+        String sql = "SELECT dbo.fnResvObtenerValorParametroWeb(?) AS ValorParametro";
+
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject(sql, String.class, claveParametro));
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
     }
 }

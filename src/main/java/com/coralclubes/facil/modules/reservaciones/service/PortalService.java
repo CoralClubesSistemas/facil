@@ -6,6 +6,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.request.GuardarExperienci
 import com.coralclubes.facil.modules.reservaciones.dto.request.GuardarImagenPortalCompraMembresiaRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.response.ExperienciaPortalDto;
 import com.coralclubes.facil.modules.reservaciones.repository.PortalRepository;
+import com.coralclubes.facil.modules.reservaciones.repository.ReservacionesRepository;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.NotificationClient;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.dto.SolicitudNotificacionDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
@@ -31,8 +32,12 @@ public class PortalService {
     private final PortalRepository repo;
     private final StorageClient storageClient;
     private final NotificationClient notificationClient;
+    private final ReservacionesRepository reservacionesRepo;
 
     private static final String STORAGE_FOLDER = "reservaciones/portal";
+    private static final String KEY_IMG_BANNER_COMPRA_MEMBRESIA = "IMG_PORTAL_COMPRA_MEMBRESIA";
+    private static final String KEY_TERMS_AND_CONDITIONS = "TERM_COND";
+    private static final String KEY_PRIVACY_POLICY = "AVISO_PRIVACIDAD";
 
     @Value("${app.email.reservations}")
     private String emailReservations;
@@ -131,8 +136,12 @@ public class PortalService {
         notificationClient.enviarNotificacion(notificacion);
     }
 
+    public void enviarSolicitudInformacion(ContactoDto request) {
+        log.info("Enviando solicitud de información desde el portal: {}", request);
+    }
+
     public void guardarImagenPortalCompraMembresia(GuardarImagenPortalCompraMembresiaRequest request, String usuario) {
-        String imagenAnterior = repo.spResvObtenerImagenPortalCompraMembresia().orElse(null);
+        String imagenAnterior = reservacionesRepo.fnResvObtenerValorParametroWeb(KEY_IMG_BANNER_COMPRA_MEMBRESIA).orElse(null);
 
         repo.spResvGuardarImagenPortalCompraMembresia(request.img(), usuario);
 
@@ -143,7 +152,7 @@ public class PortalService {
     }
 
     public String obtenerImagenPortalCompraMembresia() {
-        String valor = repo.spResvObtenerImagenPortalCompraMembresia().orElse(null);
+        String valor = reservacionesRepo.fnResvObtenerValorParametroWeb(KEY_IMG_BANNER_COMPRA_MEMBRESIA).orElse(null);
         if (valor == null || valor.isBlank()) {
             return null;
         }

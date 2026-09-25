@@ -61,8 +61,4 @@ public class PortalRepository {
 
         spExecutor.execute("spResvGuardarImagenPortalCompraMembresia", params);
     }
-
-    public Optional<String> spResvObtenerImagenPortalCompraMembresia() {
-        return spExecutor.querySingle("spResvObtenerImagenPortalCompraMembresia", Map.of(), scalarStringMapper);
-    }
 }
