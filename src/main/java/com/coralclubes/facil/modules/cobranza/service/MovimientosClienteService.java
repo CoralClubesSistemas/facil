@@ -313,7 +313,7 @@ public class MovimientosClienteService {
     }
 
     public byte[] generarExcelHistorico(GenerarExcelHistoricoRequest request) {
-        Map<String, Object> parametros = Map.of("Membresia", request.membresia());
+        Map<String, Object> parametros = Map.of("membresia", request.membresia());
         return reportesByKeyService.generarReporteByKey(
                 keysReportes.HISTORICO_MOV_MEM.getClave(),
                 parametros,

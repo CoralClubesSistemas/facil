@@ -233,7 +233,7 @@ public class ReportesMotorRepository {
         for (int i = 0; i < mapeo.size(); i++) {
             ParametroMapeoDto param = mapeo.get(i);
             int index = i + 1;
-            Object valorJava = parametrosJava.get(param.nombreJava());
+            Object valorJava = obtenerValorParametro(parametrosJava, param.nombreJava());
 
             switch (param.tipoDato().toLowerCase()) {
                 case "datetime", "date" -> {
@@ -253,6 +253,18 @@ public class ReportesMotorRepository {
                 }
             }
         }
+    }
+
+    private Object obtenerValorParametro(Map<String, Object> parametrosJava, String nombreEsperado) {
+        if (parametrosJava == null || nombreEsperado == null) return null;
+        if (parametrosJava.containsKey(nombreEsperado)) {
+            return parametrosJava.get(nombreEsperado);
+        }
+        return parametrosJava.entrySet().stream()
+                .filter(e -> e.getKey().equalsIgnoreCase(nombreEsperado))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse(null);
     }
 
     private List<Map<String, Object>> procesarResultSet(ResultSet rs) throws SQLException {
