@@ -13,16 +13,19 @@ import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.Respu
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PortalService {
 
     private final PortalRepository repo;
@@ -58,19 +61,44 @@ public class PortalService {
     }
 
     public Integer guardarExperiencia(GuardarExperienciaRequest request, String usuario) {
-        return repo.spResvGuardarExperienciasPortal(request, usuario)
+        String imagenAnterior = null;
+        if (request.id() != null) {
+            imagenAnterior = repo.spResvObtenerExperienciasPortal().stream()
+                    .filter(e -> Objects.equals(e.id(), request.id()))
+                    .map(ExperienciaPortalProjection::img)
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        Integer idGuardado = repo.spResvGuardarExperienciasPortal(request, usuario)
                 .orElseThrow(() -> new RuntimeException("No se pudo guardar la experiencia del portal"));
+
+        // Solo si se confirma el guardado de la nueva y la imagen anterior cambió, eliminamos físicamente la anterior
+        if (imagenAnterior != null && !imagenAnterior.trim().equalsIgnoreCase(request.img() != null ? request.img().trim() : "")) {
+            eliminarArchivoFisicoSiEsUuid(imagenAnterior);
+        }
+
+        return idGuardado;
     }
 
     public void eliminarExperiencia(Integer id, String usuario) {
+        String imagenAEliminar = repo.spResvObtenerExperienciasPortal().stream()
+                .filter(e -> Objects.equals(e.id(), id))
+                .map(ExperienciaPortalProjection::img)
+                .findFirst()
+                .orElse(null);
+
         repo.spResvEliminarExperienciasPortal(id, usuario);
+
+        // Confirmada la eliminación en BD, procedemos con la eliminación física en storage
+        eliminarArchivoFisicoSiEsUuid(imagenAEliminar);
     }
 
     public RespuestaCargaDto solicitarUrlCarga(SolicitarUrlRequest request, String usuario) {
         Map<String, String> metadata = Map.of(
-            "modulo", "PORTAL RESERVACIONES",
-            "experienciaId", String.valueOf(request.id() != null ? request.id() : "NUEVO"),
-            "subidoPor", usuario
+                "modulo", "PORTAL RESERVACIONES",
+                "experienciaId", String.valueOf(request.id() != null ? request.id() : "NUEVO"),
+                "subidoPor", usuario
         );
 
         SolicitudCargaDto solicitud = SolicitudCargaDto.builder()
@@ -104,7 +132,14 @@ public class PortalService {
     }
 
     public void guardarImagenPortalCompraMembresia(GuardarImagenPortalCompraMembresiaRequest request, String usuario) {
+        String imagenAnterior = repo.spResvObtenerImagenPortalCompraMembresia().orElse(null);
+
         repo.spResvGuardarImagenPortalCompraMembresia(request.img(), usuario);
+
+        // Solo si se confirma el guardado de la nueva y la imagen anterior cambió, eliminamos físicamente la anterior
+        if (imagenAnterior != null && !imagenAnterior.trim().equalsIgnoreCase(request.img() != null ? request.img().trim() : "")) {
+            eliminarArchivoFisicoSiEsUuid(imagenAnterior);
+        }
     }
 
     public String obtenerImagenPortalCompraMembresia() {
@@ -117,6 +152,24 @@ public class PortalService {
             return storageClient.obtenerUrlDescarga(uuid).urlDescarga();
         } catch (IllegalArgumentException e) {
             return valor;
+        }
+    }
+
+    /**
+     * Elimina físicamente de forma permanente un archivo en Coral Storage si el valor corresponde a un UUID válido.
+     */
+    private void eliminarArchivoFisicoSiEsUuid(String valor) {
+        if (valor == null || valor.isBlank()) {
+            return;
+        }
+        try {
+            UUID uuid = UUID.fromString(valor.trim());
+            storageClient.eliminarArchivo(uuid, true);
+            log.info("Archivo físico anterior eliminado exitosamente de Coral Storage: {}", uuid);
+        } catch (IllegalArgumentException e) {
+            log.debug("El valor no es un UUID, se omite eliminación en storage: {}", valor);
+        } catch (Exception e) {
+            log.error("Error al eliminar archivo físico anterior de Coral Storage ({}): {}", valor, e.getMessage(), e);
         }
     }
 }
