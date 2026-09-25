@@ -30,6 +30,7 @@ public class FilesClientesMigrationService {
     private final NotasClientesRepository repository;
 
     private static final int BATCH_SIZE = 50;
+    private static final int MAX_FALLOS_PERMITIDOS = 5;
 
     private record NotaPendienteRef(String membresia, Integer consecutivo, Integer orden, String nombreArchivo) {
     }
@@ -62,10 +63,16 @@ public class FilesClientesMigrationService {
     public void ejecutarMigracion() {
         log.info("=== INICIANDO PROCESO GLOBAL DE MIGRACIÓN DE ARCHIVOS A CORAL STORAGE ===");
 
+        boolean exitoNotas = false;
         try {
-            migrarNotasClientes();
+            exitoNotas = migrarNotasClientes();
         } catch (Exception e) {
             log.error("Error crítico durante la migración de notas de clientes", e);
+        }
+
+        if (!exitoNotas) {
+            log.error("=== PROCESO GLOBAL DE MIGRACIÓN ABORTADO DEBIDO A FALLOS CRÍTICOS EN NOTAS DE CLIENTES ===");
+            return;
         }
 
         try {
@@ -81,7 +88,7 @@ public class FilesClientesMigrationService {
      * Realiza la migración de imágenes de la tabla IMAGENES_NOTAS_CLIENTES a la tabla ADJUNTOS_NOTAS_CLIENTES
      * mediante procesamiento por lotes y carga diferida de Base64 para evitar desbordar el heap de la JVM.
      */
-    private void migrarNotasClientes() {
+    private boolean migrarNotasClientes() {
         log.info("--- Iniciando migración de Notas de Clientes por lotes ---");
 
         String queryCandidatos = "SELECT " +
@@ -109,18 +116,19 @@ public class FilesClientesMigrationService {
             ));
         } catch (Exception e) {
             log.error("Error al consultar la tabla IMAGENES_NOTAS_CLIENTES. ¿Existe la tabla en este entorno?", e);
-            return;
+            return false;
         }
 
         int total = candidatos.size();
         log.info("Registros de notas elegibles encontrados: {}", total);
 
         if (total == 0) {
-            return;
+            return true;
         }
 
         int exitos = 0;
         int fallos = 0;
+        boolean abortado = false;
         int totalLotes = (int) Math.ceil((double) total / BATCH_SIZE);
 
         String queryDetalle = "SELECT " +
@@ -157,6 +165,12 @@ public class FilesClientesMigrationService {
                         log.warn("No se pudo obtener el detalle de la imagen para Membresía {}, Consecutivo {}: {}",
                                 membresia, consecutivo, e.getMessage());
                         fallos++;
+                        if (fallos > MAX_FALLOS_PERMITIDOS) {
+                            log.error("PROCESO DETENIDO: Se superó el umbral de {} fallos permitidos en notas de clientes (total fallos: {}). Abortando migración.",
+                                    MAX_FALLOS_PERMITIDOS, fallos);
+                            abortado = true;
+                            break;
+                        }
                         continue;
                     }
 
@@ -167,6 +181,12 @@ public class FilesClientesMigrationService {
                     if (fileBytes == null || fileBytes.length == 0) {
                         log.warn("Contenido decodificado vacío para Membresía {}, Consecutivo {}. Saltando.", membresia, consecutivo);
                         fallos++;
+                        if (fallos > MAX_FALLOS_PERMITIDOS) {
+                            log.error("PROCESO DETENIDO: Se superó el umbral de {} fallos permitidos en notas de clientes (total fallos: {}). Abortando migración.",
+                                    MAX_FALLOS_PERMITIDOS, fallos);
+                            abortado = true;
+                            break;
+                        }
                         continue;
                     }
 
@@ -207,18 +227,29 @@ public class FilesClientesMigrationService {
                 } catch (Exception e) {
                     log.error("Error al migrar nota para Membresía: {}, Consecutivo: {}. Detalle: {}", membresia, consecutivo, e.getMessage(), e);
                     fallos++;
+                    if (fallos > MAX_FALLOS_PERMITIDOS) {
+                        log.error("PROCESO DETENIDO: Se superó el umbral de {} fallos permitidos en notas de clientes (total fallos: {}). Abortando migración.",
+                                MAX_FALLOS_PERMITIDOS, fallos);
+                        abortado = true;
+                        break;
+                    }
                 }
+            }
+
+            if (abortado) {
+                break;
             }
         }
 
-        log.info("Migración de notas finalizada. Éxitos: {}, Fallos: {}", exitos, fallos);
+        log.info("Migración de notas finalizada{}. Éxitos: {}, Fallos: {}", abortado ? " (ABORTADA POR EXCESO DE FALLOS)" : "", exitos, fallos);
+        return !abortado;
     }
 
     /**
      * Realiza la migración de imágenes de la tabla CREDENCIALES_SOCIOS a Coral Storage, actualizando su UUID
      * mediante procesamiento por lotes y carga diferida de Base64.
      */
-    private void migrarCredencialesSocios() {
+    private boolean migrarCredencialesSocios() {
         log.info("--- Iniciando migración de Credenciales de Socios por lotes ---");
 
         String queryCandidatos = "SELECT " +
@@ -242,18 +273,19 @@ public class FilesClientesMigrationService {
             ));
         } catch (Exception e) {
             log.error("Error al consultar la tabla CREDENCIALES_SOCIOS. ¿Existe la tabla en este entorno?", e);
-            return;
+            return false;
         }
 
         int total = candidatos.size();
         log.info("Registros de credenciales elegibles encontrados: {}", total);
 
         if (total == 0) {
-            return;
+            return true;
         }
 
         int exitos = 0;
         int fallos = 0;
+        boolean abortado = false;
         int totalLotes = (int) Math.ceil((double) total / BATCH_SIZE);
 
         String queryDetalle = "SELECT " +
@@ -291,6 +323,12 @@ public class FilesClientesMigrationService {
                         log.warn("No se pudo obtener el detalle de la credencial para Membresía {}, CredencialId {}: {}",
                                 membresia, credencialId, e.getMessage());
                         fallos++;
+                        if (fallos > MAX_FALLOS_PERMITIDOS) {
+                            log.error("PROCESO DETENIDO: Se superó el umbral de {} fallos permitidos en credenciales de socios (total fallos: {}). Abortando migración.",
+                                    MAX_FALLOS_PERMITIDOS, fallos);
+                            abortado = true;
+                            break;
+                        }
                         continue;
                     }
 
@@ -302,6 +340,12 @@ public class FilesClientesMigrationService {
                     if (fileBytes == null || fileBytes.length == 0) {
                         log.warn("Contenido decodificado vacío para Membresía {}, CredencialId {}. Saltando.", membresia, credencialId);
                         fallos++;
+                        if (fallos > MAX_FALLOS_PERMITIDOS) {
+                            log.error("PROCESO DETENIDO: Se superó el umbral de {} fallos permitidos en credenciales de socios (total fallos: {}). Abortando migración.",
+                                    MAX_FALLOS_PERMITIDOS, fallos);
+                            abortado = true;
+                            break;
+                        }
                         continue;
                     }
 
@@ -360,11 +404,22 @@ public class FilesClientesMigrationService {
                 } catch (Exception e) {
                     log.error("Error al migrar credencial para Membresía: {}, CredencialId: {}. Detalle: {}", membresia, credencialId, e.getMessage(), e);
                     fallos++;
+                    if (fallos > MAX_FALLOS_PERMITIDOS) {
+                        log.error("PROCESO DETENIDO: Se superó el umbral de {} fallos permitidos en credenciales de socios (total fallos: {}). Abortando migración.",
+                                MAX_FALLOS_PERMITIDOS, fallos);
+                        abortado = true;
+                        break;
+                    }
                 }
+            }
+
+            if (abortado) {
+                break;
             }
         }
 
-        log.info("Migración de credenciales finalizada. Éxitos: {}, Fallos: {}", exitos, fallos);
+        log.info("Migración de credenciales finalizada{}. Éxitos: {}, Fallos: {}", abortado ? " (ABORTADA POR EXCESO DE FALLOS)" : "", exitos, fallos);
+        return !abortado;
     }
 
     // =====================================================
