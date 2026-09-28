@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.reservaciones.controller.admin;
 
 import com.coralclubes.facil.modules.reservaciones.dto.request.CancelarReservacionRequest;
+import com.coralclubes.facil.modules.reservaciones.dto.request.PagarAdeudosReservacionRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.response.CargoHabitacionDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.DetalleReservacionDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.ReservacionMembresiaDto;
@@ -23,6 +24,18 @@ import java.util.List;
 public class PortalClientesAdminController {
 
     private final ReservacionesService service;
+    private final UserContext userContext;
+
+    @PostMapping("/generar-orden-adeudo")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<String>> generarOrdenAdeudo(
+            @Valid @RequestBody PagarAdeudosReservacionRequest request) {
+        String usuario = (userContext.getUsername() != null && !userContext.getUsername().isBlank())
+                ? userContext.getUsername()
+                : "SOCIO";
+        String checkoutUrl = service.pagarAdeudosReservacionPortal(request, usuario);
+        return ResponseEntity.ok(ApiResponse.success("Sesión de pago iniciada correctamente.", checkoutUrl));
+    }
 
     @GetMapping("/reservaciones")
     @PreAuthorize("isAuthenticated()")

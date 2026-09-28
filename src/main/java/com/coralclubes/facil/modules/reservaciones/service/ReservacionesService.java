@@ -49,10 +49,13 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -693,6 +696,90 @@ public class ReservacionesService {
                 .build();
 
         return cobranzaService.generarOrdenCobranza(ordenRequest, userContext.getUsername()).data().ordenUuid();
+    }
+
+    @Transactional
+    public String pagarAdeudosReservacionPortal(PagarAdeudosReservacionRequest request, String usuario) {
+        if (request.idMovimientos() == null || request.idMovimientos().isEmpty()) {
+            throw new IllegalArgumentException("Debe proporcionar al menos un movimiento para pagar.");
+        }
+
+        // 1. Obtener los cargos completos de la reservación
+        List<CargoHabitacionDto> todosLosCargos = repository.obtenerCargosReservacion(request.membresia(), request.folio());
+        if (todosLosCargos == null || todosLosCargos.isEmpty()) {
+            throw new IllegalArgumentException("No se encontraron cargos para la reservación especificada.");
+        }
+
+        // 2. Validar que todos los idMovimientos solicitados pertenezcan a la reservación
+        Set<Integer> movimientosValidosIds = todosLosCargos.stream()
+                .map(CargoHabitacionDto::idMovimiento)
+                .collect(Collectors.toSet());
+
+        Set<Integer> movimientosSolicitados = new HashSet<>(request.idMovimientos());
+        if (!movimientosValidosIds.containsAll(movimientosSolicitados)) {
+            throw new IllegalArgumentException("Uno o más movimientos solicitados no pertenecen a la reservación indicada.");
+        }
+
+        // 3. Filtrar solo los cargos solicitados que tengan saldo pendiente
+        List<GenerarOrdenCobranzaMovimientoRequest> movimientos = todosLosCargos.stream()
+                .filter(cargo -> movimientosSolicitados.contains(cargo.idMovimiento()))
+                .filter(cargo -> cargo.importePendiente() != null && cargo.importePendiente().compareTo(BigDecimal.ZERO) > 0)
+                .map(cargo -> GenerarOrdenCobranzaMovimientoRequest.builder()
+                        .idMovimiento(cargo.idMovimiento())
+                        .montoCapital(cargo.importePendiente())
+                        .montoInteres(BigDecimal.ZERO)
+                        .interesPago(BigDecimal.ZERO)
+                        .interesesBonificados(BigDecimal.ZERO)
+                        .totalDescuento(BigDecimal.ZERO)
+                        .justificacionDescuento(null)
+                        .usuarioAutoriza(usuario)
+                        .build())
+                .toList();
+
+        if (movimientos.isEmpty()) {
+            throw new IllegalArgumentException("Ninguno de los movimientos seleccionados presenta saldo pendiente para pagar.");
+        }
+
+        // 4. Generar la orden de cobranza
+        String mensaje = "Pago de adeudo para reservación folio " + request.folio() + " - Membresía: " + request.membresia();
+        var ordenRequest = GenerarOrdenCobranzaRequest.builder()
+                .membresia(request.membresia())
+                .movimientos(movimientos)
+                .agregarIva(false)
+                .ivaIncluido(false)
+                .mensajeAdicional(mensaje)
+                .build();
+
+        UUID ordenUuid = cobranzaService.generarOrdenCobranza(ordenRequest, usuario).data().ordenUuid();
+
+        // 5. Configurar metadatos del intento de pago (usando URLs configuradas del proyecto)
+        Map<String, Object> intentoMetadata = new HashMap<>();
+        intentoMetadata.put("redirectSuccess", urlCheckoutSuccess);
+        intentoMetadata.put("redirectFailure", urlCheckoutFailure);
+        intentoMetadata.put("redirectCancel", urlCheckoutCancel);
+        intentoMetadata.put("membresia", request.membresia());
+        intentoMetadata.put("folio", request.folio());
+        intentoMetadata.put("idMovimientos", request.idMovimientos());
+        intentoMetadata.put("tipoOperacion", "PAGO_ADEUDO_RESERVACION");
+
+        BigDecimal totalPagar = movimientos.stream()
+                .map(GenerarOrdenCobranzaMovimientoRequest::montoCapital)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        ProcesarPagoRequest pagoRequest = ProcesarPagoRequest.builder()
+                .formaPagoClave("LINK")
+                .monto(totalPagar)
+                .metadata(intentoMetadata)
+                .build();
+
+        // 6. Iniciar el intento de pago para generar sesión de Checkout
+        ProcesarPagoResponse pagoResponse = intentoPagoService.iniciarPago(ordenUuid, pagoRequest, usuario);
+
+        if (pagoResponse.datosAdicionales() == null || !pagoResponse.datosAdicionales().containsKey("checkoutUrl")) {
+            throw new IllegalStateException("No fue posible generar la URL de redirección para el pago.");
+        }
+
+        return pagoResponse.datosAdicionales().get("checkoutUrl").toString();
     }
 
     public ApiResponse<Boolean> registrarCheckOut(CheckOutRequest request) {
