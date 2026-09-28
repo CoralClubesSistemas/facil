@@ -103,11 +103,10 @@ public class ClientesGatewayAuthService {
         Integer idDesarrollo = (membresiaInfo != null) ? membresiaInfo.desarrollo() : null;
         String desarrolloDescripcion = (membresiaInfo != null) ? membresiaInfo.descripcionDesarrollo() : null;
 
-        assert membresiaInfo != null;
         return UserInfo.builder()
                 .username(loginData.membresia())
                 .email(loginData.correo())
-                .nombreCompleto(membresiaInfo.nombreCompleto())
+                .nombreCompleto(membresiaInfo != null ? membresiaInfo.nombreCompleto() : null)
                 .rolId(null)
                 .role("CLIENTE")
                 .source("EXTERNAL")

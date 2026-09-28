@@ -242,7 +242,9 @@ public class UnidadesRepository {
 
     @Cacheable(value = "tipos_unidad_cards", key = "#idDesarrollo != null ? #idDesarrollo : 'todos'")
     public List<TipoUnidadCardDto> spResvObtenerTiposUnidadCard(Integer idDesarrollo) {
-        return spExecutor.queryList("spResvObtenerTiposUnidadCard", Map.of("IdDesarrollo", idDesarrollo), tipoUnidadCardMapper);
+        Map<String, Object> params = new HashMap<>();
+        params.put("IdDesarrollo", idDesarrollo);
+        return spExecutor.queryList("spResvObtenerTiposUnidadCard", params, tipoUnidadCardMapper);
     }
 
     @Cacheable(value = "tipo_unidad_detalles", key = "#idTipoUnidad")
