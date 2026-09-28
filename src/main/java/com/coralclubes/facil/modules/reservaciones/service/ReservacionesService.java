@@ -700,6 +700,9 @@ public class ReservacionesService {
 
     @Transactional
     public String pagarAdeudosReservacionPortal(PagarAdeudosReservacionRequest request, String usuario) {
+        businessLogger.info("PORTAL","Iniciando proceso de pago de adeudos para reservación. Membresía: {}, Folio: {}, Movimientos: {}",
+                request.membresia(), request.folio(), request.idMovimientos());
+
         if (request.idMovimientos() == null || request.idMovimientos().isEmpty()) {
             throw new IllegalArgumentException("Debe proporcionar al menos un movimiento para pagar.");
         }
