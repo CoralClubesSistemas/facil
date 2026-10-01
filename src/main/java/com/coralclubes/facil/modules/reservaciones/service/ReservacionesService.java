@@ -584,6 +584,10 @@ public class ReservacionesService {
             return ApiResponse.success("No se encontró información para el tipo de unidad solicitado.", null);
         }
 
+        if (projection.costoEstancia() == null || projection.costoEstancia().compareTo(BigDecimal.ZERO) <= 0) {
+            return ApiResponse.error(GeneralResponseCode.INTERNAL_SERVER_ERROR, "La unidad seleccionada no tiene costo de estancia definido.");
+        }
+
         String imagenUrl = projection.uuidImagen() != null ? storageCache.obtenerUrlImagen(projection.uuidImagen()) : null;
 
         DisponibilidadUnidadDto dto = DisponibilidadUnidadDto.builder()

@@ -44,7 +44,7 @@ public class CobranzaService {
 
     // private final AnalisisDeInformacion bedrockClient;
 
-    @Value("${app.email.audit-default")
+    @Value("${app.email.audit-default}")
     private String emailAuditDefault;
 
     public ApiResponse<GenerarOrdenCobranzaResponse> generarOrdenCobranza(GenerarOrdenCobranzaRequest request, String usuario) {
