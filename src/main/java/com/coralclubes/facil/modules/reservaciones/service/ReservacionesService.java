@@ -148,6 +148,13 @@ public class ReservacionesService {
         return ApiResponse.success("Cupones obtenidos", repository.obtenerCuponesCarrito(groupId));
     }
 
+    public List<CuponMembresiaReservacionDto> obtenerCuponesMembresia(String membresia, Integer anioConsulta) {
+        if (membresia == null || membresia.isBlank()) {
+            throw new IllegalArgumentException("La membresía es obligatoria.");
+        }
+        return repository.spResvObtenerCuponesMembresia(membresia, anioConsulta);
+    }
+
     public ApiResponse<ResumenCheckoutResponse> calcularCheckout(CalcularCheckoutRequest request) {
         log.info("Calculando checkout para groupId: {}, cupon: {}, promo: {}, rrtIdsPagoPuntos: {}",
                 request.groupId(), request.cupon(), request.codigoPromocion(), request.rrtIdsPagoPuntos());
@@ -704,7 +711,7 @@ public class ReservacionesService {
 
     @Transactional
     public String pagarAdeudosReservacionPortal(PagarAdeudosReservacionRequest request, String usuario) {
-        businessLogger.info("PORTAL","Iniciando proceso de pago de adeudos para reservación. Membresía: {}, Folio: {}, Movimientos: {}",
+        businessLogger.info("PORTAL", "Iniciando proceso de pago de adeudos para reservación. Membresía: {}, Folio: {}, Movimientos: {}",
                 request.membresia(), request.folio(), request.idMovimientos());
 
         if (request.idMovimientos() == null || request.idMovimientos().isEmpty()) {

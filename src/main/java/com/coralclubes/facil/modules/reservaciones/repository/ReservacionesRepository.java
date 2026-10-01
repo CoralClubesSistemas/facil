@@ -52,6 +52,16 @@ public class ReservacionesRepository {
             rs.getBigDecimal("porcentajeDescuento")
     );
 
+    private final RowMapper<CuponMembresiaReservacionDto> cuponMembresiaReservacionMapper = (rs, rowNum) -> new CuponMembresiaReservacionDto(
+            rs.getObject("id_cupon", Integer.class),
+            rs.getString("nombre_cupon"),
+            rs.getString("descripcion_cupon"),
+            rs.getString("desarrollos_aplicables"),
+            rs.getTimestamp("inicio_vigencia") != null ? rs.getTimestamp("inicio_vigencia").toLocalDateTime() : null,
+            rs.getTimestamp("fin_vigencia") != null ? rs.getTimestamp("fin_vigencia").toLocalDateTime() : null,
+            rs.getObject("cupones_disponibles", Integer.class)
+    );
+
     RowMapper<DetalleReservacionDto> detalleReservacionMapper = (rs, rowNum) -> {
 
         // Extraemos y parseamos el JSON de Cargos (puede venir NULL si la tabla de cargos estuviera vacía)
@@ -301,6 +311,14 @@ public class ReservacionesRepository {
         params.put("GROUP_ID", groupId.toString());
 
         return spExecutor.queryList("spResvObtenerCuponesCarrito", params, cuponMapper);
+    }
+
+    public List<CuponMembresiaReservacionDto> spResvObtenerCuponesMembresia(String membresia, Integer anioConsulta) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("membresia", membresia);
+        params.put("anio_consulta", anioConsulta);
+
+        return spExecutor.queryList("spResvObtenerCuponesMembresia", params, cuponMembresiaReservacionMapper);
     }
 
     // 1. Guardar la reserva principal

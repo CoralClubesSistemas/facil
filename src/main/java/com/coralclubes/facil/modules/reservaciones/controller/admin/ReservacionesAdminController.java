@@ -3,6 +3,7 @@ package com.coralclubes.facil.modules.reservaciones.controller.admin;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleDto;
 import com.coralclubes.facil.modules.cobranza.dto.response.ConfirmacionReservaResponse;
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
+import com.coralclubes.facil.modules.reservaciones.dto.response.CuponMembresiaReservacionDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.DisponibilidadUnidadUI;
 import com.coralclubes.facil.modules.reservaciones.dto.response.ResumenCheckoutResponse;
 import com.coralclubes.facil.modules.reservaciones.service.ReservacionesService;
@@ -70,6 +71,15 @@ public class ReservacionesAdminController {
         return ResponseEntity.ok(service.obtenerCuponesDisponibles(groupId));
     }
 
+    @GetMapping("/cupones/membresia/{membresia}")
+    @PreAuthorize("hasAuthority('MOD_SMNURESERVACIONES')")
+    public ResponseEntity<ApiResponse<List<CuponMembresiaReservacionDto>>> obtenerCuponesMembresia(
+            @PathVariable String membresia,
+            @RequestParam(required = false) Integer anioConsulta) {
+        List<CuponMembresiaReservacionDto> cupones = service.obtenerCuponesMembresia(membresia, anioConsulta);
+        return ResponseEntity.ok(ApiResponse.success(cupones));
+    }
+
     @PostMapping("/confirmar")
     @PreAuthorize("hasAuthority('MOD_SMNURESERVACIONES')")
     public ResponseEntity<ApiResponse<List<Integer>>> confirmarReservacion(
@@ -109,7 +119,7 @@ public class ReservacionesAdminController {
             @RequestParam String membresia,
             @RequestParam Integer consecutivo,
             @RequestParam String correos
-            ) {
+    ) {
         service.reenviarCartaOcupacion(membresia, consecutivo, correos);
         return ResponseEntity.ok(ApiResponse.success("Carta de ocupación reenviada correctamente", true));
     }
