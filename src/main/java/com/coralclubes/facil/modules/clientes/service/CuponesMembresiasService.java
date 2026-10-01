@@ -1,15 +1,19 @@
 package com.coralclubes.facil.modules.clientes.service;
 
+import com.coralclubes.facil.modules.clientes.dto.projection.CuponMembresiaDb;
 import com.coralclubes.facil.modules.clientes.dto.request.AdicionarCuponesMembresiaRequest;
 import com.coralclubes.facil.modules.clientes.dto.request.AsignarCuponesMembresiaRequest;
 import com.coralclubes.facil.modules.clientes.dto.request.ConsumirCuponMembresiaRequest;
+import com.coralclubes.facil.modules.clientes.dto.request.FiltroCuponesMembresiaRequest;
 import com.coralclubes.facil.modules.clientes.dto.request.SintetizarCorreoCuponesRequest;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleAsignacionResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponFormatoInfoResponse;
+import com.coralclubes.facil.modules.clientes.dto.response.CuponMembresiaCompletoResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponMembresiaDetalleResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponMembresiaResumenResponse;
 import com.coralclubes.facil.modules.clientes.repository.CuponesMembresiasRepository;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuerpoCorreoResponse;
+import com.coralclubes.facil.modules.cobranza.repository.CuponesRepository;
 import com.coralclubes.facil.modules.sistema.service.PlantillasCuerpoCorreoService;
 import com.coralclubes.logging.BusinessLogger;
 import lombok.RequiredArgsConstructor;
@@ -26,12 +30,44 @@ import java.util.Map;
 public class CuponesMembresiasService {
 
     private final CuponesMembresiasRepository repository;
+    private final CuponesRepository cuponesCobranzaRepository;
     private final PlantillasCuerpoCorreoService plantillasService;
     private final SociosService sociosService;
     private final BusinessLogger logger;
 
+    public List<CuponMembresiaCompletoResponse> obtenerCuponesMembresiaCompletos(FiltroCuponesMembresiaRequest filtro) {
+        List<CuponMembresiaDb> cupones = repository.spMembresiaObtenerCupones(filtro);
+
+        return cupones.stream()
+                .map(c -> {
+                    var beneficios = cuponesCobranzaRepository.spCuponesObtenerBeneficios(c.idCupon());
+                    var condiciones = cuponesCobranzaRepository.spCuponesObtenerCondiciones(c.idCupon());
+                    return new CuponMembresiaCompletoResponse(c, beneficios, condiciones);
+                })
+                .toList();
+    }
+
     public List<CuponMembresiaResumenResponse> obtenerCuponesMembresia(String membresia, Integer year) {
-        return repository.spMembresiaObtenerCupones(membresia, year);
+        return repository.spMembresiaObtenerCupones(membresia, year).stream()
+                .map(db -> new CuponMembresiaResumenResponse(
+                        db.id(),
+                        db.membresia(),
+                        db.idCupon(),
+                        db.movimientoGeneradorId(),
+                        db.movimientoGenerador(),
+                        db.cantidadCuponesTotales(),
+                        db.cuponesDisponibles(),
+                        db.estatus(),
+                        db.fechaOtorgado(),
+                        db.nombreCupon(),
+                        db.nomenclatura(),
+                        db.desarrollo(),
+                        db.origenCupon(),
+                        db.anioCupon(),
+                        db.inicioVigencia(),
+                        db.finVigencia()
+                ))
+                .toList();
     }
 
     public List<CuponMembresiaDetalleResponse> obtenerDetalleCuponMembresia(Integer cuponId) {

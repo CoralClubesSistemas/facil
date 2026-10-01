@@ -73,6 +73,7 @@ public class CuponesRepository {
             rs.getString("clave_beneficio"),
             rs.getString("configuracion_beneficio"),
             rs.getObject("concepto_id", Integer.class),
+            rs.getString("concepto_clave"),
             rs.getString("concepto")
     );
 

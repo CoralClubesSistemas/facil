@@ -1,8 +1,10 @@
 package com.coralclubes.facil.modules.clientes.repository;
 
+import com.coralclubes.facil.modules.clientes.dto.projection.CuponMembresiaDb;
 import com.coralclubes.facil.modules.clientes.dto.request.AdicionarCuponesMembresiaRequest;
 import com.coralclubes.facil.modules.clientes.dto.request.AsignarCuponesMembresiaRequest;
 import com.coralclubes.facil.modules.clientes.dto.request.ConsumirCuponMembresiaRequest;
+import com.coralclubes.facil.modules.clientes.dto.request.FiltroCuponesMembresiaRequest;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleAsignacionResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponFormatoInfoResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponMembresiaDetalleResponse;
@@ -14,10 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Repository
 @RequiredArgsConstructor
@@ -26,24 +27,53 @@ public class CuponesMembresiasRepository {
     private final StoredProcedureExecutor spExecutor;
     private final ObjectMapper objectMapper;
 
-    private final RowMapper<CuponMembresiaResumenResponse> resumenMapper = (rs, rowNum) -> new CuponMembresiaResumenResponse(
-            rs.getObject("id", Integer.class),
-            rs.getString("membresia"),
-            rs.getObject("id_cupon", Integer.class),
-            rs.getObject("movimiento_generador_id", Integer.class),
-            rs.getString("movimiento_generador"),
-            rs.getObject("cupones_otorgados", Integer.class),
-            rs.getObject("cupones_disponibles", Integer.class),
-            rs.getString("estatus"),
-            rs.getTimestamp("fecha_otorgado") != null ? rs.getTimestamp("fecha_otorgado").toLocalDateTime() : null,
-            rs.getString("nombre_cupon"),
-            rs.getString("nomenclatura"),
-            rs.getString("desarrollo"),
-            rs.getString("origen_cupon"),
-            rs.getObject("anio_cupon", Integer.class),
-            rs.getTimestamp("inicio_vigencia") != null ? rs.getTimestamp("inicio_vigencia").toLocalDateTime() : null,
-            rs.getTimestamp("fin_vigencia") != null ? rs.getTimestamp("fin_vigencia").toLocalDateTime() : null
-    );
+    private final RowMapper cuponMembresiaDbMapper = (rs, rowNum) -> {
+        Timestamp fechaOtorgado = rs.getTimestamp("fecha_otorgado");
+        Timestamp inicioVigencia = rs.getTimestamp("inicio_vigencia");
+        Timestamp finVigencia = rs.getTimestamp("fin_vigencia");
+
+        String rawDesarrollos = rs.getString("desarrollos_aplicables");
+        List desarrollosList;
+
+        if (rawDesarrollos == null || rawDesarrollos.isBlank()) {
+            desarrollosList = Collections.emptyList();
+        } else {
+            String limpio = rawDesarrollos.replace("[", "").replace("]", "").trim();
+            desarrollosList = limpio.isEmpty()
+                    ? Collections.emptyList()
+                    : Arrays.stream(limpio.split(","))
+                      .map(String::trim)
+                      .filter(s -> !s.isEmpty())
+                      .map(Integer::valueOf)
+                      .toList();
+        }
+
+        return CuponMembresiaDb.builder()
+                .id(rs.getObject("id", Integer.class))
+                .membresia(rs.getString("membresia"))
+                .idCupon(rs.getObject("id_cupon", Integer.class))
+                .movimientoGeneradorId(rs.getObject("movimiento_generador_id", Integer.class))
+                .movimientoGenerador(rs.getString("movimiento_generador"))
+                .cantidadCuponesTotales(rs.getObject("cantidad_cupones_totales", Integer.class))
+                .cuponesUsados(rs.getObject("cupones_usados", Integer.class))
+                .cuponesDisponibles(rs.getObject("cupones_disponibles", Integer.class))
+                .estatus(rs.getString("estatus"))
+                .nombreCupon(rs.getString("nombre_cupon"))
+                .descripcionCupon(rs.getString("descripcion_cupon"))
+                .origenCuponId(rs.getString("origen_cupon_id"))
+                .nomenclatura(rs.getString("nomenclatura"))
+                .desarrollo(rs.getString("desarrollo"))
+                .origenCupon(rs.getString("origen_cupon"))
+                .anioCupon(rs.getObject("anio_cupon", Integer.class))
+                .anioVigencia(rs.getObject("anio_vigencia", Integer.class))
+                .fechaOtorgado(fechaOtorgado != null ? fechaOtorgado.toLocalDateTime() : null)
+                .inicioVigencia(inicioVigencia != null ? inicioVigencia.toLocalDateTime() : null)
+                .finVigencia(finVigencia != null ? finVigencia.toLocalDateTime() : null)
+                .esTransferible(rs.getObject("es_transferible", Boolean.class))
+                .desarrollosAplicables(desarrollosList)
+                .desarrollosLegibles(rs.getString("desarrollos_legibles"))
+                .build();
+    };
 
     private final RowMapper<CuponMembresiaDetalleResponse> detalleMapper = (rs, rowNum) -> new CuponMembresiaDetalleResponse(
             rs.getObject("consecutivo", Integer.class),
@@ -86,12 +116,21 @@ public class CuponesMembresiasRepository {
         return spExecutor.queryList("spMembresiaObtenerInfoFormatosCupones", Map.of("id", id), cuponFormatoInfoMapper);
     }
 
-    public List<CuponMembresiaResumenResponse> spMembresiaObtenerCupones(String membresia, Integer year) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("membresia", membresia);
-        params.put("year", year);
+    public List<CuponMembresiaDb> spMembresiaObtenerCupones(String membresia, Integer year) {
+        return spMembresiaObtenerCupones(new FiltroCuponesMembresiaRequest(membresia, year, null, null, null, null, null));
+    }
 
-        return spExecutor.queryList("spMembresiaObtenerCupones", params, resumenMapper);
+    public List<CuponMembresiaDb> spMembresiaObtenerCupones(FiltroCuponesMembresiaRequest filtro) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("membresia", filtro.membresia());
+        params.put("year", filtro.year());
+        params.put("fecha_inicio_consulta", filtro.fechaInicioConsulta());
+        params.put("fecha_fin_consulta", filtro.fechaFinConsulta());
+        params.put("origen_cupon", filtro.origenCupon());
+        params.put("desarrollo_consumo", filtro.desarrolloConsumo());
+        params.put("objetivos", filtro.getObjetivosFormateados());
+
+        return spExecutor.queryList("spMembresiaObtenerCupones", params, cuponMembresiaDbMapper);
     }
 
     public List<CuponMembresiaDetalleResponse> spMembresiaObtenerDetalleCupon(Integer cuponId) {

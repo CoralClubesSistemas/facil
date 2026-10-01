@@ -5,6 +5,7 @@ public record CuponBeneficioResponse(
         String claveBeneficio,
         String configuracionBeneficio,
         Integer conceptoId,
+        String conceptoClave,
         String concepto
 ) {
 }
