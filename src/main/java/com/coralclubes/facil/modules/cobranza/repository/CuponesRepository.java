@@ -3,6 +3,8 @@ package com.coralclubes.facil.modules.cobranza.repository;
 import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarCuponRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarFormatoImagenCuponRequest;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponBeneficioResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponCondicionResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponDetalleResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponImagenFormatoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponListadoResponse;
@@ -58,6 +60,28 @@ public class CuponesRepository {
 
     public List<CuponesCatalogoElementoResponse> spCuponesCatalogoBeneficios() {
         return spExecutor.queryList("spCuponesCatalogoBeneficios", Collections.emptyMap(), catalogoElementoMapper);
+    }
+
+    private final RowMapper<CuponCondicionResponse> cuponCondicionMapper = (rs, rowNum) -> new CuponCondicionResponse(
+            rs.getObject("condicion_id", Integer.class),
+            rs.getString("clave_condicion"),
+            rs.getString("valor_condicion")
+    );
+
+    private final RowMapper<CuponBeneficioResponse> cuponBeneficioMapper = (rs, rowNum) -> new CuponBeneficioResponse(
+            rs.getObject("beneficio_id", Integer.class),
+            rs.getString("clave_beneficio"),
+            rs.getString("configuracion_beneficio"),
+            rs.getObject("concepto_id", Integer.class),
+            rs.getString("concepto")
+    );
+
+    public List<CuponCondicionResponse> spCuponesObtenerCondiciones(Integer cuponId) {
+        return spExecutor.queryList("spCuponesObtenerCondiciones", Map.of("cupon_id", cuponId), cuponCondicionMapper);
+    }
+
+    public List<CuponBeneficioResponse> spCuponesObtenerBeneficios(Integer cuponId) {
+        return spExecutor.queryList("spCuponesObtenerBeneficios", Map.of("cupon_id", cuponId), cuponBeneficioMapper);
     }
 
     public List<SelectGenerico<String>> spCuponesCatalogoOrigenes() {

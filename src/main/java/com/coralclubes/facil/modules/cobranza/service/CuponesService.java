@@ -4,6 +4,8 @@ import com.coralclubes.dto.SelectGenerico;
 import com.coralclubes.facil.modules.cobranza.dto.request.DuplicarCuponesMasivoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarCuponRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GuardarFormatoImagenCuponRequest;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponBeneficioResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.CuponCondicionResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponDetalleResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponImagenFormatoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponListadoResponse;
@@ -47,6 +49,14 @@ public class CuponesService {
 
     public List<CuponesCatalogoElementoResponse> obtenerCatalogoBeneficios() {
         return repository.spCuponesCatalogoBeneficios();
+    }
+
+    public List<CuponCondicionResponse> obtenerCondicionesCupon(Integer cuponId) {
+        return repository.spCuponesObtenerCondiciones(cuponId);
+    }
+
+    public List<CuponBeneficioResponse> obtenerBeneficiosCupon(Integer cuponId) {
+        return repository.spCuponesObtenerBeneficios(cuponId);
     }
 
     public List<SelectGenerico<String>> obtenerCatalogoOrigenes() {
