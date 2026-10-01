@@ -1,8 +1,10 @@
 package com.coralclubes.facil.modules.reservaciones.service;
 
+import com.coralclubes.facil.modules.clientes.dto.request.FiltroCuponesMembresiaRequest;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleDto;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
 import com.coralclubes.facil.modules.clientes.dto.response.PuntosMembresia;
+import com.coralclubes.facil.modules.clientes.service.CuponesMembresiasService;
 import com.coralclubes.facil.modules.clientes.service.PuntosService;
 import com.coralclubes.facil.modules.clientes.service.SociosService;
 import com.coralclubes.facil.modules.reservaciones.repository.UnidadesRepository;
@@ -81,6 +83,7 @@ public class ReservacionesService {
     private final PdfGeneratorService pdfGeneratorService;
     private final UnidadesRepository unidadesRepo;
     private final IntentoPagoService intentoPagoService;
+    private final CuponesMembresiasService cuponesMembresiasService;
 
     @Value("${app.clients.notifications.templates.reserva-cancelada}")
     private String templateReservaCancelada;
@@ -94,6 +97,8 @@ public class ReservacionesService {
     private String urlCheckoutFailure;
     @Value("${app.clients.checkout.urls.portal-resv.redirect-cancel}")
     private String urlCheckoutCancel;
+
+    private static final List<String> objetivos = List.of("NOCHES", "RESERVACION");
 
     // =========================================================================
     // 1. GESTIÓN DE INVENTARIO Y DISPONIBILIDAD
@@ -152,7 +157,34 @@ public class ReservacionesService {
         if (membresia == null || membresia.isBlank()) {
             throw new IllegalArgumentException("La membresía es obligatoria.");
         }
-        return repository.spResvObtenerCuponesMembresia(membresia, anioConsulta);
+
+        var filtro = new FiltroCuponesMembresiaRequest(
+                membresia,
+                anioConsulta,
+                null,
+                null,
+                null,
+                null,
+                objetivos
+        );
+
+        var cuponesCompletos = cuponesMembresiasService.obtenerCuponesMembresiaCompletos(filtro);
+
+        return cuponesCompletos.stream()
+                .map(completo -> {
+                    var cupon = completo.cupon();
+                    return new CuponMembresiaReservacionDto(
+                            cupon.id(),
+                            cupon.idCupon(),
+                            cupon.nombreCupon(),
+                            cupon.descripcionCupon(),
+                            cupon.desarrollosLegibles(),
+                            cupon.inicioVigencia(),
+                            cupon.finVigencia(),
+                            cupon.cuponesDisponibles()
+                    );
+                })
+                .toList();
     }
 
     public ApiResponse<ResumenCheckoutResponse> calcularCheckout(CalcularCheckoutRequest request) {

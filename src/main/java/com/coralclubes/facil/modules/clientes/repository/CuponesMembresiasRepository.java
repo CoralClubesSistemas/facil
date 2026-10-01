@@ -189,7 +189,6 @@ public class CuponesMembresiasRepository {
         Map<String, Object> params = new HashMap<>();
         params.put("Membresia", request.membresia());
         params.put("PqacId", request.pqacId());
-        params.put("NumeroOrden", request.numeroOrden());
         params.put("Usuario", usuario);
 
         spExecutor.execute("spMembresiaConsumirCupon", params);

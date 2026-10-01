@@ -8,9 +8,6 @@ public record ConsumirCuponMembresiaRequest(
         String membresia,
 
         @NotNull(message = "El identificador del paquete (PqacId) es obligatorio")
-        Integer pqacId,
-
-        @NotNull(message = "El número de orden es obligatorio")
-        Integer numeroOrden
+        Integer pqacId
 ) {
 }

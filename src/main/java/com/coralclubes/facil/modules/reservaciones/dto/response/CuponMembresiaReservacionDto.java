@@ -3,6 +3,7 @@ package com.coralclubes.facil.modules.reservaciones.dto.response;
 import java.time.LocalDateTime;
 
 public record CuponMembresiaReservacionDto(
+        Integer id,
         Integer idCupon,
         String nombreCupon,
         String descripcionCupon,
