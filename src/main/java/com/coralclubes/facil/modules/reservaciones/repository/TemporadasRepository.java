@@ -13,6 +13,9 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import com.coralclubes.facil.modules.reservaciones.dto.response.TemporadaPeriodoResponse;
+import org.springframework.jdbc.core.JdbcTemplate;
+import java.sql.Date;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +27,7 @@ import java.util.Optional;
 public class TemporadasRepository {
 
     private final StoredProcedureExecutor spExecutor;
+    private final JdbcTemplate jdbcTemplate;
 
     // Mapper de SQL a Java
     private final RowMapper<TemporadaDto> temporadaMapper = (rs, rowNum) -> TemporadaDto.builder()
@@ -48,6 +52,14 @@ public class TemporadasRepository {
             .fechaFinal(rs.getDate("FECHA_FINAL").toLocalDate())
             .build();
 
+    private final RowMapper<TemporadaPeriodoResponse> temporadaPeriodoMapper = (rs, rowNum) -> TemporadaPeriodoResponse.builder()
+            .fecha(rs.getDate("fecha") != null ? rs.getDate("fecha").toLocalDate() : null)
+            .temporadaId(rs.getObject("temporada_id") != null ? rs.getInt("temporada_id") : null)
+            .temporadaNombre(rs.getString("temporada_nombre"))
+            .temporadaInicio(rs.getDate("temporada_inicio") != null ? rs.getDate("temporada_inicio").toLocalDate() : null)
+            .temporadaFin(rs.getDate("temporada_fin") != null ? rs.getDate("temporada_fin").toLocalDate() : null)
+            .build();
+
     // =========================================================================
     // LECTURA
     // =========================================================================
@@ -67,7 +79,8 @@ public class TemporadasRepository {
 
     @Caching(evict = {
             @CacheEvict(value = "temporadas_reservaciones", allEntries = true),
-            @CacheEvict(value = "temporadas_fecha", allEntries = true)
+            @CacheEvict(value = "temporadas_fecha", allEntries = true),
+            @CacheEvict(value = "temporadas_periodo", allEntries = true)
     })
     public Optional<Integer> spResvGuardarTemporadaReservacion(TemporadaRequest request, String usuario) {
         Map<String, Object> params = new HashMap<>();
@@ -84,7 +97,8 @@ public class TemporadasRepository {
 
     @Caching(evict = {
             @CacheEvict(value = "temporadas_reservaciones", allEntries = true),
-            @CacheEvict(value = "temporadas_fecha", allEntries = true)
+            @CacheEvict(value = "temporadas_fecha", allEntries = true),
+            @CacheEvict(value = "temporadas_periodo", allEntries = true)
     })
     public void spResvEliminarTemporadaReservacion(Integer idTemporadaFecha, String usuario) {
         Map<String, Object> params = new HashMap<>();
@@ -103,9 +117,20 @@ public class TemporadasRepository {
         return spExecutor.queryList("spResvObtenerTemporadasFecha", params, temporadaFechaMapper);
     }
 
+    public List<TemporadaPeriodoResponse> fnResvObtenerTemporadaPorPeriodo(Integer desarrollo, LocalDate fechaInicio, LocalDate fechaFin) {
+        String sql = "SELECT fecha, temporada_id, temporada_nombre, temporada_inicio, temporada_fin " +
+                     "FROM dbo.fnResvObtenerTemporadaPorPeriodo(?, ?, ?)";
+
+        Date sqlInicio = fechaInicio != null ? Date.valueOf(fechaInicio) : null;
+        Date sqlFin = fechaFin != null ? Date.valueOf(fechaFin) : null;
+
+        return jdbcTemplate.query(sql, temporadaPeriodoMapper, desarrollo, sqlInicio, sqlFin);
+    }
+
     @Caching(evict = {
             @CacheEvict(value = "temporadas_reservaciones", allEntries = true),
-            @CacheEvict(value = "temporadas_fecha", allEntries = true)
+            @CacheEvict(value = "temporadas_fecha", allEntries = true),
+            @CacheEvict(value = "temporadas_periodo", allEntries = true)
     })
     public Optional<Integer> spResvGuardarTemporadasMasivas(List<TemporadaMasivaRequest> temporadas, String usuario) {
         Map<String, Object> params = new HashMap<>();

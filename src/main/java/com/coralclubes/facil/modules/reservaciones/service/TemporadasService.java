@@ -4,6 +4,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.request.TemporadaMasivaRe
 import com.coralclubes.facil.modules.reservaciones.dto.request.TemporadaRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.response.TemporadaDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.TemporadaFechaResponse;
+import com.coralclubes.facil.modules.reservaciones.dto.response.TemporadaPeriodoResponse;
 import com.coralclubes.facil.modules.reservaciones.repository.TemporadasRepository;
 import com.coralclubes.facil.shared.infrastructure.exceptions.custom.ServiceUnavailableException;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
@@ -57,6 +58,12 @@ public class TemporadasService {
 
         List<TemporadaFechaResponse> actuales = repository.spResvObtenerTemporadasFecha(idDesarrollo, fecha);
         return ApiResponse.success(actuales);
+    }
+
+    public List<TemporadaPeriodoResponse> obtenerTemporadasPorPeriodo(Integer desarrollo, LocalDate fechaInicio, LocalDate fechaFin) {
+        if (desarrollo == null) desarrollo = 0;
+
+        return repository.fnResvObtenerTemporadaPorPeriodo(desarrollo, fechaInicio, fechaFin);
     }
 
     public ApiResponse<Integer> guardarTemporadasMasivas(List<TemporadaMasivaRequest> request) {
