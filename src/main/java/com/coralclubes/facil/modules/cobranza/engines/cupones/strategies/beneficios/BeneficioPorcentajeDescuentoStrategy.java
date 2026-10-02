@@ -57,8 +57,12 @@ public class BeneficioPorcentajeDescuentoStrategy implements CuponBeneficioStrat
 
             // Soporta JSON {"descuento": 30} o valor numérico directo "30"
             if (configStr.trim().startsWith("{")) {
-                Map<String, Object> map = objectMapper.readValue(configStr, new TypeReference<>() {});
-                Object descObj = map.get("descuento");
+                Map<String, Object> map = objectMapper.readValue(configStr, new TypeReference<>() {
+                });
+                Object descObj = map.get("porcentaje_descuento");
+                if (descObj == null) {
+                    descObj = map.get("descuento");
+                }
                 if (descObj instanceof Number n) {
                     porcentajeValor = BigDecimal.valueOf(n.doubleValue());
                 } else if (descObj instanceof String s) {

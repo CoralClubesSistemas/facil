@@ -150,6 +150,7 @@ public class CuponesEngine {
         // El descuento acumulado no debe sobrepasar el monto original
         BigDecimal descuentoFinal = descuentoAcumulado.min(montoOriginal);
 
+        log.info("Liquidación de cupón: Monto original = {}, Descuento acumulado = {}, Descuento final aplicado = {}", montoOriginal, descuentoAcumulado, descuentoFinal);
         return CuponLiquidacionResult.aprobado(montoOriginal, descuentoFinal, instruccionesAcciones);
     }
 }

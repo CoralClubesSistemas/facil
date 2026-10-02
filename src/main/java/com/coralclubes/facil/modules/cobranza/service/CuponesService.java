@@ -19,17 +19,13 @@ import com.coralclubes.facil.modules.cobranza.engines.cupones.dto.CuponLiquidaci
 import com.coralclubes.facil.modules.cobranza.engines.cupones.dto.ResultadoValidacionCondicion;
 import com.coralclubes.facil.modules.cobranza.engines.cupones.engine.CuponesEngine;
 import com.coralclubes.facil.modules.cobranza.repository.CuponesRepository;
-import com.coralclubes.facil.modules.reservaciones.dto.response.TipoUnidadDetalleDto;
 import com.coralclubes.facil.shared.domain.dto.ArchivoDescarga;
-import com.coralclubes.facil.shared.infrastructure.exceptions.custom.ServiceUnavailableException;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaDto;
 import com.coralclubes.logging.BusinessLogger;
-import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
