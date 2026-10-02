@@ -1,6 +1,6 @@
-package com.coralclubes.facil.modules.cobranza.model.pagos.engine;
+package com.coralclubes.facil.modules.cobranza.engines.pagos.engine;
 
-import com.coralclubes.facil.modules.cobranza.model.pagos.interfaces.PaymentStrategy;
+import com.coralclubes.facil.modules.cobranza.engines.pagos.interfaces.PaymentStrategy;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

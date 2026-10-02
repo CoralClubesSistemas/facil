@@ -1,4 +1,4 @@
-package com.coralclubes.facil.modules.cobranza.model.generador_movimientos;
+package com.coralclubes.facil.modules.cobranza.engines.generador_movimientos;
 
 import com.coralclubes.facil.modules.cobranza.dto.request.CotizacionMovimientoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GeneracionMovimientoRequest;

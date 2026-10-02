@@ -1,11 +1,11 @@
-package com.coralclubes.facil.modules.cobranza.model.pagos.strategies;
+package com.coralclubes.facil.modules.cobranza.engines.pagos.strategies;
 
 import com.coralclubes.facil.modules.cobranza.dto.request.ProcesarPagoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.IntentoPagoDto;
 import com.coralclubes.facil.modules.cobranza.dto.response.ProcesarPagoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.ConsultarOrdenCobranzaResponse;
-import com.coralclubes.facil.modules.cobranza.model.pagos.enums.EstatusIntentoPago;
-import com.coralclubes.facil.modules.cobranza.model.pagos.interfaces.PaymentStrategy;
+import com.coralclubes.facil.modules.cobranza.engines.pagos.enums.EstatusIntentoPago;
+import com.coralclubes.facil.modules.cobranza.engines.pagos.interfaces.PaymentStrategy;
 import com.coralclubes.facil.modules.cobranza.repository.IntentoPagoRepository;
 import com.coralclubes.facil.modules.cobranza.repository.CobranzaRepository;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.NotificationClient;

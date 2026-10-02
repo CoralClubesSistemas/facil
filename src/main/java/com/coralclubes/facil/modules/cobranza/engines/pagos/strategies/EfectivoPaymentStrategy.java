@@ -1,10 +1,10 @@
-package com.coralclubes.facil.modules.cobranza.model.pagos.strategies;
+package com.coralclubes.facil.modules.cobranza.engines.pagos.strategies;
 
 import com.coralclubes.facil.modules.cobranza.dto.request.ProcesarPagoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.IntentoPagoDto;
 import com.coralclubes.facil.modules.cobranza.dto.response.ProcesarPagoResponse;
-import com.coralclubes.facil.modules.cobranza.model.pagos.enums.EstatusIntentoPago;
-import com.coralclubes.facil.modules.cobranza.model.pagos.interfaces.PaymentStrategy;
+import com.coralclubes.facil.modules.cobranza.engines.pagos.enums.EstatusIntentoPago;
+import com.coralclubes.facil.modules.cobranza.engines.pagos.interfaces.PaymentStrategy;
 import com.coralclubes.facil.modules.cobranza.repository.IntentoPagoRepository;
 import com.coralclubes.utils.json.JsonUtils;
 import lombok.RequiredArgsConstructor;
@@ -17,17 +17,18 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class TerminalPaymentStrategy implements PaymentStrategy {
+public class EfectivoPaymentStrategy implements PaymentStrategy {
 
     private final IntentoPagoRepository intentoPagoRepository;
 
     @Override
     public String getGatewayType() {
-        return "TARJETA";
+        return "EFECTIVO";
     }
 
     @Override
     public ProcesarPagoResponse procesar(UUID ordenUuid, ProcesarPagoRequest request, String usuario) {
+        // 1. Efectivo se aprueba inmediatamente porque el cajero tiene el dinero en mano
         String estatus = EstatusIntentoPago.APROBADO.toString();
 
         String metadata = request.metadata() != null ? JsonUtils.toJson(request.metadata()) : null;
@@ -39,18 +40,18 @@ public class TerminalPaymentStrategy implements PaymentStrategy {
         // 2. Al ser aprobado directo, actualizamos fecha de aprobación
         intentoPagoRepository.spCobranzaActualizarEstatusIntentoPago(intentoId, estatus, LocalDateTime.now());
 
-        log.info("Intento de pago con TARJETA, orden {} registrado con ID {} y estatus APROBADO", ordenUuid, intentoId);
+        log.info("Intento de pago con EFECTIVO, orden {} registrado con ID {} y estatus APROBADO", ordenUuid, intentoId);
 
         return ProcesarPagoResponse.builder()
                 .intentoPagoId(intentoId)
                 .estatus(estatus)
-                .mensajeAccion("Pago con tarjeta registrado correctamente")
+                .mensajeAccion("Pago en efectivo registrado correctamente.")
                 .build();
     }
 
     @Override
     public void postProcesarFinalizacion(Integer idIntentoPago) {
-        intentoPagoRepository.spCobranzaRegistrarPagoTarjeta(idIntentoPago);
+        intentoPagoRepository.spCobranzaRegistrarPagoEfectivo(idIntentoPago);
     }
 
     @Override

@@ -9,7 +9,7 @@ import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoManualRespo
 import com.coralclubes.facil.modules.cobranza.dto.response.MovimientoPorTipoMembresiaResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.TarifaMovimientoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.UltimoMovimientoResponse;
-import com.coralclubes.facil.modules.cobranza.model.generador_movimientos.GeneracionMovimientoStrategy;
+import com.coralclubes.facil.modules.cobranza.engines.generador_movimientos.GeneracionMovimientoStrategy;
 import com.coralclubes.facil.modules.cobranza.repository.GeneracionMovimientosRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

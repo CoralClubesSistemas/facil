@@ -1,4 +1,4 @@
-package com.coralclubes.facil.modules.cobranza.model.pagos.interfaces;
+package com.coralclubes.facil.modules.cobranza.engines.pagos.interfaces;
 
 import com.coralclubes.facil.modules.cobranza.dto.request.ProcesarPagoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.IntentoPagoDto;

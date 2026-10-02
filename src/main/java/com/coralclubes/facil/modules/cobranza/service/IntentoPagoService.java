@@ -5,13 +5,12 @@ import com.coralclubes.facil.modules.cobranza.dto.response.ConsultarOrdenCobranz
 import com.coralclubes.facil.modules.cobranza.dto.response.EstadoCumplimientoDto;
 import com.coralclubes.facil.modules.cobranza.dto.response.IntentoPagoDto;
 import com.coralclubes.facil.modules.cobranza.dto.response.ProcesarPagoResponse;
-import com.coralclubes.facil.modules.cobranza.model.pagos.engine.PaymentStrategyFactory;
-import com.coralclubes.facil.modules.cobranza.model.pagos.enums.EstatusIntentoPago;
-import com.coralclubes.facil.modules.cobranza.model.pagos.interfaces.PaymentStrategy;
+import com.coralclubes.facil.modules.cobranza.engines.pagos.engine.PaymentStrategyFactory;
+import com.coralclubes.facil.modules.cobranza.engines.pagos.enums.EstatusIntentoPago;
+import com.coralclubes.facil.modules.cobranza.engines.pagos.interfaces.PaymentStrategy;
 import com.coralclubes.facil.modules.cobranza.repository.IntentoPagoRepository;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.logging.BusinessLogger;
-import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

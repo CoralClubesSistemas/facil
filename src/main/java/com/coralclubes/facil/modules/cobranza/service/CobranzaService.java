@@ -4,8 +4,8 @@ import com.coralclubes.facil.modules.cobranza.dto.projection.DatosReciboResponse
 import com.coralclubes.facil.modules.cobranza.dto.projection.ReciboPagado;
 import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.*;
-import com.coralclubes.facil.modules.cobranza.model.pagos.engine.PaymentStrategyFactory;
-import com.coralclubes.facil.modules.cobranza.model.pagos.interfaces.PaymentStrategy;
+import com.coralclubes.facil.modules.cobranza.engines.pagos.engine.PaymentStrategyFactory;
+import com.coralclubes.facil.modules.cobranza.engines.pagos.interfaces.PaymentStrategy;
 import com.coralclubes.facil.modules.cobranza.repository.CobranzaRepository;
 import com.coralclubes.facil.modules.cobranza.repository.IntentoPagoRepository;
 import com.coralclubes.facil.modules.usuarios.service.UsuarioService;

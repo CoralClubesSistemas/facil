@@ -13,7 +13,7 @@ import com.coralclubes.facil.modules.cobranza.dto.request.GuardarPropuestaPaquet
 import com.coralclubes.facil.modules.cobranza.dto.request.ProcesarPagoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.VenderPaqueteAnualRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.*;
-import com.coralclubes.facil.modules.cobranza.model.generador_movimientos.MovimientoPaqueteAnualStrategy;
+import com.coralclubes.facil.modules.cobranza.engines.generador_movimientos.MovimientoPaqueteAnualStrategy;
 import com.coralclubes.facil.modules.cobranza.repository.PaqueteAnualRepository;
 import com.coralclubes.facil.modules.sistema.service.PlantillasCuerpoCorreoService;
 import com.coralclubes.logging.BusinessLogger;

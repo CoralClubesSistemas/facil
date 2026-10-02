@@ -1,10 +1,10 @@
-package com.coralclubes.facil.modules.cobranza.model.pagos.strategies;
+package com.coralclubes.facil.modules.cobranza.engines.pagos.strategies;
 
 import com.coralclubes.facil.modules.cobranza.dto.request.ProcesarPagoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.IntentoPagoDto;
 import com.coralclubes.facil.modules.cobranza.dto.response.ProcesarPagoResponse;
-import com.coralclubes.facil.modules.cobranza.model.pagos.enums.EstatusIntentoPago;
-import com.coralclubes.facil.modules.cobranza.model.pagos.interfaces.PaymentStrategy;
+import com.coralclubes.facil.modules.cobranza.engines.pagos.enums.EstatusIntentoPago;
+import com.coralclubes.facil.modules.cobranza.engines.pagos.interfaces.PaymentStrategy;
 import com.coralclubes.facil.modules.cobranza.repository.IntentoPagoRepository;
 import com.coralclubes.utils.json.JsonUtils;
 import lombok.RequiredArgsConstructor;
@@ -17,11 +17,14 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DepositoPaymentStrategy implements PaymentStrategy {
+public class TerminalPaymentStrategy implements PaymentStrategy {
+
     private final IntentoPagoRepository intentoPagoRepository;
 
     @Override
-    public String getGatewayType() { return "DEPOSITO"; }
+    public String getGatewayType() {
+        return "TARJETA";
+    }
 
     @Override
     public ProcesarPagoResponse procesar(UUID ordenUuid, ProcesarPagoRequest request, String usuario) {
@@ -36,18 +39,18 @@ public class DepositoPaymentStrategy implements PaymentStrategy {
         // 2. Al ser aprobado directo, actualizamos fecha de aprobación
         intentoPagoRepository.spCobranzaActualizarEstatusIntentoPago(intentoId, estatus, LocalDateTime.now());
 
-        log.info("Intento de pago con DEPOSITO, orden {} registrado con ID {} y estatus APROBADO", ordenUuid, intentoId);
+        log.info("Intento de pago con TARJETA, orden {} registrado con ID {} y estatus APROBADO", ordenUuid, intentoId);
 
         return ProcesarPagoResponse.builder()
                 .intentoPagoId(intentoId)
                 .estatus(estatus)
-                .mensajeAccion("Pago con depósito registrado correctamente")
+                .mensajeAccion("Pago con tarjeta registrado correctamente")
                 .build();
     }
 
     @Override
     public void postProcesarFinalizacion(Integer idIntentoPago) {
-        intentoPagoRepository.spCobranzaRegistrarPagoDeposito(idIntentoPago);
+        intentoPagoRepository.spCobranzaRegistrarPagoTarjeta(idIntentoPago);
     }
 
     @Override

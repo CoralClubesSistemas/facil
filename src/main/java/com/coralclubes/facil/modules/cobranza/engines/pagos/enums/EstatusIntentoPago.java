@@ -1,4 +1,4 @@
-package com.coralclubes.facil.modules.cobranza.model.pagos.enums;
+package com.coralclubes.facil.modules.cobranza.engines.pagos.enums;
 
 public enum EstatusIntentoPago {
     APROBADO,
