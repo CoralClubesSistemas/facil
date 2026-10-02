@@ -1,4 +1,4 @@
-package com.coralclubes.facil.modules.reservaciones.model.promociones.utils;
+package com.coralclubes.facil.modules.reservaciones.engines.promociones.utils;
 
 import java.math.BigDecimal;
 import java.util.List;

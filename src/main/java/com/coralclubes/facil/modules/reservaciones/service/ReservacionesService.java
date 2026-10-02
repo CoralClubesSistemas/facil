@@ -1,7 +1,6 @@
 package com.coralclubes.facil.modules.reservaciones.service;
 
 import com.coralclubes.facil.modules.clientes.dto.request.FiltroCuponesMembresiaRequest;
-import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleDto;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponMembresiaCompletoResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
 import com.coralclubes.facil.modules.clientes.dto.response.PuntosMembresia;
@@ -27,8 +26,8 @@ import com.coralclubes.facil.modules.cobranza.service.IntentoPagoService;
 import com.coralclubes.facil.modules.reservaciones.dto.projection.DisponibilidadUnidadProjection;
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
 import com.coralclubes.facil.modules.reservaciones.dto.response.*;
-import com.coralclubes.facil.modules.reservaciones.model.promociones.dto.ReservacionContexto;
-import com.coralclubes.facil.modules.reservaciones.model.promociones.engine.PromocionesEngine;
+import com.coralclubes.facil.modules.reservaciones.engines.promociones.dto.ReservacionContexto;
+import com.coralclubes.facil.modules.reservaciones.engines.promociones.engine.PromocionesEngine;
 import com.coralclubes.facil.modules.reservaciones.repository.ReservacionesRepository;
 import com.coralclubes.facil.shared.domain.dto.PaginaResponse;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.NotificationClient;

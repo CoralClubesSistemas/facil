@@ -276,6 +276,23 @@ public class ReservacionesRepository {
         spExecutor.querySingle("spResvEliminarReservaTemporal", params, mapper);
     }
 
+    public void spResvModificarFechasReservacion(
+            String membresia,
+            Integer consecutivo,
+            LocalDate nuevaFechaSalida,
+            String usuario,
+            String motivo
+    ) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("Membresia", membresia);
+        params.put("Consecutivo", consecutivo);
+        params.put("NuevaFechaSalida", nuevaFechaSalida);
+        params.put("Usuario", usuario);
+        params.put("Motivo", motivo != null && !motivo.isBlank() ? motivo : "Ampliación de estancia por cupón X por Y");
+
+        spExecutor.executeLog("spResvModificarFechasReservacion", params, usuario, true, false);
+    }
+
     public String obtenerContextoReservaTemporalJson(UUID groupId) {
         Map<String, Object> params = new HashMap<>();
         params.put("GROUP_ID", groupId.toString());
@@ -294,13 +311,6 @@ public class ReservacionesRepository {
         RowMapper<String> jsonMapper = (rs, rowNum) -> rs.getString("DesgloseJson");
 
         return spExecutor.querySingle("spResvObtenerDesgloseFinanciero", params, jsonMapper).orElse(null);
-    }
-
-    public List<CuponDisponibleDto> obtenerCuponesCarrito(UUID groupId) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("GROUP_ID", groupId.toString());
-
-        return spExecutor.queryList("spResvObtenerCuponesCarrito", params, cuponMapper);
     }
 
     // 1. Guardar la reserva principal

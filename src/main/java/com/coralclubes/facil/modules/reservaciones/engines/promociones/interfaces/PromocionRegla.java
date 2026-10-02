@@ -1,7 +1,7 @@
-package com.coralclubes.facil.modules.reservaciones.model.promociones.interfaces;
+package com.coralclubes.facil.modules.reservaciones.engines.promociones.interfaces;
 
 import com.coralclubes.facil.modules.reservaciones.dto.response.Promocion.Regla;
-import com.coralclubes.facil.modules.reservaciones.model.promociones.dto.ReservacionContexto;
+import com.coralclubes.facil.modules.reservaciones.engines.promociones.dto.ReservacionContexto;
 
 public interface PromocionRegla {
     /**

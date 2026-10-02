@@ -1,4 +1,4 @@
-package com.coralclubes.facil.modules.reservaciones.model.promociones.dto;
+package com.coralclubes.facil.modules.reservaciones.engines.promociones.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

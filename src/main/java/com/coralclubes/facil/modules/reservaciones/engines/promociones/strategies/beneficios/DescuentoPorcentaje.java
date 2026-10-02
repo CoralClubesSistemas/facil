@@ -1,8 +1,8 @@
-package com.coralclubes.facil.modules.reservaciones.model.promociones.strategies.beneficios;
+package com.coralclubes.facil.modules.reservaciones.engines.promociones.strategies.beneficios;
 
 import com.coralclubes.facil.modules.reservaciones.dto.response.Promocion.Beneficio;
-import com.coralclubes.facil.modules.reservaciones.model.promociones.dto.ReservacionContexto;
-import com.coralclubes.facil.modules.reservaciones.model.promociones.interfaces.PromocionBeneficio;
+import com.coralclubes.facil.modules.reservaciones.engines.promociones.dto.ReservacionContexto;
+import com.coralclubes.facil.modules.reservaciones.engines.promociones.interfaces.PromocionBeneficio;
 import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 
