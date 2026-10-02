@@ -16,6 +16,6 @@ public record ConfirmarReservaRequest(
         String peticionEspecial,
         List<Integer> totalPersonas, // Arreglo con la cantidad de personas por habitación [2, 2, 1]
         String codigoPromocion,
-        CalcularCheckoutRequest.CuponRequest cupon,
+        Integer cuponId,
         List<Integer> rrtIdsPagoPuntos
 ) {}

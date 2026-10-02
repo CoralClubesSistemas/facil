@@ -1,5 +1,6 @@
 package com.coralclubes.facil.modules.reservaciones.service;
 
+import com.coralclubes.facil.modules.clientes.dto.request.ConsumirCuponMembresiaRequest;
 import com.coralclubes.facil.modules.clientes.dto.request.FiltroCuponesMembresiaRequest;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponMembresiaCompletoResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
@@ -7,8 +8,11 @@ import com.coralclubes.facil.modules.clientes.dto.response.PuntosMembresia;
 import com.coralclubes.facil.modules.clientes.service.CuponesMembresiasService;
 import com.coralclubes.facil.modules.clientes.service.PuntosService;
 import com.coralclubes.facil.modules.clientes.service.SociosService;
+import com.coralclubes.facil.modules.cobranza.engines.cupones.dto.CuponAccionInstruccion;
 import com.coralclubes.facil.modules.cobranza.engines.cupones.dto.CuponEvaluacionContexto;
-import com.coralclubes.facil.modules.cobranza.engines.cupones.engine.CuponesEngine;
+import com.coralclubes.facil.modules.cobranza.engines.cupones.dto.CuponLiquidacionResult;
+import com.coralclubes.facil.modules.cobranza.service.CuponesService;
+import com.coralclubes.facil.modules.reservaciones.engines.cupones_reservaciones.engine.CuponesReservacionesEngine;
 import com.coralclubes.facil.modules.reservaciones.repository.UnidadesRepository;
 import com.coralclubes.facil.shared.domain.dto.ArchivoDescarga;
 import com.coralclubes.facil.shared.domain.enums.DesarrolloLogoEnum;
@@ -86,7 +90,8 @@ public class ReservacionesService {
     private final UnidadesRepository unidadesRepo;
     private final IntentoPagoService intentoPagoService;
     private final CuponesMembresiasService cuponesMembresiasService;
-    private final CuponesEngine cuponesEngine;
+    private final CuponesService cuponesService;
+    private final CuponesReservacionesEngine cuponesReservacionesEngine;
     private final TemporadasService temporadasService;
 
     @Value("${app.clients.notifications.templates.reserva-cancelada}")
@@ -160,56 +165,7 @@ public class ReservacionesService {
             throw new IllegalArgumentException("No se encontró el contexto de la reservación temporal.");
         }
 
-        // Obtener datos del socio para enriquecer validación de condiciones (afiliación CA, clasificación, etc.)
-        var socioResponse = sociosService.obtenerSocios(contexto.getMembresia());
-        var socio = socioResponse != null ? socioResponse.data() : null;
-
-        // Construir mapa de atributos dinámicos con datos reales
-        Map<String, Object> atributos = new HashMap<>();
-        atributos.put("fechaEntrada", contexto.getFechaEntrada());
-        atributos.put("fechaSalida", contexto.getFechaSalida());
-        atributos.put("fechaInicio", contexto.getFechaEntrada());
-        atributos.put("fechaFin", contexto.getFechaSalida());
-
-        if (contexto.getItems() != null) {
-            int totalPersonas = contexto.getItems().stream()
-                    .mapToInt(item -> item.getCapacidad() != null ? item.getCapacidad() : 2)
-                    .sum();
-            atributos.put("personas", totalPersonas);
-            atributos.put("numeroPersonas", totalPersonas);
-            atributos.put("noches", contexto.getItems().isEmpty() || contexto.getItems().getFirst().getCostoPorNoche() == null
-                    ? null
-                    : contexto.getItems().getFirst().getCostoPorNoche().size());
-        }
-
-        if (socio != null) {
-            atributos.put("clasificacionMembresiaId", socio.clasificacionMembresiaId());
-            atributos.put("clasificacionMembresia", socio.clasificacionMembresia());
-        }
-
-        // Obtener el desglose de temporadas por día de estancia
-        if (contexto.getIdDesarrollo() != null && contexto.getFechaEntrada() != null && contexto.getFechaSalida() != null) {
-            List<TemporadaPeriodoResponse> temporadasPeriodo = temporadasService.obtenerTemporadasPorPeriodo(
-                    contexto.getIdDesarrollo(), contexto.getFechaEntrada(), contexto.getFechaSalida()
-            );
-
-            List<Integer> idsTemporadas = temporadasPeriodo.stream()
-                    .map(TemporadaPeriodoResponse::temporadaId)
-                    .filter(java.util.Objects::nonNull)
-                    .distinct()
-                    .toList();
-
-            atributos.put("temporadas", idsTemporadas);
-            atributos.put("temporadasIds", idsTemporadas);
-        }
-
-        CuponEvaluacionContexto contextoEvaluacion = new CuponEvaluacionContexto(
-                contexto.getMembresia(),
-                contexto.getIdDesarrollo(),
-                contexto.getFechaEntrada(),
-                contexto.getMontoTotalCarrito(),
-                atributos
-        );
+        CuponEvaluacionContexto contextoEvaluacion = construirContextoEvaluacionCupon(contexto);
 
         // 2. Obtiene el listado de cupones disponibles de la membresía con filtros
         Integer anioConsulta = contexto.getFechaEntrada() != null ? contexto.getFechaEntrada().getYear() : null;
@@ -229,7 +185,7 @@ public class ReservacionesService {
         // 4. Mapea al DTO CuponMembresiaReservacionDto
         List<CuponMembresiaReservacionDto> cuponesValidos = cuponesCompletos.stream()
                 .filter(cuponCompleto -> {
-                    var resultadoValidacion = cuponesEngine.validarCondiciones(cuponCompleto.condiciones(), contextoEvaluacion);
+                    var resultadoValidacion = cuponesService.validarCondiciones(cuponCompleto.condiciones(), contextoEvaluacion);
                     return resultadoValidacion.esValida();
                 })
                 .map(cuponCompleto -> {
@@ -285,8 +241,8 @@ public class ReservacionesService {
     }
 
     public ApiResponse<ResumenCheckoutResponse> calcularCheckout(CalcularCheckoutRequest request) {
-        log.info("Calculando checkout para groupId: {}, cupon: {}, promo: {}, rrtIdsPagoPuntos: {}",
-                request.groupId(), request.cupon(), request.codigoPromocion(), request.rrtIdsPagoPuntos());
+        log.info("Calculando checkout para groupId: {}, cuponId: {}, promo: {}, rrtIdsPagoPuntos: {}",
+                request.groupId(), request.cuponId(), request.codigoPromocion(), request.rrtIdsPagoPuntos());
 
         // 1. Obtener Desglose Base
         String jsonDesglose = repository.obtenerDesgloseFinancieroJson(request.groupId());
@@ -323,11 +279,11 @@ public class ReservacionesService {
 
         // 4. Evaluar Beneficios Tradicionales (Cupones / Promo de Buen Fin)
         // Solo para las habitaciones que NO se van a pagar con puntos
-        ResultadoBeneficio beneficio = new ResultadoBeneficio(BigDecimal.ZERO, false, null, null, null);
+        ResultadoBeneficio beneficio = ResultadoBeneficio.vacio();
 
-        if (request.cupon() != null || (request.codigoPromocion() != null && !request.codigoPromocion().isBlank())) {
+        if (request.cuponId() != null || (request.codigoPromocion() != null && !request.codigoPromocion().isBlank())) {
             // Evaluamos y aplicamos
-            beneficio = evaluarBeneficios(request.cupon(), request.codigoPromocion(), contexto, habitaciones);
+            beneficio = evaluarBeneficios(request.cuponId(), request.codigoPromocion(), contexto, habitaciones);
         }
 
         // 5. Consolidar Totales Finales por Habitación
@@ -407,9 +363,9 @@ public class ReservacionesService {
         validarOcupantesVsHabitaciones(request.totalPersonas(), contexto.getItems().size());
 
         // 1. Evaluar si hay beneficios tradicionales (Solo si no hay pagos con puntos)
-        ResultadoBeneficio beneficio = new ResultadoBeneficio(BigDecimal.ZERO, false, null, null, null);
+        ResultadoBeneficio beneficio = ResultadoBeneficio.vacio();
         if (request.rrtIdsPagoPuntos() == null || request.rrtIdsPagoPuntos().isEmpty()) {
-            beneficio = evaluarBeneficiosSobreContexto(request.cupon(), request.codigoPromocion(), contexto);
+            beneficio = evaluarBeneficiosSobreContexto(request.cuponId(), request.codigoPromocion(), contexto);
         }
 
         // 2. Construir la lista de cargos para spResvGenerarCargosCheckout
@@ -514,7 +470,7 @@ public class ReservacionesService {
                 request.peticionEspecial(),
                 request.totalPersonas(),
                 request.codigoPromocion(),
-                request.cupon(),
+                request.cuponId(),
                 request.rrtIdsPagoPuntos()
         );
         intentoMetadata.put("request", requestParaMetadatos);
@@ -566,9 +522,9 @@ public class ReservacionesService {
         validarOcupantesVsHabitaciones(request.totalPersonas(), contexto.getItems().size());
 
         // 1. Evaluar si hay beneficios tradicionales (Solo si no hay pagos con puntos)
-        ResultadoBeneficio beneficio = new ResultadoBeneficio(BigDecimal.ZERO, false, null, null, null);
+        ResultadoBeneficio beneficio = ResultadoBeneficio.vacio();
         if (request.rrtIdsPagoPuntos() == null || request.rrtIdsPagoPuntos().isEmpty()) {
-            beneficio = evaluarBeneficiosSobreContexto(request.cupon(), request.codigoPromocion(), contexto);
+            beneficio = evaluarBeneficiosSobreContexto(request.cuponId(), request.codigoPromocion(), contexto);
         }
 
         // 2. Obtener el tabulador de puntos (para saber cuántos puntos cuesta cada cuarto)
@@ -592,15 +548,14 @@ public class ReservacionesService {
 
         Integer folioPrincipal = consecutivosGenerados.getFirst();
 
-        // Quemar beneficios o puntos según corresponda
-        if (beneficio.esValido() && !beneficio.montoDescuento().equals(BigDecimal.ZERO)) {
-            // Quema Cupones o Promociones normales
+        // Quemar beneficios o cupones según corresponda
+        if (beneficio.esValido()) {
             quemarBeneficiosEnBaseDeDatos(
-                    beneficio.tipoAplicado(),
+                    beneficio,
                     contexto.getMembresia(),
                     folioPrincipal,
                     request.codigoPromocion(),
-                    request.cupon(),
+                    request.cuponId(),
                     usuario
             );
         }
@@ -1111,8 +1066,60 @@ public class ReservacionesService {
         });
     }
 
-    private ResultadoBeneficio evaluarBeneficios(CalcularCheckoutRequest.CuponRequest cupon, String codigoPromocion, ReservacionContexto contexto, List<ResumenCheckoutResponse.ItemCheckoutDto> habitacionesVisuales) {
-        ResultadoBeneficio beneficio = evaluarBeneficiosSobreContexto(cupon, codigoPromocion, contexto);
+    private CuponEvaluacionContexto construirContextoEvaluacionCupon(ReservacionContexto contexto) {
+        if (contexto == null) return null;
+
+        var socioResponse = sociosService.obtenerSocios(contexto.getMembresia());
+        var socio = socioResponse != null ? socioResponse.data() : null;
+
+        Map<String, Object> atributos = new HashMap<>();
+        atributos.put("fechaEntrada", contexto.getFechaEntrada());
+        atributos.put("fechaSalida", contexto.getFechaSalida());
+        atributos.put("fechaInicio", contexto.getFechaEntrada());
+        atributos.put("fechaFin", contexto.getFechaSalida());
+
+        if (contexto.getItems() != null) {
+            int totalPersonas = contexto.getItems().stream()
+                    .mapToInt(item -> item.getCapacidad() != null ? item.getCapacidad() : 2)
+                    .sum();
+            atributos.put("personas", totalPersonas);
+            atributos.put("numeroPersonas", totalPersonas);
+            atributos.put("noches", contexto.getItems().isEmpty() || contexto.getItems().getFirst().getCostoPorNoche() == null
+                    ? null
+                    : contexto.getItems().getFirst().getCostoPorNoche().size());
+        }
+
+        if (socio != null) {
+            atributos.put("clasificacionMembresiaId", socio.clasificacionMembresiaId());
+            atributos.put("clasificacionMembresia", socio.clasificacionMembresia());
+        }
+
+        if (contexto.getIdDesarrollo() != null && contexto.getFechaEntrada() != null && contexto.getFechaSalida() != null) {
+            List<TemporadaPeriodoResponse> temporadasPeriodo = temporadasService.obtenerTemporadasPorPeriodo(
+                    contexto.getIdDesarrollo(), contexto.getFechaEntrada(), contexto.getFechaSalida()
+            );
+
+            List<Integer> idsTemporadas = temporadasPeriodo.stream()
+                    .map(TemporadaPeriodoResponse::temporadaId)
+                    .filter(java.util.Objects::nonNull)
+                    .distinct()
+                    .toList();
+
+            atributos.put("temporadas", idsTemporadas);
+            atributos.put("temporadasIds", idsTemporadas);
+        }
+
+        return new CuponEvaluacionContexto(
+                contexto.getMembresia(),
+                contexto.getIdDesarrollo(),
+                contexto.getFechaEntrada(),
+                contexto.getMontoTotalCarrito(),
+                atributos
+        );
+    }
+
+    private ResultadoBeneficio evaluarBeneficios(Integer cuponId, String codigoPromocion, ReservacionContexto contexto, List<ResumenCheckoutResponse.ItemCheckoutDto> habitacionesVisuales) {
+        ResultadoBeneficio beneficio = evaluarBeneficiosSobreContexto(cuponId, codigoPromocion, contexto);
 
         if (beneficio.esValido() && contexto != null && contexto.getUnidadElegidaParaDescuento() != null) {
             Integer idHabitacionGanadora = contexto.getUnidadElegidaParaDescuento().getIdTipoHabitacion();
@@ -1128,19 +1135,52 @@ public class ReservacionesService {
         return beneficio;
     }
 
-    private ResultadoBeneficio evaluarBeneficiosSobreContexto(CalcularCheckoutRequest.CuponRequest cupon, String codigoPromocion, ReservacionContexto contexto) {
+    private ResultadoBeneficio evaluarBeneficiosSobreContexto(Integer cuponId, String codigoPromocion, ReservacionContexto contexto) {
         if (contexto == null || contexto.getItems().isEmpty())
-            return new ResultadoBeneficio(BigDecimal.ZERO, false, null, null, null);
+            return ResultadoBeneficio.vacio();
 
-        if (cupon != null) {
-            contexto.setUnidadElegidaParaDescuento(contexto.getItems().getFirst());
-            BigDecimal porcentaje = cupon.porcentajeDescuento().divide(new BigDecimal("100"));
-            BigDecimal descuento = contexto.getUnidadElegidaParaDescuento().getCostoEstancia().multiply(porcentaje).setScale(2, RoundingMode.HALF_UP);
+        if (cuponId != null) {
+            CuponEvaluacionContexto contextoEvaluacion = construirContextoEvaluacionCupon(contexto);
 
-            if (descuento.compareTo(BigDecimal.ZERO) > 0) {
-                return new ResultadoBeneficio(descuento, true, "CUPON", "Cupón PQA: " + cupon.tipoDescuento(), cupon.tipoDescuento());
+            Integer anioConsulta = contexto.getFechaEntrada() != null ? contexto.getFechaEntrada().getYear() : null;
+            var filtro = new FiltroCuponesMembresiaRequest(
+                    contexto.getMembresia(),
+                    anioConsulta,
+                    null,
+                    null,
+                    null,
+                    contexto.getIdDesarrollo(),
+                    objetivos
+            );
+            List<CuponMembresiaCompletoResponse> cuponesMembresia = cuponesMembresiasService.obtenerCuponesMembresiaCompletos(filtro);
+
+            var cuponEncontrado = cuponesMembresia.stream()
+                    .filter(c -> cuponId.equals(c.cupon().id()) || cuponId.equals(c.cupon().idCupon()))
+                    .findFirst();
+
+            Integer idCatalogoCupon = cuponEncontrado.map(c -> c.cupon().idCupon()).orElse(cuponId);
+            Integer pqacId = cuponEncontrado.map(c -> c.cupon().id()).orElse(cuponId);
+            String nombreCupon = cuponEncontrado.map(c -> c.cupon().nombreCupon()).orElse("CUPON");
+
+            CuponLiquidacionResult liquidacion = cuponesService.liquidarCupon(idCatalogoCupon, contextoEvaluacion);
+
+            if (!liquidacion.esValido()) {
+                return new ResultadoBeneficio(BigDecimal.ZERO, false, null, liquidacion.mensajeRechazo(), null, List.of(), null);
             }
-            return new ResultadoBeneficio(BigDecimal.ZERO, false, null, "El cupón no arrojó descuento aplicable.", null);
+
+            contexto.setUnidadElegidaParaDescuento(contexto.getItems().getFirst());
+            BigDecimal descuento = liquidacion.montoDescuento() != null ? liquidacion.montoDescuento() : BigDecimal.ZERO;
+
+            String motivoVisual = "Cupón: " + nombreCupon;
+            return new ResultadoBeneficio(
+                    descuento,
+                    true,
+                    "CUPON",
+                    "¡Cupón aplicado con éxito!",
+                    motivoVisual,
+                    liquidacion.accionesInstrucciones(),
+                    pqacId
+            );
         }
 
         if (codigoPromocion != null && !codigoPromocion.isBlank()) {
@@ -1148,14 +1188,14 @@ public class ReservacionesService {
             if (promocion != null) {
                 BigDecimal descuento = promocionesEngine.evaluarYAplicar(promocion, contexto);
                 if (descuento.compareTo(BigDecimal.ZERO) > 0) {
-                    return new ResultadoBeneficio(descuento, true, "PROMOCION", "¡Promoción aplicada con éxito!", "Promo: " + codigoPromocion.toUpperCase());
+                    return new ResultadoBeneficio(descuento, true, "PROMOCION", "¡Promoción aplicada con éxito!", "Promo: " + codigoPromocion.toUpperCase(), List.of(), null);
                 }
-                return new ResultadoBeneficio(BigDecimal.ZERO, false, null, "El cupón no aplica para las habitaciones seleccionadas.", null);
+                return new ResultadoBeneficio(BigDecimal.ZERO, false, null, "El cupón no aplica para las habitaciones seleccionadas.", null, List.of(), null);
             }
-            return new ResultadoBeneficio(BigDecimal.ZERO, false, null, "El código ingresado no existe o expiró.", null);
+            return new ResultadoBeneficio(BigDecimal.ZERO, false, null, "El código ingresado no existe o expiró.", null, List.of(), null);
         }
 
-        return new ResultadoBeneficio(BigDecimal.ZERO, false, null, null, null);
+        return ResultadoBeneficio.vacio();
     }
 
     private List<DetalleReservacionJson> generarListaDetallesParaBaseDatos(
@@ -1188,11 +1228,18 @@ public class ReservacionesService {
         return lista;
     }
 
-    private void quemarBeneficiosEnBaseDeDatos(String tipoAplicado, String membresia, Integer consecutivo, String codigoPromo, CalcularCheckoutRequest.CuponRequest cupon, String usuario) {
-        if ("PROMOCION".equals(tipoAplicado)) {
+    private void quemarBeneficiosEnBaseDeDatos(ResultadoBeneficio beneficio, String membresia, Integer consecutivo, String codigoPromo, Integer cuponId, String usuario) {
+        if ("PROMOCION".equals(beneficio.tipoAplicado())) {
             repository.registrarConsumoPromocion(membresia, consecutivo, codigoPromo, usuario);
-        } else if ("CUPON".equals(tipoAplicado)) {
-            repository.consumirCuponReservacion(membresia, cupon.paqueteId(), cupon.consecutivo(), usuario);
+        } else if ("CUPON".equals(beneficio.tipoAplicado())) {
+            Integer pqacId = beneficio.pqacId() != null ? beneficio.pqacId() : cuponId;
+            if (pqacId != null) {
+                cuponesMembresiasService.consumirCuponMembresia(new ConsumirCuponMembresiaRequest(membresia, pqacId), usuario);
+            }
+            if (beneficio.accionesInstrucciones() != null && !beneficio.accionesInstrucciones().isEmpty()) {
+                DetalleReservacionDto detalle = repository.obtenerDetalleReservacion(membresia, consecutivo);
+                cuponesReservacionesEngine.procesarInstrucciones(beneficio.accionesInstrucciones(), detalle, usuario);
+            }
         }
     }
 
@@ -1233,8 +1280,13 @@ public class ReservacionesService {
             boolean esValido,
             String tipoAplicado,
             String mensaje,
-            String mensajeMotivoVisual
+            String mensajeMotivoVisual,
+            List<CuponAccionInstruccion> accionesInstrucciones,
+            Integer pqacId
     ) {
+        public static ResultadoBeneficio vacio() {
+            return new ResultadoBeneficio(BigDecimal.ZERO, false, null, null, null, List.of(), null);
+        }
     }
 
     public ReservacionConfirmadaEvent construirEventDesdeDb(String membresia, Integer consecutivo) {

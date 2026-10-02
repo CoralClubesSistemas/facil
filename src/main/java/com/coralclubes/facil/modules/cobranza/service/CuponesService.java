@@ -48,6 +48,10 @@ public class CuponesService {
     private final StorageClient storageClient;
     private final BusinessLogger logger;
 
+    public ResultadoValidacionCondicion validarCondiciones(List<CuponCondicionResponse> condiciones, CuponEvaluacionContexto contexto) {
+        return cuponesEngine.validarCondiciones(condiciones, contexto);
+    }
+
     public ResultadoValidacionCondicion validarCondicionesCupon(Integer cuponId, CuponEvaluacionContexto contexto) {
         List<CuponCondicionResponse> condiciones = repository.spCuponesObtenerCondiciones(cuponId);
         return cuponesEngine.validarCondiciones(condiciones, contexto);
