@@ -29,7 +29,7 @@ public class BeneficioLegacyStrategy implements CuponBeneficioStrategy {
         log.info("Procesando beneficio de tipo LEGACY para cupón: beneficioId={}, concepto={}",
                 beneficio.beneficioId(), beneficio.concepto());
 
-        String conceptoObjetivo = beneficio.conceptoClave() != null ? beneficio.conceptoClave() : contexto.conceptoObjetivo();
+        String conceptoObjetivo = beneficio.conceptoClave();
 
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("configuracion", beneficio.configuracionBeneficio());

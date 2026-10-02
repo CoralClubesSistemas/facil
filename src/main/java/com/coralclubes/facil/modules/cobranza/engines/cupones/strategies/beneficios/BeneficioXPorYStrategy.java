@@ -69,7 +69,7 @@ public class BeneficioXPorYStrategy implements CuponBeneficioStrategy {
         // Si viene como {"paga": 2, "recibe": 2} interpretado como "Paga 2 y recibe 2 adicionales":
         int cantidadGratis = Math.max(1, recibe > paga ? (recibe - paga) : recibe);
 
-        String conceptoObjetivo = beneficio.conceptoClave() != null ? beneficio.conceptoClave() : contexto.conceptoObjetivo();
+        String conceptoObjetivo = beneficio.conceptoClave();
 
         BigDecimal montoDescuento = BigDecimal.ZERO;
         var costoUnitarioOpt = contexto.getAtributo("costoUnitario", BigDecimal.class);

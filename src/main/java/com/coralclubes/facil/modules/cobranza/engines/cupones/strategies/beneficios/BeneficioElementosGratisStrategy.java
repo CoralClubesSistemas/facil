@@ -54,7 +54,7 @@ public class BeneficioElementosGratisStrategy implements CuponBeneficioStrategy 
             }
         }
 
-        String conceptoObjetivo = beneficio.conceptoClave() != null ? beneficio.conceptoClave() : contexto.conceptoObjetivo();
+        String conceptoObjetivo = beneficio.conceptoClave();
 
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("cantidad", cantidad);

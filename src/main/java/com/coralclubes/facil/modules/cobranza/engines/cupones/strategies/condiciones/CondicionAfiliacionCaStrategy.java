@@ -6,6 +6,12 @@ import com.coralclubes.facil.modules.cobranza.engines.cupones.dto.ResultadoValid
 import com.coralclubes.facil.modules.cobranza.engines.cupones.interfaces.CuponCondicionStrategy;
 import org.springframework.stereotype.Component;
 
+/**
+ * Requiere que el contexto contenga en los atributos el campo 'esAfiliadoCa' o 'afiliadoCa' de tipo Boolean.
+ * Si el valor de la condición es "true", el cupón solo será válido si el usuario es afiliado a CA (esAfiliadoCa = true).
+ * Si el valor de la condición es "false", el cupón solo será válido si el usuario NO es afiliado a CA (esAfiliadoCa = false).
+ * Si el valor de la condición es nulo o vacío, la condición se considera válida sin importar el estado de afiliación.
+ */
 @Component
 public class CondicionAfiliacionCaStrategy implements CuponCondicionStrategy {
 

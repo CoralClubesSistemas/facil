@@ -2,11 +2,14 @@ package com.coralclubes.facil.modules.reservaciones.service;
 
 import com.coralclubes.facil.modules.clientes.dto.request.FiltroCuponesMembresiaRequest;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleDto;
+import com.coralclubes.facil.modules.clientes.dto.response.CuponMembresiaCompletoResponse;
 import com.coralclubes.facil.modules.clientes.dto.response.InformacionSocio;
 import com.coralclubes.facil.modules.clientes.dto.response.PuntosMembresia;
 import com.coralclubes.facil.modules.clientes.service.CuponesMembresiasService;
 import com.coralclubes.facil.modules.clientes.service.PuntosService;
 import com.coralclubes.facil.modules.clientes.service.SociosService;
+import com.coralclubes.facil.modules.cobranza.engines.cupones.dto.CuponEvaluacionContexto;
+import com.coralclubes.facil.modules.cobranza.engines.cupones.engine.CuponesEngine;
 import com.coralclubes.facil.modules.reservaciones.repository.UnidadesRepository;
 import com.coralclubes.facil.shared.domain.dto.ArchivoDescarga;
 import com.coralclubes.facil.shared.domain.enums.DesarrolloLogoEnum;
@@ -84,6 +87,7 @@ public class ReservacionesService {
     private final UnidadesRepository unidadesRepo;
     private final IntentoPagoService intentoPagoService;
     private final CuponesMembresiasService cuponesMembresiasService;
+    private final CuponesEngine cuponesEngine;
 
     @Value("${app.clients.notifications.templates.reserva-cancelada}")
     private String templateReservaCancelada;
@@ -149,8 +153,92 @@ public class ReservacionesService {
     // 2. CHECKOUT Y CÁLCULOS FINANCIEROS (BFF)
     // =========================================================================
 
-    public ApiResponse<List<CuponDisponibleDto>> obtenerCuponesDisponibles(UUID groupId) {
-        return ApiResponse.success("Cupones obtenidos", repository.obtenerCuponesCarrito(groupId));
+    public ApiResponse<List<CuponMembresiaReservacionDto>> obtenerCuponesValidosParaReservacion(UUID groupId) {
+        // 1. Obtiene el contexto de la reservación
+        ReservacionContexto contexto = obtenerContextoHidratado(groupId);
+        if (contexto == null) {
+            throw new IllegalArgumentException("No se encontró el contexto de la reservación temporal.");
+        }
+
+        // Obtener datos del socio para enriquecer validación de condiciones (afiliación CA, clasificación, etc.)
+        var socioResponse = sociosService.obtenerSocios(contexto.getMembresia());
+        var socio = socioResponse != null ? socioResponse.data() : null;
+
+        // Construir mapa de atributos dinámicos
+        Map<String, Object> atributos = new HashMap<>();
+        atributos.put("fechaEntrada", contexto.getFechaEntrada());
+        atributos.put("fechaSalida", contexto.getFechaSalida());
+        atributos.put("fechaInicio", contexto.getFechaEntrada());
+        atributos.put("fechaFin", contexto.getFechaSalida());
+
+        if (contexto.getItems() != null) {
+            int totalPersonas = contexto.getItems().stream()
+                    .mapToInt(item -> item.getCapacidad() != null ? item.getCapacidad() : 2)
+                    .sum();
+            atributos.put("personas", totalPersonas);
+            atributos.put("numeroPersonas", totalPersonas);
+            atributos.put("noches", contexto.getItems().isEmpty() || contexto.getItems().getFirst().getCostoPorNoche() == null
+                    ? null
+                    : contexto.getItems().getFirst().getCostoPorNoche().size());
+        }
+
+        if (socio != null) {
+            atributos.put("clasificacionMembresiaId", socio.clasificacionMembresiaId());
+            atributos.put("clasificacionMembresia", socio.clasificacionMembresia());
+            atributos.put("esAfiliadoCa", socio.convenioCie() != null && !socio.convenioCie().isBlank());
+        }
+
+        CuponEvaluacionContexto contextoEvaluacion = new CuponEvaluacionContexto(
+                contexto.getMembresia(),
+                contexto.getIdDesarrollo(),
+                contexto.getFechaEntrada(),
+                contexto.getMontoTotalCarrito(),
+                atributos
+        );
+
+        // 2. Obtiene el listado de cupones disponibles de la membresía con filtros
+        Integer anioConsulta = contexto.getFechaEntrada() != null ? contexto.getFechaEntrada().getYear() : null;
+        var filtro = new FiltroCuponesMembresiaRequest(
+                contexto.getMembresia(),
+                anioConsulta,
+                contexto.getFechaEntrada() != null ? contexto.getFechaEntrada().atStartOfDay() : null,
+                contexto.getFechaSalida() != null ? contexto.getFechaSalida().atStartOfDay() : null,
+                null,
+                contexto.getIdDesarrollo(),
+                objetivos
+        );
+
+        log.debug("filtros a aplicar: {}", filtro);
+
+        List<CuponMembresiaCompletoResponse> cuponesCompletos = cuponesMembresiasService.obtenerCuponesMembresiaCompletos(filtro);
+
+        log.debug("cupones antes de filtros: {}", cuponesCompletos);
+
+        // 3. Pasa cada cupón por el motor para ejecutar el validador y devuelve solo los que han cumplido con todo
+        // 4. Mapea al DTO CuponMembresiaReservacionDto
+        List<CuponMembresiaReservacionDto> cuponesValidos = cuponesCompletos.stream()
+                .filter(cuponCompleto -> {
+                    var resultadoValidacion = cuponesEngine.validarCondiciones(cuponCompleto.condiciones(), contextoEvaluacion);
+                    return resultadoValidacion.esValida();
+                })
+                .map(cuponCompleto -> {
+                    var c = cuponCompleto.cupon();
+                    return new CuponMembresiaReservacionDto(
+                            c.id(),
+                            c.idCupon(),
+                            c.nombreCupon(),
+                            c.descripcionCupon(),
+                            c.desarrollosLegibles(),
+                            c.inicioVigencia(),
+                            c.finVigencia(),
+                            c.cuponesDisponibles()
+                    );
+                })
+                .toList();
+
+        log.debug("listado de cupones validos: {}", cuponesValidos);
+
+        return ApiResponse.success("Cupones válidos obtenidos exitosamente", cuponesValidos);
     }
 
     public List<CuponMembresiaReservacionDto> obtenerCuponesMembresia(String membresia, Integer anioConsulta) {

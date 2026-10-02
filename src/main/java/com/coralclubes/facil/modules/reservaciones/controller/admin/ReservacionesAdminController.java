@@ -1,6 +1,5 @@
 package com.coralclubes.facil.modules.reservaciones.controller.admin;
 
-import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleDto;
 import com.coralclubes.facil.modules.cobranza.dto.response.ConfirmacionReservaResponse;
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
 import com.coralclubes.facil.modules.reservaciones.dto.response.CuponMembresiaReservacionDto;
@@ -67,8 +66,8 @@ public class ReservacionesAdminController {
 
     @GetMapping("/cupones/{groupId}")
     @PreAuthorize("hasAuthority('MOD_SMNURESERVACIONES')")
-    public ResponseEntity<ApiResponse<List<CuponDisponibleDto>>> obtenerCuponesDisponibles(@PathVariable UUID groupId) {
-        return ResponseEntity.ok(service.obtenerCuponesDisponibles(groupId));
+    public ResponseEntity<ApiResponse<List<CuponMembresiaReservacionDto>>> obtenerCuponesValidosParaReservacion(@PathVariable UUID groupId) {
+        return ResponseEntity.ok(service.obtenerCuponesValidosParaReservacion(groupId));
     }
 
     @GetMapping("/cupones/membresia/{membresia}")

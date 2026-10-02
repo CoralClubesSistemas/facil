@@ -6,6 +6,11 @@ import com.coralclubes.facil.modules.cobranza.engines.cupones.dto.ResultadoValid
 import com.coralclubes.facil.modules.cobranza.engines.cupones.interfaces.CuponCondicionStrategy;
 import org.springframework.stereotype.Component;
 
+/**
+ * Estrategia que evalua si el número de personas/huéspedes en el consumo no excede el valor máximo permitido por la condición.
+ * para ello el campo dentro de los atributos debe estar nombrado como 'personas', 'numeroPersonas', 'huespedes' o 'adultos' y debe ser de tipo Integer.
+ * y el campo en el valor de la condicion debe ser un número entero que representa el máximo permitido.
+ */
 @Component
 public class CondicionMaxPersonasStrategy implements CuponCondicionStrategy {
 

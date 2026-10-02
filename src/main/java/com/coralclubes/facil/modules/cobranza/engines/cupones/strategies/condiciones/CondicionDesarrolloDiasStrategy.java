@@ -17,6 +17,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Estrategia que evalua si el o los dias del contexto estan contenidos en el valor de la condicion
+ * Primero se evalua si dentro de los atributos del contexto existen los atributos 'fechaEntrada' o 'fechaInicio'
+ * y 'fechaSalida' o 'fechaFin' de tipo LocalDate o LocalDateTime, si no existen se evalua si existe el atributo 'fechaConsumo' de tipo LocalDate.
+ * Despues se descompone el json del valor de la condicion y se mapea a un objeto que contiene el id del desarrollo y un array de dias permitidos.
+ * se extrae solo la configuracion del desarrollo que viene en el contexto 'idDesarrollo' y se valida que cada dia de la lista de fechas
+ * a evaluar este contenido en el array de dias permitidos.
+ * Si al menos un dia no esta contenido en el array de dias permitidos, la condicion se considera invalida
+ * y se retorna un mensaje indicando que el cupón no es válido para ese día en el desarrollo seleccionado.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -49,7 +59,8 @@ public class CondicionDesarrolloDiasStrategy implements CuponCondicionStrategy {
 
         try {
             // Ejemplo de JSON: [{"desarrollo": 3, "dias": [1,2,3,4]}, {"desarrollo": 4, "dias": [1,2,3,4]}]
-            List<Map<String, Object>> listaConfig = objectMapper.readValue(valor.trim(), new TypeReference<>() {});
+            List<Map<String, Object>> listaConfig = objectMapper.readValue(valor.trim(), new TypeReference<>() {
+            });
             int desarrolloActual = contexto.idDesarrollo();
 
             Map<String, Object> configParaDesarrollo = listaConfig.stream()

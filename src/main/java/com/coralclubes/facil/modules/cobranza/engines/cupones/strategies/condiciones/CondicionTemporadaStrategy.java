@@ -9,6 +9,11 @@ import org.springframework.stereotype.Component;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Estrategia que evalua si la temporada del consumo esta contenida en el valor de la condicion.
+ * los campos que puede contener el contexto son 'idTemporada' o 'temporada' de tipo Integer o String respectivamente.
+ * el valor de la condicion puede ser un array de IDs o nombres de temporadas.
+ */
 @Component
 public class CondicionTemporadaStrategy implements CuponCondicionStrategy {
 

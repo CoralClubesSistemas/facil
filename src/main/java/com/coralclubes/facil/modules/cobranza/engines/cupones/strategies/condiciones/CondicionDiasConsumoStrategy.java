@@ -13,6 +13,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Estrategia que evalua si los dias de consumo estan contenidos en el valor de la condicion.
+ * los campos que puede contener el contexto son 'fechaEntrada' o 'fechaInicio'
+ * y 'fechaSalida' o 'fechaFin' de tipo LocalDate o LocalDateTime.
+ * si estos campos no estan presentes el valor a evaluar es la fecha de consumo que se obtiene del contexto.
+ * el valor de la condicion puede ser un array de numeros o nombres de dias de la semana
+ * en español o ingles, por ejemplo: "[1,2,3]" o "[LUNES,MARTES,MIERCOLES]" o "[MONDAY,TUESDAY,WEDNESDAY]".
+ * si al menos un dia de consumo no esta contenido en el valor de la condicion, la evaluacion es invalida.
+ */
 @Component
 public class CondicionDiasConsumoStrategy implements CuponCondicionStrategy {
 

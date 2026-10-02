@@ -9,6 +9,12 @@ import org.springframework.stereotype.Component;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Estrategia para evaluar la condición de clasificación de membresía de un cupón.
+ * requiere que el parametro de atributos contenga el campo 'clasificacionMembresiaId' o 'clasificacionMembresia' de tipo Integer o String respectivamente.
+ * el cual debe estar contenido en el array que se extrae del campo 'valorCondicion' del objeto CuponCondicionResponse.
+ * Si el valor de la condición es nulo o vacío, la condición se considera válida sin importar la clasificación de membresía.
+ */
 @Component
 public class CondicionClasificacionMembresiaStrategy implements CuponCondicionStrategy {
 

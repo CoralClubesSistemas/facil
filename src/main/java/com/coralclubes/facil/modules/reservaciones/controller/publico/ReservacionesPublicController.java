@@ -1,6 +1,6 @@
 package com.coralclubes.facil.modules.reservaciones.controller.publico;
 
-import com.coralclubes.facil.modules.clientes.dto.response.CuponDisponibleDto;
+import com.coralclubes.facil.modules.reservaciones.dto.response.CuponMembresiaReservacionDto;
 import com.coralclubes.facil.modules.cobranza.dto.response.ConfirmacionReservaResponse;
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
 import com.coralclubes.facil.modules.reservaciones.dto.response.DisponibilidadUnidadDto;
@@ -60,8 +60,8 @@ public class ReservacionesPublicController {
     }
 
     @GetMapping("/cupones/{groupId}")
-    public ResponseEntity<ApiResponse<List<CuponDisponibleDto>>> obtenerCuponesDisponibles(@PathVariable UUID groupId) {
-        return ResponseEntity.ok(service.obtenerCuponesDisponibles(groupId));
+    public ResponseEntity<ApiResponse<List<CuponMembresiaReservacionDto>>> obtenerCuponesDisponibles(@PathVariable UUID groupId) {
+        return ResponseEntity.ok(service.obtenerCuponesValidosParaReservacion(groupId));
     }
 
     @PostMapping("/crear-membresia-externo")
