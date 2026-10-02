@@ -14,6 +14,10 @@ import com.coralclubes.facil.modules.cobranza.dto.response.CuponesCatalogoElemen
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponesEstadisticasKpiResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponesTopCanjeadosResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponesUsoMensualResponse;
+import com.coralclubes.facil.modules.cobranza.engines.cupones.dto.CuponEvaluacionContexto;
+import com.coralclubes.facil.modules.cobranza.engines.cupones.dto.CuponLiquidacionResult;
+import com.coralclubes.facil.modules.cobranza.engines.cupones.dto.ResultadoValidacionCondicion;
+import com.coralclubes.facil.modules.cobranza.engines.cupones.engine.CuponesEngine;
 import com.coralclubes.facil.modules.cobranza.repository.CuponesRepository;
 import com.coralclubes.facil.modules.reservaciones.dto.response.TipoUnidadDetalleDto;
 import com.coralclubes.facil.shared.domain.dto.ArchivoDescarga;
@@ -40,8 +44,20 @@ import java.util.concurrent.Callable;
 public class CuponesService {
 
     private final CuponesRepository repository;
+    private final CuponesEngine cuponesEngine;
     private final StorageClient storageClient;
     private final BusinessLogger logger;
+
+    public ResultadoValidacionCondicion validarCondicionesCupon(Integer cuponId, CuponEvaluacionContexto contexto) {
+        List<CuponCondicionResponse> condiciones = repository.spCuponesObtenerCondiciones(cuponId);
+        return cuponesEngine.validarCondiciones(condiciones, contexto);
+    }
+
+    public CuponLiquidacionResult liquidarCupon(Integer cuponId, CuponEvaluacionContexto contexto) {
+        List<CuponCondicionResponse> condiciones = repository.spCuponesObtenerCondiciones(cuponId);
+        List<CuponBeneficioResponse> beneficios = repository.spCuponesObtenerBeneficios(cuponId);
+        return cuponesEngine.liquidar(condiciones, beneficios, contexto);
+    }
 
     public List<CuponesCatalogoElementoResponse> obtenerCatalogoCondiciones() {
         return repository.spCuponesCatalogoCondiciones();
