@@ -87,6 +87,7 @@ public class ReservacionesService {
     private final IntentoPagoService intentoPagoService;
     private final CuponesMembresiasService cuponesMembresiasService;
     private final CuponesEngine cuponesEngine;
+    private final TemporadasService temporadasService;
 
     @Value("${app.clients.notifications.templates.reserva-cancelada}")
     private String templateReservaCancelada;
@@ -163,7 +164,7 @@ public class ReservacionesService {
         var socioResponse = sociosService.obtenerSocios(contexto.getMembresia());
         var socio = socioResponse != null ? socioResponse.data() : null;
 
-        // Construir mapa de atributos dinámicos
+        // Construir mapa de atributos dinámicos con datos reales
         Map<String, Object> atributos = new HashMap<>();
         atributos.put("fechaEntrada", contexto.getFechaEntrada());
         atributos.put("fechaSalida", contexto.getFechaSalida());
@@ -184,7 +185,22 @@ public class ReservacionesService {
         if (socio != null) {
             atributos.put("clasificacionMembresiaId", socio.clasificacionMembresiaId());
             atributos.put("clasificacionMembresia", socio.clasificacionMembresia());
-            atributos.put("esAfiliadoCa", socio.convenioCie() != null && !socio.convenioCie().isBlank());
+        }
+
+        // Obtener el desglose de temporadas por día de estancia
+        if (contexto.getIdDesarrollo() != null && contexto.getFechaEntrada() != null && contexto.getFechaSalida() != null) {
+            List<TemporadaPeriodoResponse> temporadasPeriodo = temporadasService.obtenerTemporadasPorPeriodo(
+                    contexto.getIdDesarrollo(), contexto.getFechaEntrada(), contexto.getFechaSalida()
+            );
+
+            List<Integer> idsTemporadas = temporadasPeriodo.stream()
+                    .map(TemporadaPeriodoResponse::temporadaId)
+                    .filter(java.util.Objects::nonNull)
+                    .distinct()
+                    .toList();
+
+            atributos.put("temporadas", idsTemporadas);
+            atributos.put("temporadasIds", idsTemporadas);
         }
 
         CuponEvaluacionContexto contextoEvaluacion = new CuponEvaluacionContexto(
@@ -207,11 +223,7 @@ public class ReservacionesService {
                 objetivos
         );
 
-        log.debug("filtros a aplicar: {}", filtro);
-
         List<CuponMembresiaCompletoResponse> cuponesCompletos = cuponesMembresiasService.obtenerCuponesMembresiaCompletos(filtro);
-
-        log.debug("cupones antes de filtros: {}", cuponesCompletos);
 
         // 3. Pasa cada cupón por el motor para ejecutar el validador y devuelve solo los que han cumplido con todo
         // 4. Mapea al DTO CuponMembresiaReservacionDto
@@ -234,8 +246,6 @@ public class ReservacionesService {
                     );
                 })
                 .toList();
-
-        log.debug("listado de cupones validos: {}", cuponesValidos);
 
         return ApiResponse.success("Cupones válidos obtenidos exitosamente", cuponesValidos);
     }
