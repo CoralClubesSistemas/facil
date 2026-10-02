@@ -14,6 +14,18 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Map;
 
+/**
+ * Estrategia que aplica un descuento basado en un porcentaje.
+ * dentro del contexto debe estar definido el monto original de la transacción para calcular el descuento real.
+ * La configuración del beneficio puede ser un JSON con la clave "descuento" o un valor numérico directo.
+ * Ejemplos de configuración válida:
+ * - {"descuento": 30}
+ * - 30
+ * - "30"
+ * Si el porcentaje configurado es mayor a 100, se aplicará un descuento del 100%.
+ * Si el porcentaje configurado es nulo, vacío o menor o igual a cero, no se aplicará ningún descuento.
+ * se retorna el monto del descuento real aplicado, que será el resultado de multiplicar el monto original por el porcentaje configurado.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor

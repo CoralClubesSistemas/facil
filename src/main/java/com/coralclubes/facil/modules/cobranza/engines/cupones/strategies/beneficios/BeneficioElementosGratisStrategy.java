@@ -16,6 +16,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Estrategia que aplica un beneficio de elementos gratis.
+ * La configuración del beneficio puede ser un JSON con la clave "cantidad" o un valor numérico directo.
+ * Ejemplos de configuración válida:
+ * - {"cantidad": 1}
+ * - 1
+ * - "1"
+ * Se retorna una instrucción de acción para entregar los elementos gratis.
+ * Cada consumidor interpretará la instrucción según su lógica de negocio, utilizando el tipo de acción "ENTREGA_ELEMENTOS_GRATIS".
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor

@@ -31,4 +31,8 @@ public record ResultadoAplicacionBeneficio(
     public static ResultadoAplicacionBeneficio soloAcciones(List<CuponAccionInstruccion> acciones) {
         return new ResultadoAplicacionBeneficio(BigDecimal.ZERO, acciones);
     }
+
+    public static ResultadoAplicacionBeneficio noAplica() {
+        return new ResultadoAplicacionBeneficio(BigDecimal.ZERO, Collections.emptyList());
+    }
 }

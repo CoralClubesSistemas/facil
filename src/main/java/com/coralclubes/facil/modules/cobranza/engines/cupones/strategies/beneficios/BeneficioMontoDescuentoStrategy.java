@@ -14,6 +14,18 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Map;
 
+/**
+ * Estrategia que aplica un descuento basado en un monto fijo.
+ * dentro del contexto debe estar definido el monto original de la transacción para calcular el descuento real.
+ * La configuración del beneficio puede ser un JSON con la clave "monto" o un valor numérico directo.
+ * Ejemplos de configuración válida:
+ * - {"monto": 50.00}
+ * - 50.00
+ * - "50.00"
+ * Si el monto configurado es mayor al monto original, se aplicará un descuento igual al monto original.
+ * Si el monto configurado es nulo, vacío o menor o igual a cero, no se aplicará ningún descuento.
+ * se retorna el monto del descuento real aplicado, que será el menor entre el monto configurado y el monto original.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -40,7 +52,8 @@ public class BeneficioMontoDescuentoStrategy implements CuponBeneficioStrategy {
 
             // Soporta JSON {"monto": 50.00} o valor numérico directo "50.00"
             if (configStr.trim().startsWith("{")) {
-                Map<String, Object> map = objectMapper.readValue(configStr, new TypeReference<>() {});
+                Map<String, Object> map = objectMapper.readValue(configStr, new TypeReference<>() {
+                });
                 Object montoObj = map.get("monto");
                 if (montoObj instanceof Number n) {
                     monto = BigDecimal.valueOf(n.doubleValue());
