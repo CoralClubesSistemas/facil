@@ -15,6 +15,8 @@ public record ItemCalculoDescuentoDto(
         BigDecimal interesesBonificados,
         BigDecimal montoIva,
         BigDecimal montoIvaInteres,
-        BigDecimal totalPagarItem
+        BigDecimal totalPagarItem,
+        Boolean requiereAutorizacion,
+        Boolean autorizado
 ) {
 }

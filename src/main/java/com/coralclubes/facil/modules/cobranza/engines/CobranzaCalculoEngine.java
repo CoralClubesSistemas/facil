@@ -15,19 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Motor de calculo de descuentos, IVA y totales para la cobranza.
- * <p>
- * Este componente encapsula la lógica de cálculo de descuentos en cascada, prorrateo de descuentos, cálculo de IVA y totales finales.
- * Se utiliza tanto para simular los cálculos en el frontend como para preparar los datos para persistencia en la base de datos.
- * <p>
- * Funcionalidades principales:
- * <ul>
- *     <li>Calcular el porcentaje efectivo acumulado de una lista de porcentajes en cascada.</li>
- *     <li>Simular el cálculo de descuentos e impuestos, devolviendo un desglose detallado para el frontend.</li>
- *     <li>Procesar los movimientos para persistencia, calculando valores de base y de IVA listos para inserción en la base de datos.</li>
- *     <li>Validar que el porcentaje de descuento acumulado no exceda el porcentaje máximo autorizado.</li>
- *     <li>Prorratear descuentos en cascada entre los movimientos de cobranza.</li>
- * </ul>
+ * Motor de cálculo de descuentos, IVA y totales para la cobranza.
+ * Soporta descuentos en cascada a nivel global de solicitud y a nivel individual de movimiento.
  */
 @Component
 public class CobranzaCalculoEngine {
@@ -65,31 +54,12 @@ public class CobranzaCalculoEngine {
             SimularCalculoDescuentoRequest request,
             BigDecimal porcentajeAutorizado
     ) {
-        boolean usarCascada = request.porcentajesDescuentoCascada() != null
+        boolean tieneCascadaGlobal = request.porcentajesDescuentoCascada() != null
                 && !request.porcentajesDescuentoCascada().isEmpty();
 
-        BigDecimal porcentajeRealAplicable = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
-        boolean requiereAutorizacion = false;
-        boolean autorizado = false;
-
-        if (usarCascada) {
-            porcentajeRealAplicable = calcularPorcentajeEfectivoCascada(request.porcentajesDescuentoCascada());
-            requiereAutorizacion = requiereAutorizacion(porcentajeRealAplicable, porcentajeAutorizado);
-            validarTopeAutorizado(porcentajeRealAplicable, porcentajeAutorizado, request.usuarioAutoriza());
-            autorizado = requiereAutorizacion && request.usuarioAutoriza() != null && !request.usuarioAutoriza().isBlank();
-        }
-
-        List<GenerarOrdenCobranzaMovimientoRequest> movimientosAjustados;
-        if (usarCascada) {
-            movimientosAjustados = prorratearDescuentoCascada(
-                    request.movimientos(),
-                    porcentajeRealAplicable,
-                    null,
-                    request.usuarioAutoriza()
-            );
-        } else {
-            movimientosAjustados = request.movimientos();
-        }
+        BigDecimal porcentajeGlobal = tieneCascadaGlobal
+                ? calcularPorcentajeEfectivoCascada(request.porcentajesDescuentoCascada())
+                : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
 
         boolean agregarIva = Boolean.TRUE.equals(request.agregarIva());
         boolean ivaIncluido = Boolean.TRUE.equals(request.ivaIncluido());
@@ -101,22 +71,69 @@ public class CobranzaCalculoEngine {
         BigDecimal totalIvaGeneral = BigDecimal.ZERO;
         BigDecimal totalFinalGeneral = BigDecimal.ZERO;
 
-        for (int i = 0; i < request.movimientos().size(); i++) {
-            GenerarOrdenCobranzaMovimientoRequest original = request.movimientos().get(i);
-            GenerarOrdenCobranzaMovimientoRequest ajustado = movimientosAjustados.get(i);
+        boolean alMenosUnoRequiereAutorizacion = false;
+        boolean todosAutorizados = true;
 
-            BigDecimal capitalOriginal = original.montoCapital();
-            BigDecimal descuento = ajustado.totalDescuento();
+        for (GenerarOrdenCobranzaMovimientoRequest mov : request.movimientos()) {
+            BigDecimal capitalOriginal = mov.montoCapital();
+            totalCapitalOriginal = totalCapitalOriginal.add(capitalOriginal);
+
+            // 1. Determinar porcentaje y descuento aplicable al movimiento
+            BigDecimal porcentajeItem;
+            BigDecimal descuento;
+            String usuarioAutorizaItem;
+
+            boolean tieneCascadaIndividual = mov.porcentajesDescuentoCascada() != null
+                    && !mov.porcentajesDescuentoCascada().isEmpty();
+
+            if (tieneCascadaIndividual) {
+                porcentajeItem = calcularPorcentajeEfectivoCascada(mov.porcentajesDescuentoCascada());
+                descuento = capitalOriginal.multiply(porcentajeItem.divide(CIEN, 8, RoundingMode.HALF_UP))
+                        .setScale(2, RoundingMode.HALF_UP);
+                usuarioAutorizaItem = mov.usuarioAutoriza() != null && !mov.usuarioAutoriza().isBlank()
+                        ? mov.usuarioAutoriza()
+                        : request.usuarioAutoriza();
+            } else if (tieneCascadaGlobal) {
+                porcentajeItem = porcentajeGlobal;
+                descuento = capitalOriginal.multiply(porcentajeGlobal.divide(CIEN, 8, RoundingMode.HALF_UP))
+                        .setScale(2, RoundingMode.HALF_UP);
+                usuarioAutorizaItem = request.usuarioAutoriza();
+            } else {
+                descuento = mov.totalDescuento() != null ? mov.totalDescuento() : BigDecimal.ZERO;
+                porcentajeItem = capitalOriginal.compareTo(BigDecimal.ZERO) > 0
+                        ? descuento.multiply(CIEN).divide(capitalOriginal, 2, RoundingMode.HALF_UP)
+                        : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+                usuarioAutorizaItem = mov.usuarioAutoriza() != null && !mov.usuarioAutoriza().isBlank()
+                        ? mov.usuarioAutoriza()
+                        : request.usuarioAutoriza();
+            }
+
+            // Validar autorización del ítem
+            boolean itemRequiereAutorizacion = requiereAutorizacion(porcentajeItem, porcentajeAutorizado);
+            boolean itemAutorizado = itemRequiereAutorizacion
+                    && usuarioAutorizaItem != null
+                    && !usuarioAutorizaItem.isBlank();
+
+            if (itemRequiereAutorizacion) {
+                alMenosUnoRequiereAutorizacion = true;
+                if (!itemAutorizado) {
+                    todosAutorizados = false;
+                    validarTopeAutorizado(porcentajeItem, porcentajeAutorizado, usuarioAutorizaItem);
+                }
+            }
+
+            // 2. Aplicar descuento sobre el capital
             BigDecimal capitalConDesc = capitalOriginal.subtract(descuento);
             if (capitalConDesc.compareTo(BigDecimal.ZERO) < 0) {
                 capitalConDesc = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
             }
 
-            BigDecimal interesPago = original.interesPago();
-            BigDecimal interesBonif = original.interesesBonificados();
+            BigDecimal interesPago = mov.interesPago() != null ? mov.interesPago() : BigDecimal.ZERO;
+            BigDecimal interesBonif = mov.interesesBonificados() != null ? mov.interesesBonificados() : BigDecimal.ZERO;
 
-            BigDecimal montoIvaCapital = BigDecimal.ZERO;
-            BigDecimal montoIvaInteres = BigDecimal.ZERO;
+            // 3. Impuestos
+            BigDecimal montoIvaCapital = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+            BigDecimal montoIvaInteres = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
 
             if (agregarIva) {
                 if (ivaIncluido) {
@@ -131,11 +148,6 @@ public class CobranzaCalculoEngine {
                 }
             }
 
-            BigDecimal porcentajeItem = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
-            if (capitalOriginal.compareTo(BigDecimal.ZERO) > 0) {
-                porcentajeItem = descuento.multiply(CIEN).divide(capitalOriginal, 2, RoundingMode.HALF_UP);
-            }
-
             BigDecimal totalPagarItem;
             if (agregarIva && !ivaIncluido) {
                 totalPagarItem = capitalConDesc.add(interesPago).add(montoIvaCapital).add(montoIvaInteres);
@@ -144,7 +156,7 @@ public class CobranzaCalculoEngine {
             }
 
             items.add(ItemCalculoDescuentoDto.builder()
-                    .idMovimiento(original.idMovimiento())
+                    .idMovimiento(mov.idMovimiento())
                     .montoCapitalOriginal(capitalOriginal)
                     .porcentajeAplicado(porcentajeItem)
                     .montoDescuento(descuento)
@@ -154,20 +166,26 @@ public class CobranzaCalculoEngine {
                     .montoIva(montoIvaCapital)
                     .montoIvaInteres(montoIvaInteres)
                     .totalPagarItem(totalPagarItem)
+                    .requiereAutorizacion(itemRequiereAutorizacion)
+                    .autorizado(itemAutorizado)
                     .build());
 
-            totalCapitalOriginal = totalCapitalOriginal.add(capitalOriginal);
             totalDescuentoGeneral = totalDescuentoGeneral.add(descuento);
             totalCapitalConDescuento = totalCapitalConDescuento.add(capitalConDesc);
             totalIvaGeneral = totalIvaGeneral.add(montoIvaCapital).add(montoIvaInteres);
             totalFinalGeneral = totalFinalGeneral.add(totalPagarItem);
         }
 
+        // Porcentaje real ponderado sobre el total
+        BigDecimal porcentajeRealPonderado = totalCapitalOriginal.compareTo(BigDecimal.ZERO) > 0
+                ? totalDescuentoGeneral.multiply(CIEN).divide(totalCapitalOriginal, 2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+
         return SimularCalculoDescuentoResponse.builder()
-                .porcentajeRealAplicable(porcentajeRealAplicable)
+                .porcentajeRealAplicable(porcentajeRealPonderado)
                 .porcentajeAutorizado(porcentajeAutorizado)
-                .requiereAutorizacion(requiereAutorizacion)
-                .autorizado(autorizado)
+                .requiereAutorizacion(alMenosUnoRequiereAutorizacion)
+                .autorizado(alMenosUnoRequiereAutorizacion && todosAutorizados)
                 .montoTotalOriginal(totalCapitalOriginal)
                 .montoTotalDescuento(totalDescuentoGeneral)
                 .montoTotalConDescuento(totalCapitalConDescuento)
@@ -179,41 +197,71 @@ public class CobranzaCalculoEngine {
 
     /**
      * Procesa los movimientos calculando valores de base y de IVA listos para inserción en el SP.
+     * Soporta descuentos en cascada tanto globales como por ítem individual.
      */
     public List<MovimientoIntencionPersistenciaDto> procesarParaPersistencia(
             GenerarOrdenCobranzaRequest request,
             BigDecimal porcentajeAutorizado
     ) {
-        boolean usarCascada = request.porcentajesDescuentoCascada() != null
+        boolean tieneCascadaGlobal = request.porcentajesDescuentoCascada() != null
                 && !request.porcentajesDescuentoCascada().isEmpty();
 
-        List<GenerarOrdenCobranzaMovimientoRequest> movimientosAjustados;
-
-        if (usarCascada) {
-            BigDecimal porcentajeReal = calcularPorcentajeEfectivoCascada(request.porcentajesDescuentoCascada());
-            validarTopeAutorizado(porcentajeReal, porcentajeAutorizado, request.usuarioAutorizaCascada());
-
-            movimientosAjustados = prorratearDescuentoCascada(
-                    request.movimientos(),
-                    porcentajeReal,
-                    request.justificacionCascada(),
-                    request.usuarioAutorizaCascada()
-            );
-        } else {
-            movimientosAjustados = request.movimientos();
-        }
+        BigDecimal porcentajeGlobal = tieneCascadaGlobal
+                ? calcularPorcentajeEfectivoCascada(request.porcentajesDescuentoCascada())
+                : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
 
         boolean agregarIva = Boolean.TRUE.equals(request.agregarIva());
         boolean ivaIncluido = Boolean.TRUE.equals(request.ivaIncluido());
 
         List<MovimientoIntencionPersistenciaDto> resultado = new ArrayList<>();
 
-        for (GenerarOrdenCobranzaMovimientoRequest mov : movimientosAjustados) {
+        for (GenerarOrdenCobranzaMovimientoRequest mov : request.movimientos()) {
             BigDecimal capital = mov.montoCapital();
-            BigDecimal descuento = mov.totalDescuento();
-            BigDecimal interesPago = mov.interesPago();
-            BigDecimal interesTotal = mov.montoInteres();
-            BigDecimal interesBonif = mov.interesesBonificados();
+            BigDecimal descuento;
+            String usuarioAutorizaItem;
+            String justificacionItem;
+
+            boolean tieneCascadaIndividual = mov.porcentajesDescuentoCascada() != null
+                    && !mov.porcentajesDescuentoCascada().isEmpty();
+
+            if (tieneCascadaIndividual) {
+                BigDecimal pctIndividual = calcularPorcentajeEfectivoCascada(mov.porcentajesDescuentoCascada());
+                descuento = capital.multiply(pctIndividual.divide(CIEN, 8, RoundingMode.HALF_UP))
+                        .setScale(2, RoundingMode.HALF_UP);
+
+                usuarioAutorizaItem = mov.usuarioAutoriza() != null && !mov.usuarioAutoriza().isBlank()
+                        ? mov.usuarioAutoriza()
+                        : request.usuarioAutorizaCascada();
+
+                justificacionItem = mov.justificacionDescuento() != null && !mov.justificacionDescuento().isBlank()
+                        ? mov.justificacionDescuento()
+                        : request.justificacionCascada();
+
+                validarTopeAutorizado(pctIndividual, porcentajeAutorizado, usuarioAutorizaItem);
+            } else if (tieneCascadaGlobal) {
+                descuento = capital.multiply(porcentajeGlobal.divide(CIEN, 8, RoundingMode.HALF_UP))
+                        .setScale(2, RoundingMode.HALF_UP);
+
+                usuarioAutorizaItem = request.usuarioAutorizaCascada();
+                justificacionItem = request.justificacionCascada() != null
+                        ? request.justificacionCascada()
+                        : mov.justificacionDescuento();
+
+                validarTopeAutorizado(porcentajeGlobal, porcentajeAutorizado, usuarioAutorizaItem);
+            } else {
+                descuento = mov.totalDescuento() != null ? mov.totalDescuento() : BigDecimal.ZERO;
+                usuarioAutorizaItem = mov.usuarioAutoriza();
+                justificacionItem = mov.justificacionDescuento();
+
+                BigDecimal pctDirecto = capital.compareTo(BigDecimal.ZERO) > 0
+                        ? descuento.multiply(CIEN).divide(capital, 2, RoundingMode.HALF_UP)
+                        : BigDecimal.ZERO;
+                validarTopeAutorizado(pctDirecto, porcentajeAutorizado, usuarioAutorizaItem);
+            }
+
+            BigDecimal interesPago = mov.interesPago() != null ? mov.interesPago() : BigDecimal.ZERO;
+            BigDecimal interesTotal = mov.montoInteres() != null ? mov.montoInteres() : BigDecimal.ZERO;
+            BigDecimal interesBonif = mov.interesesBonificados() != null ? mov.interesesBonificados() : BigDecimal.ZERO;
 
             BigDecimal montoIva = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
             BigDecimal montoIvaInteres = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
@@ -248,8 +296,8 @@ public class CobranzaCalculoEngine {
                     .montoIvaInteres(montoIvaInteres)
                     .interesBonificado(interesBonif)
                     .totalDescuento(descuento)
-                    .justificacionDescuento(mov.justificacionDescuento())
-                    .usuarioAutoriza(mov.usuarioAutoriza())
+                    .justificacionDescuento(justificacionItem)
+                    .usuarioAutoriza(usuarioAutorizaItem)
                     .build());
         }
 
@@ -269,33 +317,5 @@ public class CobranzaCalculoEngine {
                 );
             }
         }
-    }
-
-    private List<GenerarOrdenCobranzaMovimientoRequest> prorratearDescuentoCascada(
-            List<GenerarOrdenCobranzaMovimientoRequest> movimientos,
-            BigDecimal porcentajeEfectivoTotal,
-            String justificacion,
-            String usuarioAutoriza
-    ) {
-        BigDecimal factorEfectivo = porcentajeEfectivoTotal.divide(CIEN, 8, RoundingMode.HALF_UP);
-
-        List<GenerarOrdenCobranzaMovimientoRequest> resultado = new ArrayList<>();
-        for (GenerarOrdenCobranzaMovimientoRequest mov : movimientos) {
-            BigDecimal descuento = mov.montoCapital()
-                    .multiply(factorEfectivo)
-                    .setScale(2, RoundingMode.HALF_UP);
-
-            resultado.add(new GenerarOrdenCobranzaMovimientoRequest(
-                    mov.idMovimiento(),
-                    mov.montoCapital(),
-                    mov.montoInteres(),
-                    mov.interesPago(),
-                    mov.interesesBonificados(),
-                    descuento,
-                    justificacion != null ? justificacion : mov.justificacionDescuento(),
-                    usuarioAutoriza != null ? usuarioAutoriza : mov.usuarioAutoriza()
-            ));
-        }
-        return resultado;
     }
 }

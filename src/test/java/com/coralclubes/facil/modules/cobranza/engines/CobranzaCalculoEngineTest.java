@@ -4,6 +4,7 @@ import com.coralclubes.facil.modules.cobranza.dto.projection.MovimientoIntencion
 import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaMovimientoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.SimularCalculoDescuentoRequest;
+import com.coralclubes.facil.modules.cobranza.dto.response.ItemCalculoDescuentoDto;
 import com.coralclubes.facil.modules.cobranza.dto.response.SimularCalculoDescuentoResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,6 +22,21 @@ class CobranzaCalculoEngineTest {
     @BeforeEach
     void setUp() {
         engine = new CobranzaCalculoEngine();
+    }
+
+    private GenerarOrdenCobranzaMovimientoRequest crearMovimiento(
+            int id, BigDecimal capital, BigDecimal descuento, String usuarioAutoriza, List<BigDecimal> cascada
+    ) {
+        return GenerarOrdenCobranzaMovimientoRequest.builder()
+                .idMovimiento(id)
+                .montoCapital(capital)
+                .montoInteres(BigDecimal.ZERO)
+                .interesPago(BigDecimal.ZERO)
+                .interesesBonificados(BigDecimal.ZERO)
+                .totalDescuento(descuento != null ? descuento : BigDecimal.ZERO)
+                .usuarioAutoriza(usuarioAutoriza)
+                .porcentajesDescuentoCascada(cascada)
+                .build();
     }
 
     @Test
@@ -41,12 +57,7 @@ class CobranzaCalculoEngineTest {
         SimularCalculoDescuentoRequest request = SimularCalculoDescuentoRequest.builder()
                 .porcentajesDescuentoCascada(porcentajes)
                 .usuarioAutoriza(null)
-                .movimientos(List.of(
-                        new GenerarOrdenCobranzaMovimientoRequest(
-                                1, new BigDecimal("1000.00"), BigDecimal.ZERO, BigDecimal.ZERO,
-                                BigDecimal.ZERO, BigDecimal.ZERO, null, null
-                        )
-                ))
+                .movimientos(List.of(crearMovimiento(1, new BigDecimal("1000.00"), BigDecimal.ZERO, null, null)))
                 .build();
 
         assertThrows(com.coralclubes.facil.shared.infrastructure.exceptions.custom.PercentageExceeded.class,
@@ -62,12 +73,7 @@ class CobranzaCalculoEngineTest {
         SimularCalculoDescuentoRequest request = SimularCalculoDescuentoRequest.builder()
                 .porcentajesDescuentoCascada(porcentajes)
                 .usuarioAutoriza("SUPERVISOR_01")
-                .movimientos(List.of(
-                        new GenerarOrdenCobranzaMovimientoRequest(
-                                1, new BigDecimal("1000.00"), BigDecimal.ZERO, BigDecimal.ZERO,
-                                BigDecimal.ZERO, BigDecimal.ZERO, null, null
-                        )
-                ))
+                .movimientos(List.of(crearMovimiento(1, new BigDecimal("1000.00"), BigDecimal.ZERO, null, null)))
                 .build();
 
         SimularCalculoDescuentoResponse response = assertDoesNotThrow(() -> engine.simularCalculo(request, limiteAutorizado));
@@ -85,12 +91,7 @@ class CobranzaCalculoEngineTest {
                 .porcentajesDescuentoCascada(List.of(new BigDecimal("10.00")))
                 .agregarIva(true)
                 .ivaIncluido(false)
-                .movimientos(List.of(
-                        new GenerarOrdenCobranzaMovimientoRequest(
-                                101, new BigDecimal("1000.00"), BigDecimal.ZERO, BigDecimal.ZERO,
-                                BigDecimal.ZERO, BigDecimal.ZERO, null, null
-                        )
-                ))
+                .movimientos(List.of(crearMovimiento(101, new BigDecimal("1000.00"), BigDecimal.ZERO, null, null)))
                 .build();
 
         SimularCalculoDescuentoResponse response = engine.simularCalculo(request, new BigDecimal("15.00"));
@@ -114,12 +115,7 @@ class CobranzaCalculoEngineTest {
                 .agregarIva(true)
                 .ivaIncluido(true)
                 .porcentajesDescuentoCascada(List.of(new BigDecimal("10.00")))
-                .movimientos(List.of(
-                        new GenerarOrdenCobranzaMovimientoRequest(
-                                101, new BigDecimal("1160.00"), BigDecimal.ZERO, BigDecimal.ZERO,
-                                BigDecimal.ZERO, BigDecimal.ZERO, null, null
-                        )
-                ))
+                .movimientos(List.of(crearMovimiento(101, new BigDecimal("1160.00"), BigDecimal.ZERO, null, null)))
                 .build();
 
         List<MovimientoIntencionPersistenciaDto> resultado = engine.procesarParaPersistencia(request, new BigDecimal("20.00"));
@@ -127,10 +123,66 @@ class CobranzaCalculoEngineTest {
         assertEquals(1, resultado.size());
         MovimientoIntencionPersistenciaDto dto = resultado.getFirst();
 
-        // 1160 con 10% desc = 116 desc -> 1044 neto con IVA
-        // Base gravable de 1044 / 1.16 = 900.00 -> IVA = 144.00
         assertEquals(new BigDecimal("144.00"), dto.montoIva());
-        assertEquals(new BigDecimal("1000.00"), dto.montoCapital()); // 1160 / 1.16 = 1000
-        assertEquals(new BigDecimal("100.00"), dto.totalDescuento()); // 116 / 1.16 = 100
+        assertEquals(new BigDecimal("1000.00"), dto.montoCapital());
+        assertEquals(new BigDecimal("100.00"), dto.totalDescuento());
+    }
+
+    @Test
+    @DisplayName("Debe aplicar cascada individual por movimiento y respetar cascada global en los movimientos sin cascada individual")
+    void testCascadaIndividualYGlobalHibrida() {
+        GenerarOrdenCobranzaMovimientoRequest mov1 = crearMovimiento(
+                1, new BigDecimal("1000.00"), BigDecimal.ZERO, "SUPERVISOR_INDIVIDUAL",
+                List.of(new BigDecimal("20.00"), new BigDecimal("10.00")) // 28% individual
+        );
+
+        GenerarOrdenCobranzaMovimientoRequest mov2 = crearMovimiento(
+                2, new BigDecimal("1000.00"), BigDecimal.ZERO, null, null // Hereda global 10%
+        );
+
+        SimularCalculoDescuentoRequest request = SimularCalculoDescuentoRequest.builder()
+                .porcentajesDescuentoCascada(List.of(new BigDecimal("10.00"))) // Cascada global: 10%
+                .movimientos(List.of(mov1, mov2))
+                .build();
+
+        SimularCalculoDescuentoResponse response = engine.simularCalculo(request, new BigDecimal("15.00"));
+
+        assertNotNull(response);
+        assertEquals(2, response.items().size());
+
+        // Movimiento 1 (Cascada individual 28%):
+        ItemCalculoDescuentoDto item1 = response.items().get(0);
+        assertEquals(new BigDecimal("28.00"), item1.porcentajeAplicado());
+        assertEquals(new BigDecimal("280.00"), item1.montoDescuento());
+        assertEquals(new BigDecimal("720.00"), item1.montoCapitalConDescuento());
+        assertTrue(item1.requiereAutorizacion()); // 28% > 15%
+        assertTrue(item1.autorizado()); // Tiene SUPERVISOR_INDIVIDUAL
+
+        // Movimiento 2 (Hereda cascada global 10%):
+        ItemCalculoDescuentoDto item2 = response.items().get(1);
+        assertEquals(new BigDecimal("10.00"), item2.porcentajeAplicado());
+        assertEquals(new BigDecimal("100.00"), item2.montoDescuento());
+        assertEquals(new BigDecimal("900.00"), item2.montoCapitalConDescuento());
+        assertFalse(item2.requiereAutorizacion()); // 10% <= 15%
+
+        // Total general de descuentos: 280 + 100 = 380 (19.00% ponderado sobre $2000)
+        assertEquals(new BigDecimal("380.00"), response.montoTotalDescuento());
+        assertEquals(new BigDecimal("19.00"), response.porcentajeRealAplicable());
+    }
+
+    @Test
+    @DisplayName("Debe lanzar excepción si un movimiento individual con cascada excede el límite y no tiene usuario autorizador")
+    void testCascadaIndividualExcedeLimiteSinAutorizacion() {
+        GenerarOrdenCobranzaMovimientoRequest mov = crearMovimiento(
+                1, new BigDecimal("1000.00"), BigDecimal.ZERO, null,
+                List.of(new BigDecimal("20.00"), new BigDecimal("10.00")) // 28%
+        );
+
+        SimularCalculoDescuentoRequest request = SimularCalculoDescuentoRequest.builder()
+                .movimientos(List.of(mov))
+                .build();
+
+        assertThrows(com.coralclubes.facil.shared.infrastructure.exceptions.custom.PercentageExceeded.class,
+                () -> engine.simularCalculo(request, new BigDecimal("15.00")));
     }
 }
