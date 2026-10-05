@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.cobranza.controller.admin;
 
 import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaRequest;
+import com.coralclubes.facil.modules.cobranza.dto.request.SimularCalculoDescuentoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.*;
 import com.coralclubes.facil.modules.cobranza.service.CobranzaService;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
@@ -24,6 +25,14 @@ public class CobranzaAdminController {
 
     private final CobranzaService cobranzaService;
     private final UserContext userContext;
+
+    @PostMapping("/ordenes/simular-descuentos")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<SimularCalculoDescuentoResponse>> simularDescuentos(
+            @Valid @RequestBody SimularCalculoDescuentoRequest request
+    ) {
+        return ResponseEntity.ok(cobranzaService.simularCalculoDescuento(request));
+    }
 
     @PostMapping("/ordenes/generar")
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")

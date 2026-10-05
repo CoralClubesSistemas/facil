@@ -27,12 +27,18 @@ import java.util.Optional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import com.coralclubes.facil.modules.cobranza.dto.projection.MovimientoIntencionPersistenciaDto;
+import com.coralclubes.facil.modules.cobranza.dto.request.SimularCalculoDescuentoRequest;
+import com.coralclubes.facil.modules.cobranza.engines.CobranzaCalculoEngine;
+import com.coralclubes.facil.modules.cobranza.repository.CobranzaCatalogosRepository;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class CobranzaService {
     private final CobranzaRepository repository;
+    private final CobranzaCatalogosRepository catalogosRepository;
+    private final CobranzaCalculoEngine calculoEngine;
     private final ObjectMapper objectMapper;
     private final BusinessLogger log;
     private final UsuarioService usuarioService;
@@ -42,18 +48,36 @@ public class CobranzaService {
     private final CobranzaPostProcesoAsyncService postProcesoAsyncService;
     private final ApplicationEventPublisher eventPublisher;
 
-    // private final AnalisisDeInformacion bedrockClient;
-
     @Value("${app.email.audit-default}")
     private String emailAuditDefault;
 
-    public ApiResponse<GenerarOrdenCobranzaResponse> generarOrdenCobranza(GenerarOrdenCobranzaRequest request, String usuario) {
-        String movimientosJson = serializarMovimientos(request);
+    public ApiResponse<SimularCalculoDescuentoResponse> simularCalculoDescuento(SimularCalculoDescuentoRequest request) {
+        BigDecimal porcentajeAutorizado = null;
+        if (request.idDesarrollo() != null && request.clasificacionMembresia() != null) {
+            porcentajeAutorizado = catalogosRepository.spCobranzaObtenerPorcentajeLimite(
+                    request.idDesarrollo(), request.clasificacionMembresia());
+        }
 
-        log.info(usuario, "Generando orden de cobranza para membresía {} con movimientos: {}", request.membresia(), movimientosJson);
+        SimularCalculoDescuentoResponse response = calculoEngine.simularCalculo(request, porcentajeAutorizado);
+        return ApiResponse.success("Cálculo de descuentos simulado correctamente.", response);
+    }
+
+    public ApiResponse<GenerarOrdenCobranzaResponse> generarOrdenCobranza(GenerarOrdenCobranzaRequest request, String usuario) {
+        BigDecimal porcentajeAutorizado = null;
+        if (request.idDesarrollo() != null && request.clasificacionMembresia() != null) {
+            porcentajeAutorizado = catalogosRepository.spCobranzaObtenerPorcentajeLimite(
+                    request.idDesarrollo(), request.clasificacionMembresia());
+        }
+
+        List<MovimientoIntencionPersistenciaDto> intenciones = calculoEngine.procesarParaPersistencia(
+                request, porcentajeAutorizado);
+
+        String movimientosJson = serializarIntenciones(intenciones);
+
+        log.info(usuario, "Generando orden de cobranza para membresía {} con intenciones procesadas: {}", request.membresia(), movimientosJson);
 
         GenerarOrdenCobranzaResponse result = repository
-                .spCobranzaGenerarOrdenCobranza(request.membresia(), usuario, movimientosJson, request.agregarIva(), request.ivaIncluido(), request.mensajeAdicional())
+                .spCobranzaGenerarOrdenCobranza(request.membresia(), usuario, movimientosJson, request.agregarIva(), request.mensajeAdicional())
                 .orElseThrow(() -> new IllegalStateException("No se pudo generar la orden de cobranza."));
 
         return ApiResponse.success("Orden de cobranza generada correctamente.", result);
@@ -96,14 +120,6 @@ public class CobranzaService {
                 "Depositos obtenidos correctamente.",
                 repository.spCobranzaObtenerDepositos(idBanco, fechaDeposito, busqueda, monto)
         );
-    }
-
-    private String serializarMovimientos(GenerarOrdenCobranzaRequest request) {
-        try {
-            return objectMapper.writeValueAsString(request.movimientos());
-        } catch (JsonProcessingException ex) {
-            throw new IllegalStateException("No se pudo serializar el detalle de movimientos para la orden.");
-        }
     }
 
     public ReciboPagado finalizarOrdenDeCobranza(String ordenUuid, Integer tipoSerieRecibo, String usuario) {
@@ -226,37 +242,17 @@ public class CobranzaService {
         );
     }
 
-
-    /* public ApiResponse<AnalisisCobranzaResponse> analizarClienteParaCobranza(String membresia) {
-        String dataJsonCliente = repository.spClientesObtenerDataParaAnalisis(membresia)
-                .orElseThrow(() -> new IllegalStateException("No se encontró información para la membresía proporcionada."));
-
-        // 2. Definir el System Prompt específico para este caso de uso
-        String systemPrompt = """
-                Eres un experto analista financiero. Analiza el JSON del cliente.
-                Debes devolver la respuesta ESTRICTAMENTE en formato JSON con la siguiente estructura, sin formato Markdown ni texto antes o después:
-                {
-                  "clasificacionRiesgo": "Excelente | Regular | Moroso | Riesgo de Abandono",
-                  "justificacionAnalisis": "Breve explicación del por qué de la clasificación basada en sus pagos y notas",
-                  "mensajeWhatsappRecomendado": "El mensaje de cobranza persuasivo y empático listo para enviar"
-                }
-                """;
-
-        // 3. Solicitar el análisis a Bedrock
-        String respuestaIa = bedrockClient.analizarData(systemPrompt, dataJsonCliente);
-
-        // 4. Mapear el JSON de respuesta devuelto por la IA a nuestro Record de Java
-        try {
-            AnalisisCobranzaResponse analisis = objectMapper.readValue(respuestaIa, AnalisisCobranzaResponse.class);
-            return ApiResponse.success("Análisis de IA generado correctamente.", analisis);
-        } catch (JsonProcessingException e) {
-            log.error(userContext.getUsername(), "La IA no devolvió un JSON válido: {}", respuestaIa);
-            throw new IllegalStateException("Ocurrió un error al procesar la respuesta de la inteligencia artificial.");
-        }
-    }*/
-
     public Optional<String> obtenerSiguienteMembresiaPendiente(String membresiaActual) {
         String usuario = userContext.getUsername();
         return repository.spCobranzaObtenerSiguienteMembresiaPendiente(usuario, membresiaActual);
+    }
+
+    // *************** HELPERS ******************************
+    private String serializarIntenciones(List<MovimientoIntencionPersistenciaDto> intenciones) {
+        try {
+            return objectMapper.writeValueAsString(intenciones);
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException("No se pudo serializar el detalle de intenciones calculadas para la orden.");
+        }
     }
 }

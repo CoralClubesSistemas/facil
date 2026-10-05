@@ -112,7 +112,6 @@ public class CobranzaRepository {
             String membresia,
             String usuario,
             String movimientosJson,
-            Boolean agregarIVA,
             Boolean ivaIncluido,
             String mensajeAdicional
     ) {
@@ -120,7 +119,6 @@ public class CobranzaRepository {
         params.put("Membresia", membresia);
         params.put("Usuario", usuario);
         params.put("MovimientosJSON", movimientosJson);
-        params.put("AgregarIva", agregarIVA);
         params.put("IvaIncluido", ivaIncluido);
         params.put("MensajeAdicional", mensajeAdicional);
 
