@@ -125,6 +125,46 @@ public class CobranzaRepository {
         return spExecutor.querySingle("spCobranzaGenerarOrdenCobranza", params, generarOrdenCobranzaMapper);
     }
 
+    public Optional<String> spCobranzaObtenerContextoFinalizacionOrden(
+            String ordenUuid,
+            Integer tipoSerieRecibo,
+            String usuario
+    ) {
+        List<String> chunks = spExecutor.queryList(
+                "spCobranzaObtenerContextoFinalizacionOrden",
+                Map.of(
+                        "OrdenUuid", ordenUuid,
+                        "TipoSerieRecibo", tipoSerieRecibo,
+                        "Usuario", usuario
+                ),
+                jsonStringMapper
+        );
+        if (chunks.isEmpty() || chunks.getFirst() == null || chunks.getFirst().isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.of(String.join("", chunks));
+    }
+
+    public Optional<String> spCobranzaAplicarCierreOrdenYRecibo(
+            String ordenUuid,
+            String usuario,
+            String payloadJson
+    ) {
+        List<String> chunks = spExecutor.queryList(
+                "spCobranzaAplicarCierreOrdenYRecibo",
+                Map.of(
+                        "OrdenUuid", ordenUuid,
+                        "Usuario", usuario,
+                        "PayloadJSON", payloadJson
+                ),
+                jsonStringMapper
+        );
+        if (chunks.isEmpty() || chunks.getFirst() == null || chunks.getFirst().isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.of(String.join("", chunks));
+    }
+
     public Optional<String> spCobranzaFinalizarOrdenYGenerarRecibo(
             String ordenUuid,
             Integer tipoSerieRecibo,

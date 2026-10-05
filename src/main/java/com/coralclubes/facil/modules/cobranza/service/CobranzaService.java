@@ -27,9 +27,12 @@ import java.util.Optional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import com.coralclubes.facil.modules.cobranza.dto.projection.ContextoFinalizacionOrdenResponse;
 import com.coralclubes.facil.modules.cobranza.dto.projection.MovimientoIntencionPersistenciaDto;
+import com.coralclubes.facil.modules.cobranza.dto.request.AplicarCierreOrdenPayloadDto;
 import com.coralclubes.facil.modules.cobranza.dto.request.SimularCalculoDescuentoRequest;
 import com.coralclubes.facil.modules.cobranza.engines.CobranzaCalculoEngine;
+import com.coralclubes.facil.modules.cobranza.engines.CobranzaLiquidacionEngine;
 import com.coralclubes.facil.modules.cobranza.repository.CobranzaCatalogosRepository;
 import java.util.UUID;
 
@@ -39,6 +42,7 @@ public class CobranzaService {
     private final CobranzaRepository repository;
     private final CobranzaCatalogosRepository catalogosRepository;
     private final CobranzaCalculoEngine calculoEngine;
+    private final CobranzaLiquidacionEngine liquidacionEngine;
     private final ObjectMapper objectMapper;
     private final BusinessLogger log;
     private final UsuarioService usuarioService;
@@ -77,7 +81,13 @@ public class CobranzaService {
         log.info(usuario, "Generando orden de cobranza para membresía {} con intenciones procesadas: {}", request.membresia(), movimientosJson);
 
         GenerarOrdenCobranzaResponse result = repository
-                .spCobranzaGenerarOrdenCobranza(request.membresia(), usuario, movimientosJson, request.agregarIva(), request.mensajeAdicional())
+                .spCobranzaGenerarOrdenCobranza(
+                        request.membresia(),
+                        usuario,
+                        movimientosJson,
+                        Boolean.TRUE.equals(request.ivaIncluido()),
+                        request.mensajeAdicional()
+                )
                 .orElseThrow(() -> new IllegalStateException("No se pudo generar la orden de cobranza."));
 
         return ApiResponse.success("Orden de cobranza generada correctamente.", result);
@@ -123,13 +133,39 @@ public class CobranzaService {
     }
 
     public ReciboPagado finalizarOrdenDeCobranza(String ordenUuid, Integer tipoSerieRecibo, String usuario) {
-        String response = repository.spCobranzaFinalizarOrdenYGenerarRecibo(ordenUuid, tipoSerieRecibo, usuario)
-                .orElseThrow(() -> new IllegalArgumentException("Error en el cierre de la orden de cobranza, intente más tarde"));
+        // 1. Obtener contexto completo desde la BD
+        String contextoJson = repository.spCobranzaObtenerContextoFinalizacionOrden(ordenUuid, tipoSerieRecibo, usuario)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró contexto para la orden de cobranza a finalizar."));
+
+        ContextoFinalizacionOrdenResponse contexto;
+        try {
+            contexto = objectMapper.readValue(contextoJson, ContextoFinalizacionOrdenResponse.class);
+        } catch (JsonProcessingException ex) {
+            log.error(usuario, "Error deserializando contexto de orden {}: {}", ordenUuid, ex.getMessage());
+            throw new IllegalStateException("No se pudo interpretar el contexto de la orden de cobranza.");
+        }
+
+        // 2. Ejecutar lógica contable y corrección de saldos en Java
+        AplicarCierreOrdenPayloadDto payload = liquidacionEngine.armarPlanDeLiquidacion(contexto, tipoSerieRecibo, usuario);
+
+        String payloadJson;
+        try {
+            payloadJson = objectMapper.writeValueAsString(payload);
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException("No se pudo serializar el plan de liquidación contable.");
+        }
+
+        log.info(usuario, "Aplicando cierre contable para orden {} con importe {}: {}",
+                ordenUuid, payload.importeRecibo(), payloadJson);
+
+        // 3. Persistir atómicamente en SQL Server
+        String response = repository.spCobranzaAplicarCierreOrdenYRecibo(ordenUuid, usuario, payloadJson)
+                .orElseThrow(() -> new IllegalArgumentException("Error al aplicar el cierre de la orden de cobranza."));
 
         try {
             return objectMapper.readValue(response, ReciboPagado.class);
         } catch (JsonProcessingException ex) {
-            throw new IllegalStateException("No se pudo interpretar el JSON de la orden finalizada.");
+            throw new IllegalStateException("No se pudo interpretar el resultado de la orden finalizada.");
         }
     }
 

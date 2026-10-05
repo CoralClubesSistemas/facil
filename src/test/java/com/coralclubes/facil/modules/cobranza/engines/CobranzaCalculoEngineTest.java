@@ -49,7 +49,8 @@ class CobranzaCalculoEngineTest {
                 ))
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> engine.simularCalculo(request, limiteAutorizado));
+        assertThrows(com.coralclubes.facil.shared.infrastructure.exceptions.custom.PercentageExceeded.class,
+                () -> engine.simularCalculo(request, limiteAutorizado));
     }
 
     @Test
