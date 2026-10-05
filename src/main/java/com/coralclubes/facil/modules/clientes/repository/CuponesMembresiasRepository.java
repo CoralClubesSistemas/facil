@@ -191,6 +191,6 @@ public class CuponesMembresiasRepository {
         params.put("PqacId", request.pqacId());
         params.put("Usuario", usuario);
 
-        spExecutor.execute("spMembresiaConsumirCupon", params);
+        spExecutor.executeLog("spMembresiaConsumirCupon", params, usuario, true, true);
     }
 }

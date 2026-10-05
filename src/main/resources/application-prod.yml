@@ -64,7 +64,7 @@ app:
 
     checkout:
       url: ${CHECKOUT_SERVICE_URL}
-      api-key: FACIL_4dkQZoLmzOZ2Ynob6GnIeYbPR3O0yyEq
+      api-key: ${CHECKOUT_API_KEY}
       urls:
         portal-resv:
           redirect-success: ${PORTAL_RESV_REDIRECT_SUCCESS:http://localhost:4200/reserva/exito}

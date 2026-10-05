@@ -98,7 +98,7 @@ public class CuponesMembresiasService {
     }
 
     public void consumirCuponMembresia(ConsumirCuponMembresiaRequest request, String usuario) {
-        logger.info(usuario, "Consumiendo cupón para membresía: {}, pqacId: {}, numeroOrden: {}",
+        logger.info(usuario, "Consumiendo cupón para membresía: {}, pqacId: {}",
                 request.membresia(), request.pqacId());
         repository.spMembresiaConsumirCupon(request, usuario);
     }
