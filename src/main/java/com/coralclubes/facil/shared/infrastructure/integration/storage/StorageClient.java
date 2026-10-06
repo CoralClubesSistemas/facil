@@ -183,12 +183,17 @@ public class StorageClient {
     public byte[] descargarArchivo(String urlDescarga) {
         try {
             return restClient.get()
-                    .uri(urlDescarga)
+                    .uri(URI.create(urlDescarga))
                     .retrieve()
                     .body(byte[].class);
         } catch (Exception e) {
-            logger.error("STORAGE_CLIENT", "Error al descargar contenido binario de storage: " + e.getMessage(), e);
-            throw new ServiceUnavailableException("No fue posible descargar el archivo del almacenamiento.");
+            logger.warn("STORAGE_CLIENT", "Fallo descarga via RestClient, intentando conexion HTTP directa: " + e.getMessage());
+            try (java.io.InputStream in = URI.create(urlDescarga).toURL().openStream()) {
+                return in.readAllBytes();
+            } catch (Exception ex) {
+                logger.error("STORAGE_CLIENT", "Error al descargar contenido binario de storage: " + ex.getMessage(), ex);
+                throw new ServiceUnavailableException("No fue posible descargar el archivo del almacenamiento.");
+            }
         }
     }
 

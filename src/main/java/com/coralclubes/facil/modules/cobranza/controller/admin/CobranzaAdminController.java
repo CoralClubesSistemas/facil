@@ -2,9 +2,11 @@ package com.coralclubes.facil.modules.cobranza.controller.admin;
 
 import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.SimularCalculoDescuentoRequest;
+import com.coralclubes.facil.modules.cobranza.dto.request.SolicitarUrlComprobanteRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.*;
 import com.coralclubes.facil.modules.cobranza.service.CobranzaService;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -76,6 +78,18 @@ public class CobranzaAdminController {
             @RequestParam BigDecimal monto
             ) {
         return ResponseEntity.ok(cobranzaService.obtenerDepositos(idBanco, fechaDeposito, busqueda, monto));
+    }
+
+    @PostMapping("/depositos/comprobante/solicitar-url")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<RespuestaCargaDto>> solicitarUrlCargaComprobante(
+            @Valid @RequestBody SolicitarUrlComprobanteRequest request
+    ) {
+        String usuario = userContext.getUsername();
+        return ResponseEntity.ok(ApiResponse.success(
+                "URL prefirmada para carga de comprobante generada correctamente.",
+                cobranzaService.solicitarUrlCargaComprobante(request, usuario)
+        ));
     }
 
     @PostMapping("/ordenes/{uuid}/finalizar-recibo")

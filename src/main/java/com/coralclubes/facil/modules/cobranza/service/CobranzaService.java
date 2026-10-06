@@ -36,6 +36,17 @@ import com.coralclubes.facil.modules.cobranza.engines.CobranzaLiquidacionEngine;
 import com.coralclubes.facil.modules.cobranza.repository.CobranzaCatalogosRepository;
 import java.util.UUID;
 
+import com.coralclubes.facil.modules.cobranza.dto.request.SolicitarUrlComprobanteRequest;
+import com.coralclubes.facil.modules.cobranza.dto.response.AnalizarComprobanteResponse;
+import com.coralclubes.facil.modules.cobranza.dto.response.ComprobantePagoAnalizadoDto;
+import com.coralclubes.facil.modules.cobranza.service.extractor.ComprobanteDigitalParser;
+import com.coralclubes.facil.shared.infrastructure.integration.filesanalysis.client.FilesAnalysisClient;
+import com.coralclubes.facil.shared.infrastructure.integration.filesanalysis.dto.AnalisisArchivoSolicitud;
+import com.coralclubes.facil.shared.infrastructure.integration.filesanalysis.dto.ResultadoAnalisis;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaDto;
+
 @Service
 @RequiredArgsConstructor
 public class CobranzaService {
@@ -51,6 +62,9 @@ public class CobranzaService {
     private final UserContext userContext;
     private final CobranzaPostProcesoAsyncService postProcesoAsyncService;
     private final ApplicationEventPublisher eventPublisher;
+    private final FilesAnalysisClient filesAnalysisClient;
+    private final StorageClient storageClient;
+    private final ComprobanteDigitalParser digitalParser;
 
     @Value("${app.email.audit-default}")
     private String emailAuditDefault;
@@ -281,6 +295,70 @@ public class CobranzaService {
     public Optional<String> obtenerSiguienteMembresiaPendiente(String membresiaActual) {
         String usuario = userContext.getUsername();
         return repository.spCobranzaObtenerSiguienteMembresiaPendiente(usuario, membresiaActual);
+    }
+
+    /**
+     * Solicita una URL prefirmada a Coral Almacenamiento para subir un comprobante de pago (Valet Key).
+     * Incluye metadatos para identificar que el archivo proviene de análisis y evitar emitirlo por Redis al frontend.
+     */
+    public RespuestaCargaDto solicitarUrlCargaComprobante(SolicitarUrlComprobanteRequest request, String usuario) {
+        java.util.Map<String, String> metadatos = java.util.Map.of(
+                "tipoProceso", "ANALISIS_COMPROBANTE",
+                "subidoPor", usuario != null ? usuario : "SYSTEM"
+        );
+
+        SolicitudCargaDto solicitud = SolicitudCargaDto.builder()
+                .nombreArchivo(request.nombreArchivo())
+                .contentType(request.contentType())
+                .tamanoBytes(request.tamanoBytes())
+                .esPublico(false)
+                .rutaLogica("cobranza/comprobantes")
+                .metadatos(metadatos)
+                .build();
+        return storageClient.solicitarUrlCarga(solicitud);
+    }
+
+    /**
+     * Solicita el análisis inteligente del comprobante bancario previamente cargado en Coral Almacenamiento.
+     * Utiliza extracción digital directa si es PDF con texto estructurado, o visión multimodal de Bedrock en fallback/imágenes.
+     */
+    public AnalizarComprobanteResponse analizarComprobanteDeposito(UUID fileId, String usuario) {
+        log.info(usuario, "Iniciando análisis de comprobante de depósito con fileId {}", fileId);
+
+        String promptInstrucciones = """
+                Analiza el comprobante bancario adjunto (transferencia bancaria, depósito en ventanilla, comprobante SPEI o ticket de pago).
+                Extrae con la máxima precisión financiera los siguientes campos:
+                - bancoEmisor: Banco de origen desde donde se emitió el pago (ej. BBVA, BANAMEX, SANTANDER, etc.).
+                - bancoReceptor: Banco destino receptor del pago.
+                - monto: Importe numérico pagado (ej. 1500.50), sin signos de pesos ni comas.
+                - fechaOperacion: Fecha en formato YYYY-MM-DD.
+                - horaOperacion: Hora en formato HH:mm:ss si está disponible, o null.
+                - claveRastreo: Clave de rastreo alfanumérica o folio SPEI si existe.
+                - referencia: Número de referencia o folio de la operación.
+                - cuentaOrdenante: Número de cuenta, tarjeta o CLABE de origen.
+                - cuentaBeneficiaria: Número de cuenta, tarjeta o CLABE de destino.
+                - beneficiario: Nombre o razón social del beneficiario del pago.
+                - ordenante: Nombre del titular que realizó el pago.
+                - concepto: Concepto o motivo de pago especificado.
+                - tipoOperacion: SPEI, TRANSFERENCIA, DEPOSITO_VENTANILLA, PRACTICAJA u OTRO.
+                """;
+
+        AnalisisArchivoSolicitud<ComprobantePagoAnalizadoDto> solicitud = new AnalisisArchivoSolicitud<>(
+                fileId,
+                ComprobantePagoAnalizadoDto.class,
+                promptInstrucciones,
+                digitalParser::parsear
+        );
+
+        ResultadoAnalisis<ComprobantePagoAnalizadoDto> resultado = filesAnalysisClient.analizar(solicitud);
+
+        log.info(usuario, "Comprobante {} analizado exitosamente. Motor: {}", fileId, resultado.motorUsado());
+
+        return new AnalizarComprobanteResponse(
+                resultado.datos(),
+                resultado.motorUsado(),
+                resultado.advertencias()
+        );
     }
 
     // *************** HELPERS ******************************

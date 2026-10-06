@@ -4,7 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
 
@@ -22,9 +25,19 @@ public class BedrockConfig {
                 ? Region.of(regionStr)
                 : Region.US_EAST_1;
 
+        String accessKey = properties.getBedrock().getAccessKey();
+        String secretKey = properties.getBedrock().getSecretKey();
+
+        AwsCredentialsProvider credentialsProvider;
+        if (accessKey != null && !accessKey.isBlank() && secretKey != null && !secretKey.isBlank()) {
+            credentialsProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey.trim(), secretKey.trim()));
+        } else {
+            credentialsProvider = DefaultCredentialsProvider.create();
+        }
+
         return BedrockRuntimeClient.builder()
                 .region(region)
-                .credentialsProvider(DefaultCredentialsProvider.create())
+                .credentialsProvider(credentialsProvider)
                 .build();
     }
 }

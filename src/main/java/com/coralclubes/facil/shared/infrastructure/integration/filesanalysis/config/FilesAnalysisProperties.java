@@ -35,8 +35,10 @@ public class FilesAnalysisProperties {
     @Setter
     public static class BedrockProperties {
         private String region = "us-east-1";
-        private String modelId = "anthropic.claude-3-5-sonnet-20241022-v2:0";
+        private String modelId = "us.amazon.nova-pro-v1:0";
         private Double temperature = 0.0;
         private Integer maxTokens = 2048;
+        private String accessKey;
+        private String secretKey;
     }
 }

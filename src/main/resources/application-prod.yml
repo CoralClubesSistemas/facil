@@ -82,7 +82,7 @@ app:
       api-key: ${FILES_ANALYSIS_API_KEY:}
       bedrock:
         region: ${AWS_REGION:us-east-1}
-        model-id: ${BEDROCK_MODEL_ID:anthropic.claude-3-5-sonnet-20241022-v2:0}
+        model-id: ${BEDROCK_MODEL_ID:us.amazon.nova-pro-v1:0}
         temperature: 0.0
         max-tokens: 2048
 
