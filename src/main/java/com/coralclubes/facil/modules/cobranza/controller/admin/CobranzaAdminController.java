@@ -7,6 +7,7 @@ import com.coralclubes.facil.modules.cobranza.dto.response.*;
 import com.coralclubes.facil.modules.cobranza.service.CobranzaService;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
 import com.coralclubes.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -83,7 +84,7 @@ public class CobranzaAdminController {
     @PostMapping("/depositos/comprobante/solicitar-url")
     @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
     public ResponseEntity<ApiResponse<RespuestaCargaDto>> solicitarUrlCargaComprobante(
-            @Valid @RequestBody SolicitarUrlComprobanteRequest request
+            @Valid @RequestBody SolicitarUrlRequest request
     ) {
         String usuario = userContext.getUsername();
         return ResponseEntity.ok(ApiResponse.success(

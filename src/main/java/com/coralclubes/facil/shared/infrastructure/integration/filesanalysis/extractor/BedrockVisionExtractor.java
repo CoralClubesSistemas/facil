@@ -108,7 +108,7 @@ public class BedrockVisionExtractor {
 
         try {
             ConverseResponse response = bedrockRuntimeClient.converse(request);
-            String rawOutput = response.output().message().content().get(0).text();
+            String rawOutput = response.output().message().content().getFirst().text();
             String jsonLimpio = limpiarJson(rawOutput);
 
             return objectMapper.readValue(jsonLimpio, tipoDestino);

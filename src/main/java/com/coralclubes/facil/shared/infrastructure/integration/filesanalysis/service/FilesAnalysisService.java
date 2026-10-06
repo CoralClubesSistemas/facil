@@ -16,6 +16,19 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+/**
+ * Servicio de análisis de archivos que implementa la interfaz FilesAnalysisClient.
+ * Este servicio es responsable de:
+ * 1. Consultar metadatos del archivo en Coral Almacenamiento.
+ * 2. Descargar el archivo y determinar su tipo de contenido.
+ * 3. Procesar archivos PDF y de imagen:
+ * - Para PDFs digitales, intenta extraer texto directamente y aplicar un extractor de negocio.
+ * - Para PDFs escaneados, renderiza la primera página a imagen y utiliza Bedrock Vision para extraer información.
+ * - Para imágenes, utiliza Bedrock Vision directamente.
+ * 4. Manejar errores y fallback en caso de que la extracción directa falle.
+ * 5. Registrar eventos de negocio y advertencias relevantes durante el proceso.
+ *
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -26,7 +39,6 @@ public class FilesAnalysisService implements FilesAnalysisClient {
     private final DigitalPdfExtractor digitalPdfExtractor;
     private final PdfToImageConverter pdfToImageConverter;
     private final BedrockVisionExtractor bedrockVisionExtractor;
-    private final BusinessLogger businessLogger;
 
     @Override
     public <T> ResultadoAnalisis<T> analizar(AnalisisArchivoSolicitud<T> solicitud) {
@@ -55,10 +67,12 @@ public class FilesAnalysisService implements FilesAnalysisClient {
         // Paso 1: Intentar extracción directa de PDF digital
         Optional<String> textoOpt = digitalPdfExtractor.extraerTexto(bytesArchivo);
 
+        log.debug("SOLICITUD {}: Texto extraído del PDF: {}", solicitud.fileId(), textoOpt.orElse("No se extrajo texto"));
+
         if (textoOpt.isPresent() && solicitud.extractorTextoDigital() != null) {
             Optional<T> resultadoDirectoOpt = solicitud.extractorTextoDigital().apply(textoOpt.get());
             if (resultadoDirectoOpt.isPresent()) {
-                businessLogger.info("SYSTEM", "Extracción directa completada exitosamente para PDF: {}", solicitud.fileId());
+                log.info("Extracción directa completada exitosamente para PDF: {}", solicitud.fileId());
                 return ResultadoAnalisis.digital(resultadoDirectoOpt.get());
             }
             log.info("La extracción directa digital del PDF no satisfizo los campos requeridos. Activando fallback a Bedrock.");
@@ -67,7 +81,7 @@ public class FilesAnalysisService implements FilesAnalysisClient {
         // Paso 2: Si es un PDF escaneado (sin texto) o la extracción digital falló/incompleta, renderizar a imagen y enviar a Bedrock
         Optional<byte[]> imagenRenderizada = pdfToImageConverter.convertirPrimeraPaginaAImagen(bytesArchivo);
         if (imagenRenderizada.isPresent()) {
-            businessLogger.info("SYSTEM", "Invocando visión multimodal Bedrock para PDF escaneado/fallback: {}", solicitud.fileId());
+            log.info("Renderizando PDF a imagen para análisis: {}", solicitud.fileId());
             T resultadoAi = bedrockVisionExtractor.extraerDesdeImagen(
                     imagenRenderizada.get(),
                     "image/png",
@@ -79,7 +93,7 @@ public class FilesAnalysisService implements FilesAnalysisClient {
 
         // Paso 3: Fallback secundario si falló el renderizado pero había texto plano
         if (textoOpt.isPresent()) {
-            businessLogger.info("SYSTEM", "Invocando Bedrock sobre texto extraído del PDF: {}", solicitud.fileId());
+            log.info("Invocando Bedrock sobre texto extraído del PDF: {}", solicitud.fileId());
             T resultadoAi = bedrockVisionExtractor.extraerDesdeTexto(
                     textoOpt.get(),
                     solicitud.tipoDestino(),
@@ -92,7 +106,7 @@ public class FilesAnalysisService implements FilesAnalysisClient {
     }
 
     private <T> ResultadoAnalisis<T> procesarImagen(AnalisisArchivoSolicitud<T> solicitud, byte[] bytesArchivo, String contentType) {
-        businessLogger.info("SYSTEM", "Invocando visión multimodal Bedrock para imagen: {}", solicitud.fileId());
+        log.info("Invocando visión multimodal Bedrock para imagen: {}", solicitud.fileId());
         T resultadoAi = bedrockVisionExtractor.extraerDesdeImagen(
                 bytesArchivo,
                 contentType,

@@ -48,7 +48,7 @@ public class ComprobanteDigitalParser {
     private static final String[] BANCOS_CONOCIDOS = {
             "BBVA", "BANCOMER", "CITIBANAMEX", "BANAMEX", "SANTANDER", "BANORTE",
             "HSBC", "SCOTIABANK", "INBURSA", "BANCO AZTECA", "STP", "SISTEMA DE TRANSFERENCIAS Y PAGOS",
-            "BANCOPPEL", "AFIRME", "BANREGIO", "BAJIO", "MIFEL", "ACTINVER", "NU MEXICO"
+            "BANCOPPEL", "AFIRME", "BANREGIO", "BAJIO", "MIFEL", "ACTINVER", "NU MEXICO", "SPIN BY OXXO"
     };
 
     /**

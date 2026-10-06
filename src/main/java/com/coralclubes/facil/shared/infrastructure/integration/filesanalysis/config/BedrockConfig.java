@@ -17,6 +17,10 @@ public class BedrockConfig {
 
     private final FilesAnalysisProperties properties;
 
+    /**
+     * Configuramos un bean para el cliente Bedrock Runtime.
+     * Si el proveedor es local, se usa el DefaultCredentialsProvider (las credenciales configuradas en el dispositivo).
+     * */
     @Bean
     @ConditionalOnProperty(name = "app.clients.files-analysis.provider", havingValue = "local", matchIfMissing = true)
     public BedrockRuntimeClient bedrockRuntimeClient() {

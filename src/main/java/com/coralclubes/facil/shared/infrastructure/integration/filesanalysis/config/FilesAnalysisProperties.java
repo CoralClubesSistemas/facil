@@ -5,6 +5,11 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Materializacion de las propiedades de configuración para el cliente de análisis de archivos.
+ * Mediante esta clase agrupamos las propiedades, les asignamos valores por defecto, las tipamos
+ * y documentamos para que puedan ser inyectadas en los beans de Spring.
+ */
 @Getter
 @Setter
 @Configuration

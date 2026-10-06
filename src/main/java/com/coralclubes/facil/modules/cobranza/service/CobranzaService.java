@@ -12,6 +12,7 @@ import com.coralclubes.facil.modules.usuarios.service.UsuarioService;
 import com.coralclubes.facil.shared.events.dto.ReciboPagadoEvent;
 // import com.coralclubes.facil.shared.infrastructure.integration.ia.analisis.AnalisisDeInformacion;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
+import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitarUrlRequest;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -301,7 +302,7 @@ public class CobranzaService {
      * Solicita una URL prefirmada a Coral Almacenamiento para subir un comprobante de pago (Valet Key).
      * Incluye metadatos para identificar que el archivo proviene de análisis y evitar emitirlo por Redis al frontend.
      */
-    public RespuestaCargaDto solicitarUrlCargaComprobante(SolicitarUrlComprobanteRequest request, String usuario) {
+    public RespuestaCargaDto solicitarUrlCargaComprobante(SolicitarUrlRequest request, String usuario) {
         java.util.Map<String, String> metadatos = java.util.Map.of(
                 "tipoProceso", "ANALISIS_COMPROBANTE",
                 "subidoPor", usuario != null ? usuario : "SYSTEM"
@@ -341,6 +342,10 @@ public class CobranzaService {
                 - ordenante: Nombre del titular que realizó el pago.
                 - concepto: Concepto o motivo de pago especificado.
                 - tipoOperacion: SPEI, TRANSFERENCIA, DEPOSITO_VENTANILLA, PRACTICAJA u OTRO.
+                
+                Concideraciones adicionales:
+                - Algunos comprobantes muestran el valor de los campos en multiples renglones, la forma correcta de extraer el valor
+                es agrupando los renglones contenidos entre lineas separatorias (lineas grisas o lineas punteadas) y concatenando los valores.
                 """;
 
         AnalisisArchivoSolicitud<ComprobantePagoAnalizadoDto> solicitud = new AnalisisArchivoSolicitud<>(

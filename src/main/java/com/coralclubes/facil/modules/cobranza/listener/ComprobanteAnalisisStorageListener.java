@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 public class ComprobanteAnalisisStorageListener {
 
     private final CobranzaService cobranzaService;
-    private final BusinessLogger businessLogger;
 
     @EventListener
     public void onStorageFileProcessed(StorageFileProcessedEvent event) {
@@ -38,7 +37,7 @@ public class ComprobanteAnalisisStorageListener {
                 event.fileId(), tipoProceso);
 
         try {
-            // Procesamiento inmediato del comprobante sin triangular por frontend
+            // Procesamiento inmediato del comprobante
             AnalizarComprobanteResponse resultado = cobranzaService.analizarComprobanteDeposito(event.fileId(), usuario);
 
             // Imprimir en consola / pantalla el resultado extraído
@@ -52,7 +51,7 @@ public class ComprobanteAnalisisStorageListener {
             }
             System.out.println("================================================================================");
 
-            businessLogger.info(usuario, "Análisis inmediato completado para comprobante {}. Motor: {}, Monto: {}, Rastreo: {}",
+            log.info("Análisis inmediato completado para comprobante {}. Motor: {}, Monto: {}, Rastreo: {}",
                     event.fileId(),
                     resultado.motorUsado(),
                     resultado.comprobante() != null ? resultado.comprobante().monto() : null,
