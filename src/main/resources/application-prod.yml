@@ -76,6 +76,16 @@ app:
     gotenberg:
       url: ${GOTENBERG_URL}
 
+    files-analysis:
+      provider: ${FILES_ANALYSIS_PROVIDER:local}
+      url: ${FILES_ANALYSIS_URL:http://localhost:8084}
+      api-key: ${FILES_ANALYSIS_API_KEY:}
+      bedrock:
+        region: ${AWS_REGION:us-east-1}
+        model-id: ${BEDROCK_MODEL_ID:anthropic.claude-3-5-sonnet-20241022-v2:0}
+        temperature: 0.0
+        max-tokens: 2048
+
   security:
     password-reset:
       expiration-minutes: 60

@@ -74,6 +74,14 @@ app:
     gotenberg:
       url: http://localhost:3000
 
+    files-analysis:
+      provider: local
+      bedrock:
+        region: us-east-1
+        model-id: anthropic.claude-3-5-sonnet-20241022-v2:0
+        temperature: 0.0
+        max-tokens: 2048
+
   security:
     password-reset:
       expiration-minutes: 60

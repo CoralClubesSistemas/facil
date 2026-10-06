@@ -145,6 +145,54 @@ public class StorageClient {
     }
 
     /**
+     * Consulta los metadatos completos y estado de un archivo en Coral Almacenamiento.
+     *
+     * @param uuid El identificador único del archivo.
+     * @return DTO con información técnica (contentType, urlDescarga, estatus, nombreOriginal, etc.).
+     * @throws ServiceUnavailableException Si el servicio de almacenamiento no responde.
+     */
+    public InfoArchivoDto consultarArchivo(UUID uuid) {
+        try {
+            String uri = serviceUrl + "/api/v1/storage/files/" + uuid;
+            ApiResponse<InfoArchivoDto> response = restClient.get()
+                    .uri(uri)
+                    .header("X-API-KEY", apiKey)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<>() {
+                    });
+
+            if (response != null && response.data() != null) {
+                return response.data();
+            }
+
+            throw new IllegalStateException("El microservicio de storage devolvió una respuesta vacía.");
+
+        } catch (Exception e) {
+            logger.error("STORAGE_CLIENT", "Error al consultar archivo: " + e.getMessage(), e);
+            throw new ServiceUnavailableException("El servicio de almacenamiento no está disponible en este momento.");
+        }
+    }
+
+    /**
+     * Descarga el arreglo de bytes de un archivo a partir de su URL pública o prefirmada.
+     *
+     * @param urlDescarga URL accesible del archivo.
+     * @return Arreglo de bytes del archivo descargado.
+     * @throws ServiceUnavailableException Si falla la descarga del archivo.
+     */
+    public byte[] descargarArchivo(String urlDescarga) {
+        try {
+            return restClient.get()
+                    .uri(urlDescarga)
+                    .retrieve()
+                    .body(byte[].class);
+        } catch (Exception e) {
+            logger.error("STORAGE_CLIENT", "Error al descargar contenido binario de storage: " + e.getMessage(), e);
+            throw new ServiceUnavailableException("No fue posible descargar el archivo del almacenamiento.");
+        }
+    }
+
+    /**
      * Consulta detalles y URLs de descarga por lote (Batch) de varios archivos a la vez.
      *
      * @param batchDto Lista de UUIDs de archivos a consultar.
