@@ -41,6 +41,7 @@ import com.coralclubes.facil.modules.cobranza.dto.request.SolicitarUrlComprobant
 import com.coralclubes.facil.modules.cobranza.dto.response.AnalizarComprobanteResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.ComprobantePagoAnalizadoDto;
 import com.coralclubes.facil.modules.cobranza.service.extractor.ComprobanteDigitalParser;
+import com.coralclubes.facil.modules.cobranza.service.extractor.ComprobanteSanitizer;
 import com.coralclubes.facil.shared.infrastructure.integration.filesanalysis.client.FilesAnalysisClient;
 import com.coralclubes.facil.shared.infrastructure.integration.filesanalysis.dto.AnalisisArchivoSolicitud;
 import com.coralclubes.facil.shared.infrastructure.integration.filesanalysis.dto.ResultadoAnalisis;
@@ -66,6 +67,10 @@ public class CobranzaService {
     private final FilesAnalysisClient filesAnalysisClient;
     private final StorageClient storageClient;
     private final ComprobanteDigitalParser digitalParser;
+    private final ComprobanteSanitizer comprobanteSanitizer;
+
+    @Value("classpath:prompts/comprobante-pago-prompt.md")
+    private org.springframework.core.io.Resource promptComprobanteResource;
 
     @Value("${app.email.audit-default}")
     private String emailAuditDefault;
@@ -326,27 +331,7 @@ public class CobranzaService {
     public AnalizarComprobanteResponse analizarComprobanteDeposito(UUID fileId, String usuario) {
         log.info(usuario, "Iniciando análisis de comprobante de depósito con fileId {}", fileId);
 
-        String promptInstrucciones = """
-                Analiza el comprobante bancario adjunto (transferencia bancaria, depósito en ventanilla, comprobante SPEI o ticket de pago).
-                Extrae con la máxima precisión financiera los siguientes campos:
-                - bancoEmisor: Banco de origen desde donde se emitió el pago (ej. BBVA, BANAMEX, SANTANDER, etc.).
-                - bancoReceptor: Banco destino receptor del pago.
-                - monto: Importe numérico pagado (ej. 1500.50), sin signos de pesos ni comas.
-                - fechaOperacion: Fecha en formato YYYY-MM-DD.
-                - horaOperacion: Hora en formato HH:mm:ss si está disponible, o null.
-                - claveRastreo: Clave de rastreo alfanumérica o folio SPEI si existe.
-                - referencia: Número de referencia o folio de la operación.
-                - cuentaOrdenante: Número de cuenta, tarjeta o CLABE de origen.
-                - cuentaBeneficiaria: Número de cuenta, tarjeta o CLABE de destino.
-                - beneficiario: Nombre o razón social del beneficiario del pago.
-                - ordenante: Nombre del titular que realizó el pago.
-                - concepto: Concepto o motivo de pago especificado.
-                - tipoOperacion: SPEI, TRANSFERENCIA, DEPOSITO_VENTANILLA, PRACTICAJA u OTRO.
-                
-                Concideraciones adicionales:
-                - Algunos comprobantes muestran el valor de los campos en multiples renglones, la forma correcta de extraer el valor
-                es agrupando los renglones contenidos entre lineas separatorias (lineas grisas o lineas punteadas) y concatenando los valores.
-                """;
+        String promptInstrucciones = cargarPromptComprobante();
 
         AnalisisArchivoSolicitud<ComprobantePagoAnalizadoDto> solicitud = new AnalisisArchivoSolicitud<>(
                 fileId,
@@ -357,13 +342,31 @@ public class CobranzaService {
 
         ResultadoAnalisis<ComprobantePagoAnalizadoDto> resultado = filesAnalysisClient.analizar(solicitud);
 
+        ComprobantePagoAnalizadoDto datosSanitizados = comprobanteSanitizer.sanitizar(resultado.datos());
+
         log.info(usuario, "Comprobante {} analizado exitosamente. Motor: {}", fileId, resultado.motorUsado());
 
         return new AnalizarComprobanteResponse(
-                resultado.datos(),
+                datosSanitizados,
                 resultado.motorUsado(),
                 resultado.advertencias()
         );
+    }
+
+    private String cargarPromptComprobante() {
+        try {
+            if (promptComprobanteResource != null && promptComprobanteResource.exists()) {
+                return promptComprobanteResource.getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+            }
+        } catch (Exception e) {
+            log.error("SYSTEM", "Error al leer la plantilla de prompt externa para comprobantes: {}", e.getMessage());
+        }
+        return """
+                Analiza el comprobante bancario adjunto.
+                Extrae con la máxima precisión financiera los siguientes campos:
+                - bancoEmisor, bancoReceptor, monto, fechaOperacion, horaOperacion, claveRastreo, referencia,
+                  cuentaOrdenante, cuentaBeneficiaria, beneficiario, ordenante, concepto, tipoOperacion.
+                """;
     }
 
     // *************** HELPERS ******************************

@@ -45,6 +45,47 @@ class ComprobanteDigitalParserTest {
     }
 
     @Test
+    @DisplayName("Debe extraer con éxito comprobante empresarial BBVA Net Cash (Mismo Banco)")
+    void testParsearBbvaNetCash() {
+        String textoBbvaNetCash = """
+                Fecha y hora de consulta 23/09/2026 10:47:02 PM Contrato 00464392
+                Nombre del Cliente PROMOTORA TURISTICA DE MANZANILLO SA DE CV
+                BBVA Net Cash - Pagos Mismo Banco
+                Operación autorizada
+                Datos del firmante
+                Usuario: ADMIN6 Poder: 100%
+                Datos de la operación
+                Tipo de operación: Pago Mismo Banco
+                Descripción: FAC 3435 Importe de la operación: 24,648.76 MXP
+                Cuenta de retiro: 0181038451 Cuenta de depósito: 0454342127
+                Divisa de la cuenta: MXP Divisa de la cuenta: MXP
+                Titular de la cuenta: MEXITOURS SA DE CV Titular de la cuenta: EMPRESAS FIMEX,SA DE CV
+                Fecha de creación: 23/09/2026 Fecha de aplicación: 23/09/2026
+                Hora: 22:47:00
+                Instrumento de seguridad: ASD 6552108461 Motivo de pago: CONCILIACION CORAL VISTA D EL M
+                Datos de confirmación de la transferencia
+                Folio de firma: 0007979208 Folio único: I323202609232247000007979215
+                Estado operación
+                Porcentaje firmado: 100% Estado: Operado
+                BBVA México, S.A., Institución de Banca Múltiple, Grupo Financiero BBVA México www.bbvanetcash.mx
+                """;
+
+        Optional<ComprobantePagoAnalizadoDto> resultado = parser.parsear(textoBbvaNetCash);
+
+        assertTrue(resultado.isPresent(), "Debe poder procesar comprobante BBVA Net Cash");
+        ComprobantePagoAnalizadoDto dto = resultado.get();
+
+        assertEquals("BBVA", dto.bancoEmisor());
+        assertEquals("BBVA", dto.bancoReceptor());
+        assertEquals(new BigDecimal("24648.76"), dto.monto());
+        assertEquals("0181038451", dto.cuentaOrdenante());
+        assertEquals("0454342127", dto.cuentaBeneficiaria());
+        assertEquals("23/09/2026", dto.fechaOperacion());
+        assertEquals("22:47:00", dto.horaOperacion());
+        assertNotNull(dto.referencia(), "Debe extraer folio único o de firma como referencia");
+    }
+
+    @Test
     @DisplayName("Debe retornar Optional.empty() si el texto no contiene monto para forzar fallback a IA")
     void testParsearSinMonto() {
         String textoIncompleto = """
