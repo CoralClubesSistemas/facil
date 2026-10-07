@@ -111,6 +111,8 @@ public class BedrockVisionExtractor {
             String rawOutput = response.output().message().content().getFirst().text();
             String jsonLimpio = limpiarJson(rawOutput);
 
+            log.debug("Respuesta cruda de Bedrock: {}", rawOutput);
+
             return objectMapper.readValue(jsonLimpio, tipoDestino);
         } catch (Exception e) {
             log.error("Error al procesar extracción en AWS Bedrock: {}", e.getMessage(), e);
