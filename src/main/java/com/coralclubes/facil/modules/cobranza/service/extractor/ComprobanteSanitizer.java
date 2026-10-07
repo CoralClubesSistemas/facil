@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.cobranza.service.extractor;
 
 import com.coralclubes.facil.modules.cobranza.dto.response.ComprobantePagoAnalizadoDto;
+import com.coralclubes.facil.modules.cobranza.enums.BancoBanxico;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

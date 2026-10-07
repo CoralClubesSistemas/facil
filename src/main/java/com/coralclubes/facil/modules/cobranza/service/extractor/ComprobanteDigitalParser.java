@@ -1,6 +1,7 @@
 package com.coralclubes.facil.modules.cobranza.service.extractor;
 
 import com.coralclubes.facil.modules.cobranza.dto.response.ComprobantePagoAnalizadoDto;
+import com.coralclubes.facil.modules.cobranza.enums.BancoBanxico;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +18,7 @@ import java.util.regex.Pattern;
 @Slf4j
 @Component
 public class ComprobanteDigitalParser {
-
+    // ========= Expresiones regulares para extraer campos clave =========
     private static final Pattern PATTERN_MONTO = Pattern.compile(
             "(?i)(?:importe(?:\\s+de\\s+la\\s+operaci[oó]n|\\s+transferido)?|monto|total|cantidad)[\t :$]*([0-9]{1,3}(?:,[0-9]{3})*(?:\\.[0-9]{2}))"
     );

@@ -336,6 +336,7 @@ public class CobranzaService {
 
         log.info("{} solicita análisis de comprobante de depósito con fileId {} (página {})", usuario, fileId, numeroPagina);
 
+        // ====== procesamos el archivo mediante la integracion de files analysis ======
         String promptInstrucciones = cargarPromptComprobante();
 
         AnalisisArchivoSolicitud<ComprobantePagoAnalizadoDto> solicitud = new AnalisisArchivoSolicitud<>(
@@ -348,6 +349,7 @@ public class CobranzaService {
 
         ResultadoAnalisis<ComprobantePagoAnalizadoDto> resultado = filesAnalysisClient.analizar(solicitud);
 
+        // Del resultado obtenido, sanitizamos los datos (eliminamos caracteres extraños, normalizamos mayúsculas/minúsculas, reemplazamos campos, etc.)
         ComprobantePagoAnalizadoDto datosSanitizados = comprobanteSanitizer.sanitizar(resultado.datos());
 
         System.out.println("Datos sanitizados del comprobante: " + datosSanitizados);

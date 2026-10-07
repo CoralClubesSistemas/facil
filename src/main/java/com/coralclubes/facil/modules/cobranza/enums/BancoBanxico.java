@@ -1,4 +1,4 @@
-package com.coralclubes.facil.modules.cobranza.service.extractor;
+package com.coralclubes.facil.modules.cobranza.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -10,12 +10,12 @@ import java.util.Optional;
 
 /**
  * Catálogo Enum oficial de instituciones financieras participantes en Banxico (SPEI)
- * con sus códigos de 3 dígitos de CLABE interbancaria.
+ * con sus códigos de 3 dígitos de CLABE interbancaria. Si los 3 digitos al inicio de la CLABE no son
+ * encontrados en este catálogo, se considera que la institución no es participante de Banxico.
  */
 @Getter
 @RequiredArgsConstructor
 public enum BancoBanxico {
-
     BANAMEX("002", "BANAMEX"),
     BANCOMEXT("006", "BANCOMEXT"),
     BANOBRAS("009", "BANOBRAS"),
