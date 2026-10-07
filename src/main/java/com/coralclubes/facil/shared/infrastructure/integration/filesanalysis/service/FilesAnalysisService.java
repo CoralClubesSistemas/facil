@@ -42,7 +42,7 @@ public class FilesAnalysisService implements FilesAnalysisClient {
 
     @Override
     public <T> ResultadoAnalisis<T> analizar(AnalisisArchivoSolicitud<T> solicitud) {
-        log.info("Iniciando análisis de archivo con ID {}", solicitud.fileId());
+        log.debug("Iniciando análisis de archivo con ID {}", solicitud.fileId());
 
         // 1. Consultar metadatos validados en Coral Almacenamiento
         InfoArchivoDto infoArchivo = storageClient.consultarArchivo(solicitud.fileId());
@@ -64,24 +64,26 @@ public class FilesAnalysisService implements FilesAnalysisClient {
     }
 
     private <T> ResultadoAnalisis<T> procesarPdf(AnalisisArchivoSolicitud<T> solicitud, byte[] bytesArchivo) {
-        // Paso 1: Intentar extracción directa de PDF digital
-        Optional<String> textoOpt = digitalPdfExtractor.extraerTexto(bytesArchivo);
+        Integer numeroPagina = solicitud.numeroPagina();
 
-        log.debug("SOLICITUD {}: Texto extraído del PDF: {}", solicitud.fileId(), textoOpt.orElse("No se extrajo texto"));
+        // Paso 1: Intentar extracción directa de PDF digital (página específica o completo)
+        Optional<String> textoOpt = digitalPdfExtractor.extraerTexto(bytesArchivo, numeroPagina);
+
+        log.debug("SOLICITUD {}: Texto extraído del PDF (página {}): {}", solicitud.fileId(), numeroPagina, textoOpt.orElse("No se extrajo texto"));
 
         if (textoOpt.isPresent() && solicitud.extractorTextoDigital() != null) {
             Optional<T> resultadoDirectoOpt = solicitud.extractorTextoDigital().apply(textoOpt.get());
             if (resultadoDirectoOpt.isPresent()) {
-                log.info("Extracción directa completada exitosamente para PDF: {}", solicitud.fileId());
+                log.info("Extracción directa completada exitosamente para PDF: {} (página {})", solicitud.fileId(), numeroPagina);
                 return ResultadoAnalisis.digital(resultadoDirectoOpt.get());
             }
             log.info("La extracción directa digital del PDF no satisfizo los campos requeridos. Activando fallback a Bedrock.");
         }
 
-        // Paso 2: Si es un PDF escaneado (sin texto) o la extracción digital falló/incompleta, renderizar a imagen y enviar a Bedrock
-        Optional<byte[]> imagenRenderizada = pdfToImageConverter.convertirPrimeraPaginaAImagen(bytesArchivo);
+        // Paso 2: Si es un PDF escaneado (sin texto) o la extracción digital falló/incompleta, renderizar página a imagen y enviar a Bedrock
+        Optional<byte[]> imagenRenderizada = pdfToImageConverter.convertirPaginaAImagen(bytesArchivo, numeroPagina);
         if (imagenRenderizada.isPresent()) {
-            log.info("Renderizando PDF a imagen para análisis: {}", solicitud.fileId());
+            log.debug("Renderizando PDF a imagen para análisis: {} (página {})", solicitud.fileId(), numeroPagina);
             T resultadoAi = bedrockVisionExtractor.extraerDesdeImagen(
                     imagenRenderizada.get(),
                     "image/png",

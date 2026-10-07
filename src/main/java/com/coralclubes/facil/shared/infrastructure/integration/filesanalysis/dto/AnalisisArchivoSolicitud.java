@@ -8,6 +8,7 @@ import java.util.function.Function;
  * Solicitud de análisis agnóstica para cualquier módulo consumidor.
  *
  * @param fileId Identificador único del archivo en Coral Almacenamiento.
+ * @param numeroPagina Número de página a procesar (1-indexed). Si es null se asume la primera página.
  * @param tipoDestino Clase objetivo (Java Record/POJO) a la que se desea deserializar el resultado.
  * @param promptInstrucciones Instrucciones semánticas del negocio para guiar la extracción inteligente.
  * @param extractorTextoDigital Función opcional de extracción directa sobre texto plano si el archivo es un PDF digital.
@@ -15,11 +16,16 @@ import java.util.function.Function;
  */
 public record AnalisisArchivoSolicitud<T>(
         UUID fileId,
+        Integer numeroPagina,
         Class<T> tipoDestino,
         String promptInstrucciones,
         Function<String, Optional<T>> extractorTextoDigital
 ) {
+    public AnalisisArchivoSolicitud(UUID fileId, Class<T> tipoDestino, String promptInstrucciones, Function<String, Optional<T>> extractorTextoDigital) {
+        this(fileId, 1, tipoDestino, promptInstrucciones, extractorTextoDigital);
+    }
+
     public AnalisisArchivoSolicitud(UUID fileId, Class<T> tipoDestino, String promptInstrucciones) {
-        this(fileId, tipoDestino, promptInstrucciones, null);
+        this(fileId, 1, tipoDestino, promptInstrucciones, null);
     }
 }

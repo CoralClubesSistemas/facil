@@ -19,23 +19,46 @@ public class PdfToImageConverter {
     private static final int DEFAULT_DPI = 200;
 
     /**
-     * Renderiza la primera página de un documento PDF a imagen PNG en memoria.
+     * Renderiza la primera página de un documento PDF a imagen PNG en memoria (página 1).
      *
      * @param pdfBytes Bytes del PDF.
      * @return Arreglo de bytes de la imagen PNG generada, o Optional.empty() si falla.
      */
     public Optional<byte[]> convertirPrimeraPaginaAImagen(byte[] pdfBytes) {
+        return convertirPaginaAImagen(pdfBytes, 1);
+    }
+
+    /**
+     * Renderiza una página específica (1-indexed) de un documento PDF a imagen PNG en memoria.
+     * Si la página solicitada excede el rango del documento o es menor a 1, utiliza por defecto la primera página.
+     *
+     * @param pdfBytes Bytes del PDF.
+     * @param numeroPagina Número de página (1-indexed). Si es null o <= 0 se asume 1.
+     * @return Arreglo de bytes de la imagen PNG generada, o Optional.empty() si falla.
+     */
+    public Optional<byte[]> convertirPaginaAImagen(byte[] pdfBytes, Integer numeroPagina) {
         if (pdfBytes == null || pdfBytes.length == 0) {
             return Optional.empty();
         }
 
         try (PDDocument document = Loader.loadPDF(pdfBytes)) {
-            if (document.getNumberOfPages() == 0) {
+            int totalPaginas = document.getNumberOfPages();
+            if (totalPaginas == 0) {
                 return Optional.empty();
             }
 
+            int paginaDeseada = (numeroPagina != null && numeroPagina > 0) ? numeroPagina : 1;
+            // 0-indexed para PDFBox:
+            int pageIndex = paginaDeseada - 1;
+
+            if (pageIndex >= totalPaginas) {
+                log.warn("Página solicitada {} fuera de rango (total de páginas: {}). Usando primera página.",
+                        paginaDeseada, totalPaginas);
+                pageIndex = 0;
+            }
+
             PDFRenderer renderer = new PDFRenderer(document);
-            BufferedImage image = renderer.renderImageWithDPI(0, DEFAULT_DPI, ImageType.RGB);
+            BufferedImage image = renderer.renderImageWithDPI(pageIndex, DEFAULT_DPI, ImageType.RGB);
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ImageIO.write(image, "png", baos);

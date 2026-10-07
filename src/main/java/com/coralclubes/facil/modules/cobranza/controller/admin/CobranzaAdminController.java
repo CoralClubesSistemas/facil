@@ -1,5 +1,6 @@
 package com.coralclubes.facil.modules.cobranza.controller.admin;
 
+import com.coralclubes.facil.modules.cobranza.dto.request.AnalizarComprobanteRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.GenerarOrdenCobranzaRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.SimularCalculoDescuentoRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.SolicitarUrlComprobanteRequest;
@@ -90,6 +91,20 @@ public class CobranzaAdminController {
         return ResponseEntity.ok(ApiResponse.success(
                 "URL prefirmada para carga de comprobante generada correctamente.",
                 cobranzaService.solicitarUrlCargaComprobante(request, usuario)
+        ));
+    }
+
+    @PostMapping("/depositos/comprobante")
+    @PreAuthorize("hasAuthority('MOD_MNUCOBRANZA')")
+    public ResponseEntity<ApiResponse<DepositoCobranzaDto>> obtenerDepositosPorComprobante(
+            @Valid @RequestBody AnalizarComprobanteRequest request
+    ) {
+        String usuario = userContext.getUsername();
+        DepositoCobranzaDto response = cobranzaService.buscarDepositosPorComprobante(request, usuario);
+
+        return ResponseEntity.ok(ApiResponse.success(
+                "Depósitos encontrados para el comprobante proporcionado.",
+                response
         ));
     }
 

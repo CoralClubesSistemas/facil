@@ -18,6 +18,7 @@ import com.coralclubes.responses.ApiResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,7 @@ import com.coralclubes.facil.modules.cobranza.engines.CobranzaLiquidacionEngine;
 import com.coralclubes.facil.modules.cobranza.repository.CobranzaCatalogosRepository;
 import java.util.UUID;
 
+import com.coralclubes.facil.modules.cobranza.dto.request.AnalizarComprobanteRequest;
 import com.coralclubes.facil.modules.cobranza.dto.request.SolicitarUrlComprobanteRequest;
 import com.coralclubes.facil.modules.cobranza.dto.response.AnalizarComprobanteResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.ComprobantePagoAnalizadoDto;
@@ -49,6 +51,7 @@ import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageCl
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.RespuestaCargaDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaDto;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CobranzaService {
@@ -57,7 +60,6 @@ public class CobranzaService {
     private final CobranzaCalculoEngine calculoEngine;
     private final CobranzaLiquidacionEngine liquidacionEngine;
     private final ObjectMapper objectMapper;
-    private final BusinessLogger log;
     private final UsuarioService usuarioService;
     private final IntentoPagoRepository intentoPagoRepository;
     private final PaymentStrategyFactory strategyFactory;
@@ -98,7 +100,7 @@ public class CobranzaService {
 
         String movimientosJson = serializarIntenciones(intenciones);
 
-        log.info(usuario, "Generando orden de cobranza para membresía {} con intenciones procesadas: {}", request.membresia(), movimientosJson);
+        log.info("[{}] Generando orden de cobranza para membresía {} con intenciones procesadas: {}", usuario, request.membresia(), movimientosJson);
 
         GenerarOrdenCobranzaResponse result = repository
                 .spCobranzaGenerarOrdenCobranza(
@@ -161,7 +163,7 @@ public class CobranzaService {
         try {
             contexto = objectMapper.readValue(contextoJson, ContextoFinalizacionOrdenResponse.class);
         } catch (JsonProcessingException ex) {
-            log.error(usuario, "Error deserializando contexto de orden {}: {}", ordenUuid, ex.getMessage());
+            log.error("[{}] Error deserializando contexto de orden {}: {}", usuario, ordenUuid, ex.getMessage());
             throw new IllegalStateException("No se pudo interpretar el contexto de la orden de cobranza.");
         }
 
@@ -175,8 +177,8 @@ public class CobranzaService {
             throw new IllegalStateException("No se pudo serializar el plan de liquidación contable.");
         }
 
-        log.info(usuario, "Aplicando cierre contable para orden {} con importe {}: {}",
-                ordenUuid, payload.importeRecibo(), payloadJson);
+        log.info("[{}] Aplicando cierre contable para orden {} con importe {}: {}",
+                usuario, ordenUuid, payload.importeRecibo(), payloadJson);
 
         // 3. Persistir atómicamente en SQL Server
         String response = repository.spCobranzaAplicarCierreOrdenYRecibo(ordenUuid, usuario, payloadJson)
@@ -225,7 +227,7 @@ public class CobranzaService {
                     PaymentStrategy strategy = strategyFactory.getStrategy(intento.formaPagoClave());
                     strategy.postProcesarFinalizacion(intento.intentoPagoId());
                 } catch (Exception e) {
-                    log.error(usuario, "Error en post-procesamiento de forma de pago ID {}: {}", intento.intentoPagoId(), e.getMessage());
+                    log.error("[{}] Error en post-procesamiento de forma de pago ID {}: {}", usuario, intento.intentoPagoId(), e.getMessage());
                 }
             }
         }
@@ -234,7 +236,7 @@ public class CobranzaService {
         // 3. Obtener datos procesados para los PDFs
         // SOLO SI EL ESTATUS DEL RECIBO ES 'PAGADO'
         if (r.estatusRecibo().equalsIgnoreCase("PAGADO")) {
-            log.info(usuario, "Recibo {}-{} para membresía {} finalizado con estatus PAGADO. Iniciando generación de documentos y notificaciones.", orden.serieReciboId(), orden.numeroRecibo(), orden.membresia());
+            log.info("[{}] Recibo {}-{} para membresía {} finalizado con estatus PAGADO. Iniciando generación de documentos y notificaciones.", usuario, orden.serieReciboId(), orden.numeroRecibo(), orden.membresia());
 
             DatosReciboResponse recibo = datosRecibo(orden.numeroRecibo(), orden.serieReciboId(), orden.membresia());
 
@@ -247,7 +249,7 @@ public class CobranzaService {
                     correoAuditoria
             );
         } else {
-            log.info(usuario, "Recibo {}-{} para membresía {} finalizado con estatus {}. No se generarán documentos ni notificaciones.", orden.serieReciboId(), orden.numeroRecibo(), orden.membresia(), r.estatusRecibo());
+            log.info("[{}] Recibo {}-{} para membresía {} finalizado con estatus {}. No se generarán documentos ni notificaciones.", usuario, orden.serieReciboId(), orden.numeroRecibo(), orden.membresia(), r.estatusRecibo());
         }
 
         // publicacion de evento de recibo pagado
@@ -276,7 +278,7 @@ public class CobranzaService {
 
         eventPublisher.publishEvent(reciboPagadoEvent);
 
-        log.info(usuario, "Orden de cobranza finalizada y evento de recibo pagado publicado para membresía: {}, recibo: {}-{}", orden.membresia(), orden.serieReciboId(), orden.numeroRecibo());
+        log.info("[{}] Orden de cobranza finalizada y evento de recibo pagado publicado para membresía: {}, recibo: {}-{}", usuario, orden.membresia(), orden.serieReciboId(), orden.numeroRecibo());
 
         return ApiResponse.success("El cobro se procesó correctamente. Los recibos se están generando y enviando en segundo plano.", orden);
     }
@@ -305,11 +307,10 @@ public class CobranzaService {
 
     /**
      * Solicita una URL prefirmada a Coral Almacenamiento para subir un comprobante de pago (Valet Key).
-     * Incluye metadatos para identificar que el archivo proviene de análisis y evitar emitirlo por Redis al frontend.
      */
     public RespuestaCargaDto solicitarUrlCargaComprobante(SolicitarUrlRequest request, String usuario) {
         java.util.Map<String, String> metadatos = java.util.Map.of(
-                "tipoProceso", "ANALISIS_COMPROBANTE",
+                "tipoProceso", "COMPROBANTE_DEPOSITO",
                 "subidoPor", usuario != null ? usuario : "SYSTEM"
         );
 
@@ -327,14 +328,19 @@ public class CobranzaService {
     /**
      * Solicita el análisis inteligente del comprobante bancario previamente cargado en Coral Almacenamiento.
      * Utiliza extracción digital directa si es PDF con texto estructurado, o visión multimodal de Bedrock en fallback/imágenes.
+     * Soporta especificar opcionalmente el número de página a analizar en PDFs multipágina.
      */
-    public AnalizarComprobanteResponse analizarComprobanteDeposito(UUID fileId, String usuario) {
-        log.info(usuario, "Iniciando análisis de comprobante de depósito con fileId {}", fileId);
+    public DepositoCobranzaDto buscarDepositosPorComprobante(AnalizarComprobanteRequest request, String usuario) {
+        UUID fileId = request.fileId();
+        Integer numeroPagina = request.numeroPagina() != null ? request.numeroPagina() : 1;
+
+        log.info("[{}] Iniciando análisis de comprobante de depósito con fileId {} (página {})", usuario, fileId, numeroPagina);
 
         String promptInstrucciones = cargarPromptComprobante();
 
         AnalisisArchivoSolicitud<ComprobantePagoAnalizadoDto> solicitud = new AnalisisArchivoSolicitud<>(
                 fileId,
+                numeroPagina,
                 ComprobantePagoAnalizadoDto.class,
                 promptInstrucciones,
                 digitalParser::parsear
@@ -344,13 +350,9 @@ public class CobranzaService {
 
         ComprobantePagoAnalizadoDto datosSanitizados = comprobanteSanitizer.sanitizar(resultado.datos());
 
-        log.info(usuario, "Comprobante {} analizado exitosamente. Motor: {}", fileId, resultado.motorUsado());
+        System.out.println("Datos sanitizados del comprobante: " + datosSanitizados);
 
-        return new AnalizarComprobanteResponse(
-                datosSanitizados,
-                resultado.motorUsado(),
-                resultado.advertencias()
-        );
+        return null;
     }
 
     private String cargarPromptComprobante() {
@@ -359,7 +361,7 @@ public class CobranzaService {
                 return promptComprobanteResource.getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
             }
         } catch (Exception e) {
-            log.error("SYSTEM", "Error al leer la plantilla de prompt externa para comprobantes: {}", e.getMessage());
+            log.error("Error al leer la plantilla de prompt externa para comprobantes: {}", e.getMessage());
         }
         return """
                 Analiza el comprobante bancario adjunto.

@@ -66,7 +66,7 @@ class FilesAnalysisServiceTest {
 
         when(storageClient.consultarArchivo(fileId)).thenReturn(info);
         when(storageClient.descargarArchivo(info.urlDescarga())).thenReturn(sampleBytes);
-        when(digitalPdfExtractor.extraerTexto(sampleBytes)).thenReturn(Optional.of("Texto plano bancario"));
+        when(digitalPdfExtractor.extraerTexto(eq(sampleBytes), any())).thenReturn(Optional.of("Texto plano bancario"));
 
         TestDto expected = new TestDto("BBVA", "12345");
         AnalisisArchivoSolicitud<TestDto> solicitud = new AnalisisArchivoSolicitud<>(
@@ -97,8 +97,8 @@ class FilesAnalysisServiceTest {
 
         when(storageClient.consultarArchivo(fileId)).thenReturn(info);
         when(storageClient.descargarArchivo(info.urlDescarga())).thenReturn(sampleBytes);
-        when(digitalPdfExtractor.extraerTexto(sampleBytes)).thenReturn(Optional.of("Texto insuficiente"));
-        when(pdfToImageConverter.convertirPrimeraPaginaAImagen(sampleBytes)).thenReturn(Optional.of(fakeImageBytes));
+        when(digitalPdfExtractor.extraerTexto(eq(sampleBytes), any())).thenReturn(Optional.of("Texto insuficiente"));
+        when(pdfToImageConverter.convertirPaginaAImagen(eq(sampleBytes), any())).thenReturn(Optional.of(fakeImageBytes));
         when(bedrockVisionExtractor.extraerDesdeImagen(eq(fakeImageBytes), eq("image/png"), eq(TestDto.class), any()))
                 .thenReturn(aiExpected);
 

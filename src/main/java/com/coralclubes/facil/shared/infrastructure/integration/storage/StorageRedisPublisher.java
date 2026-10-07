@@ -24,13 +24,6 @@ public class StorageRedisPublisher {
 
     @EventListener
     public void manejarEventoInterno(StorageFileProcessedEvent event) {
-        // Si el archivo proviene de un proceso interno de análisis, no lo emitimos al frontend vía Redis
-        String tipoProceso = event.getMetadataValue("tipoProceso");
-        if ("ANALISIS_COMPROBANTE".equalsIgnoreCase(tipoProceso)) {
-            log.info("Archivo {} corresponde a ANALISIS_COMPROBANTE. Se omite emisión al frontend vía Redis.", event.fileId());
-            return;
-        }
-
         /* generalmente y dentro del sistema FACIL todos los archivos cargados al microservicio de storage
         incluiran este campo en la metadata "subidoPor"
         aun que podemos agregar validaciones para evitar publicar eventos sin esta información */
