@@ -23,11 +23,8 @@ import java.util.Optional;
  * 2. Descargar el archivo y determinar su tipo de contenido.
  * 3. Procesar archivos PDF y de imagen:
  * - Para PDFs digitales, intenta extraer texto directamente y aplicar un extractor de negocio.
- * - Para PDFs escaneados, renderiza la primera página a imagen y utiliza Bedrock Vision para extraer información.
+ * - Para PDFs escaneados, renderiza la página indicada a imagen y utiliza Bedrock Vision para extraer información.
  * - Para imágenes, utiliza Bedrock Vision directamente.
- * 4. Manejar errores y fallback en caso de que la extracción directa falle.
- * 5. Registrar eventos de negocio y advertencias relevantes durante el proceso.
- *
  */
 @Slf4j
 @Service
@@ -71,6 +68,8 @@ public class FilesAnalysisService implements FilesAnalysisClient {
 
         log.debug("SOLICITUD {}: Texto extraído del PDF (página {}): {}", solicitud.fileId(), numeroPagina, textoOpt.orElse("No se extrajo texto"));
 
+
+        // Si la extraccion de texto plano regreso un valor y el consumidor proporciono un extractor de negocio, se intenta la extraccion directa.
         if (textoOpt.isPresent() && solicitud.extractorTextoDigital() != null) {
             Optional<T> resultadoDirectoOpt = solicitud.extractorTextoDigital().apply(textoOpt.get());
             if (resultadoDirectoOpt.isPresent()) {

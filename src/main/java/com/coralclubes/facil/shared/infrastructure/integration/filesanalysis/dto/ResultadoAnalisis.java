@@ -3,10 +3,10 @@ package com.coralclubes.facil.shared.infrastructure.integration.filesanalysis.dt
 /**
  * Resultado genérico de análisis de archivos con metadatos del motor utilizado.
  *
- * @param datos Datos parseados al tipo solicitado por el módulo consumidor.
- * @param motorUsado Motor utilizado para el análisis (DIGITAL_PDF, BEDROCK_AI o REMOTE_SERVICE).
+ * @param datos        Datos parseados al tipo solicitado por el módulo consumidor.
+ * @param motorUsado   Motor utilizado para el análisis (DIGITAL_PDF, BEDROCK_AI o REMOTE_SERVICE).
  * @param advertencias Advertencias o notas sobre la extracción (opcional).
- * @param <T> Tipo de objeto resultante.
+ * @param <T>          Tipo de objeto resultante.
  */
 public record ResultadoAnalisis<T>(
         T datos,

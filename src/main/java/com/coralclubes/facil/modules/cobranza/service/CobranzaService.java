@@ -334,7 +334,7 @@ public class CobranzaService {
         UUID fileId = request.fileId();
         Integer numeroPagina = request.numeroPagina() != null ? request.numeroPagina() : 1;
 
-        log.info("[{}] Iniciando análisis de comprobante de depósito con fileId {} (página {})", usuario, fileId, numeroPagina);
+        log.info("{} solicita análisis de comprobante de depósito con fileId {} (página {})", usuario, fileId, numeroPagina);
 
         String promptInstrucciones = cargarPromptComprobante();
 
@@ -355,6 +355,15 @@ public class CobranzaService {
         return null;
     }
 
+    // *************** HELPERS ******************************
+    private String serializarIntenciones(List<MovimientoIntencionPersistenciaDto> intenciones) {
+        try {
+            return objectMapper.writeValueAsString(intenciones);
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException("No se pudo serializar el detalle de intenciones calculadas para la orden.");
+        }
+    }
+
     private String cargarPromptComprobante() {
         try {
             if (promptComprobanteResource != null && promptComprobanteResource.exists()) {
@@ -369,14 +378,5 @@ public class CobranzaService {
                 - bancoEmisor, bancoReceptor, monto, fechaOperacion, horaOperacion, claveRastreo, referencia,
                   cuentaOrdenante, cuentaBeneficiaria, beneficiario, ordenante, concepto, tipoOperacion.
                 """;
-    }
-
-    // *************** HELPERS ******************************
-    private String serializarIntenciones(List<MovimientoIntencionPersistenciaDto> intenciones) {
-        try {
-            return objectMapper.writeValueAsString(intenciones);
-        } catch (JsonProcessingException ex) {
-            throw new IllegalStateException("No se pudo serializar el detalle de intenciones calculadas para la orden.");
-        }
     }
 }
