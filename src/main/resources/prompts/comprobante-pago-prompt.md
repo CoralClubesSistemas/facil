@@ -36,13 +36,16 @@ Debes devolver EXCLUSIVAMENTE un objeto JSON que se ajuste a la siguiente estruc
 - **Resolución por CLABE de 18 dígitos**:
   - Los primeros 3 dígitos de una CLABE determinan el banco de manera infalible (002=Banamex, 012=BBVA, 014=Santander, 021=HSBC, 072=Banorte, 127=Banco Azteca, 137=Bancoppel, 646=STP, 692=Spin by OXXO).
   - Si la cuenta destino tiene una CLABE de 18 dígitos, el `bancoReceptor` DEBE corresponder a dicha CLABE.
+- Mapea SIEMPRE el nombre del banco a su versión corta y oficial.
+  - EJEMPLOS DE CORRECCIÓN OBLIGATORIA: Si dice "BBVA MEXICO", devuelve SOLO "BBVA". Si dice "Citibanamex", devuelve "BANAMEX". Si dice "Spin by OXXO", devuelve "SPIN BY OXXO".
 
 ### 2. CUENTAS Y PARTICIPANTES (Ordenante vs Beneficiario):
 - `ordenante`: La persona física o moral que envía el dinero (quien paga).
 - `beneficiario`: La persona física o moral que recibe el dinero.
 - `cuentaOrdenante`: Número de cuenta, tarjeta o CLABE del emisor (ej. "Número de cuenta Spin 9500502729989833").
 - `cuentaBeneficiaria`: Número de cuenta, tarjeta o CLABE del receptor (ej. "012180004543421270" o cuenta de depósito).
-- **Concideracion:** Aun que la cuenta ordenante o beneficiaria se exprese mediante ***1234, solo debes extraer el valor numerico.
+- `cuentaOrdenante` y `cuentaBeneficiaria`: Deben contener ÚNICA Y EXCLUSIVAMENTE NÚMEROS.
+- **REGLA DE ORO:** Si la cuenta en la imagen tiene asteriscos, letras o abreviaturas (ej. "***1234", "CTA **1144", "CLABE **6233", "No. Cta: 9368"), ELIMINA TODO TEXTO Y ASTERISCOS y extrae SOLO los dígitos numéricos (ej. devuelve "1234", "1144", "6233", "9368"). NUNCA devuelvas un asterisco en el JSON.
 
 ### 3. REFERENCIA vs FOLIOS DE SISTEMA / PIE DE PÁGINA:
 - `referencia`: Debe ser la referencia numérica asignada al pago (ej. "Número de referencia: 7209108", "Ref. Numérica", "Descripción/Folio"). Generalmente son de 4 a 10 dígitos.
@@ -60,10 +63,9 @@ Debes devolver EXCLUSIVAMENTE un objeto JSON que se ajuste a la siguiente estruc
 ### 7. CONCEPTO:
 - Extrae el concepto o descripción del movimiento, que puede aparecer como "Concepto", "Descripción", "Detalle de la operación" o "Referencia de pago". 
 - Si el concepto está dividido en varios renglones, concaténalos limpiamente sin saltos de línea adicionales.
-- **PROHIBIDO extraer del pie de página o leyendas legales**:
-  - NO tomes números de aclaración telefónica, Condusef, líneas de captura web, enlaces a banxico.org.mx/cep, versiones de app ni folios de impresión.
-  - Si no hay un concepto explícito del pago, deja `concepto` como `null`.
-  - Algunos recibos imprimen el encabezado como: "Enviaste $ por concepto de:" seguido de la descripción. En ese caso, extrae únicamente la descripción, omitiendo la frase introductoria.
+- **PROHIBICIÓN ABSOLUTA:** Si el texto que estás leyendo contiene palabras como "ACLARACIÓN", "SUCURSAL", "LLAMA", "LÍNEA BBVA", "800", "CONDUSEF", "DUDAS", asume inmediatamente que NO es un concepto y devuelve `null`. (Ejemplo que debes ignorar y devolver null: "CUALQUIER ACLARACIÓN ACUDE A TU SUCURSAL O LLAMA...")
+- Si no hay un concepto explícito del pago, deja `concepto` como `null`.
+- Algunos recibos imprimen el encabezado como: "Enviaste $ por concepto de:" seguido de la descripción. En ese caso, extrae únicamente la descripción, omitiendo la frase introductoria.
 
 ### 8. TIPO DE OPERACIÓN:
 - `tipoOperacion`: Debe ser "TRANSFERENCIA" o "DEPÓSITO".  Si no se declara
@@ -77,7 +79,6 @@ Debes devolver EXCLUSIVAMENTE un objeto JSON que se ajuste a la siguiente estruc
 ### 10. FORMATO DE RESPUESTA:
 - Devuelve SOLAMENTE el bloque JSON válido, sin preámbulos, sin markdown adicional que envuelva fuera del JSON y sin explicaciones.
 
-### 11. CASOS ESPECIALES:
-- Si en la cuenta de origen la leyenda es similar a "Guardadito", "Nomina grupo Salinas", "Afore Azteca", "Afore Santander", etc,
-debes deducir el banco de origen a partir de la leyenda. (ej. "Guardadito" = "AZTECA", "Afore Azteca" = "BANCO AZTECA", "Afore Santander" = "SANTANDER").
-y complementar con el logo impreso en el comprobante.
+### 11. CASOS ESPECIALES Y DEDUCCIÓN DE BANCOS:
+- Si en el comprobante (logo o texto) aparece "Guardadito", "Nomina grupo Salinas" o "Afore Azteca", el `bancoEmisor` DEBE SER "BANCO AZTECA".
+- Si aparece "Afore Santander", el `bancoEmisor` DEBE SER "SANTANDER". Para casos similares, deduce el banco emisor a partir de la marca o institución que aparece en el comprobante.

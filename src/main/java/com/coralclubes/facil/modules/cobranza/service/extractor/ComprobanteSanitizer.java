@@ -13,20 +13,21 @@ import java.util.regex.Pattern;
 /**
  * Sanitiza y normaliza los datos extraídos de un comprobante de pago bancario,
  * aplicando reglas determinísticas financieras, validación CLABE Banxico,
- * descarte de leyendas de pie de página y consistencia de roles ordenante/beneficiario.
+ * normalización de cadenas, descarte de leyendas de pie de página y corrección de la IA.
  */
 @Slf4j
 @Component
 public class ComprobanteSanitizer {
 
+    // Se agregan términos detectados en los logs (ACUDE, SUCURSAL, LLAMA, 800)
     private static final List<String> BLACKLIST_PIE_PAGINA = List.of(
             "CONDUSEF", "HOJA", "PAGINA", "PÁGINA", "VERSION", "VERSIÓN",
             "CONSULTA", "LINEA", "LÍNEA", "ACLARACION", "ACLARACIÓN",
             "TELEFONO", "TELÉFONO", "DERECHOS RESERVADOS", "WWW.", "HTTP",
-            "IMPUESTO", "COMISION", "COMISIÓN", "IVA", "FOLIO DE IMPRESION"
+            "IMPUESTO", "COMISION", "COMISIÓN", "IVA", "FOLIO DE IMPRESION",
+            "SUCURSAL", "ACUDE", "LLAMA", "800 "
     );
 
-    private static final Pattern PATTERN_SOLO_DIGITOS = Pattern.compile("^\\d+$");
     private static final Pattern PATTERN_CLABE_18 = Pattern.compile("^\\d{18}$");
 
     /**
@@ -37,8 +38,8 @@ public class ComprobanteSanitizer {
             return null;
         }
 
-        String bancoEmisor = normalizarTexto(raw.bancoEmisor());
-        String bancoReceptor = normalizarTexto(raw.bancoReceptor());
+        String bancoEmisor = normalizarBanco(raw.bancoEmisor());
+        String bancoReceptor = normalizarBanco(raw.bancoReceptor());
         String cuentaOrdenante = limpiarNumeroCuenta(raw.cuentaOrdenante());
         String cuentaBeneficiaria = limpiarNumeroCuenta(raw.cuentaBeneficiaria());
         String ordenante = normalizarTexto(raw.ordenante());
@@ -48,8 +49,8 @@ public class ComprobanteSanitizer {
         BigDecimal monto = sanitizarMonto(raw.monto());
         String fecha = normalizarFecha(raw.fechaOperacion());
         String hora = normalizarTexto(raw.horaOperacion());
-        String concepto = normalizarTexto(raw.concepto());
-        String tipoOperacion = normalizarTipoOperacion(raw.tipoOperacion(), claveRastreo);
+        String concepto = sanitizarConcepto(raw.concepto());
+        String tipoOperacion = normalizarTipoOperacion(raw.tipoOperacion());
 
         // 1. Corrección infalible de Banco Emisor si cuentaOrdenante es CLABE de 18 dígitos
         if (cuentaOrdenante != null && PATTERN_CLABE_18.matcher(cuentaOrdenante).matches()) {
@@ -63,9 +64,9 @@ public class ComprobanteSanitizer {
             bancoReceptor = BancoBanxico.obtenerNombrePorClabe(cuentaBeneficiaria).orElse(bancoReceptor);
         }
 
-        // 3. Inversión de roles si están cruzados (en Cobranza el receptor/beneficiario siempre es Coral Clubes)
+        // 3. Inversión de roles si están cruzados (en Cobranza el receptor siempre es Coral Clubes)
         if (esCoralClubes(ordenante) && !esCoralClubes(beneficiario)) {
-            log.info("Detectada inversión de roles (Coral Clubes figuraba como ordenante). Ajustando a beneficiario.");
+            log.info("Detectada inversión de roles. Ajustando a beneficiario.");
             String tempNombre = ordenante;
             ordenante = beneficiario;
             beneficiario = tempNombre;
@@ -80,20 +81,49 @@ public class ComprobanteSanitizer {
         }
 
         return new ComprobantePagoAnalizadoDto(
-                bancoEmisor,
-                bancoReceptor,
-                monto,
-                fecha,
-                hora,
-                claveRastreo,
-                referencia,
-                cuentaOrdenante,
-                cuentaBeneficiaria,
-                beneficiario,
-                ordenante,
-                concepto,
-                tipoOperacion
+                bancoEmisor, bancoReceptor, monto, fecha, hora, claveRastreo, referencia,
+                cuentaOrdenante, cuentaBeneficiaria, beneficiario, ordenante, concepto, tipoOperacion
         );
+    }
+
+    /**
+     * Normaliza los nombres de los bancos y corrige errores de la IA detectados en los logs.
+     */
+    private String normalizarBanco(String rawBanco) {
+        if (rawBanco == null || rawBanco.isBlank()) {
+            return null;
+        }
+        String upper = rawBanco.toUpperCase().trim();
+
+        if (upper.contains("BBVA")) return "BBVA";
+        if (upper.contains("AZTECA") || upper.contains("SALINAS") || upper.contains("GUARDADITO"))
+            return "BANCO AZTECA";
+        if (upper.contains("SANTANDER")) return "SANTANDER";
+        if (upper.contains("CITI") || upper.contains("BANAMEX")) return "BANAMEX";
+        if (upper.contains("SPIN")) return "SPIN BY OXXO";
+        if (upper.contains("MERCADO PAGO")) return "MERCADO PAGO";
+        if (upper.contains("STP")) return "STP";
+
+        return rawBanco.trim();
+    }
+
+    /**
+     * Filtra el concepto para eliminar pies de página extraídos por error ("CUALQUIER ACLARACIÓN...")
+     */
+    private String sanitizarConcepto(String rawConcepto) {
+        if (rawConcepto == null || rawConcepto.isBlank()) {
+            return null;
+        }
+        String concepto = rawConcepto.trim();
+        String upper = concepto.toUpperCase();
+
+        for (String terminoProhibido : BLACKLIST_PIE_PAGINA) {
+            if (upper.contains(terminoProhibido)) {
+                log.debug("Concepto descartado por contener texto legal/pie de página: '{}'", concepto);
+                return null;
+            }
+        }
+        return concepto;
     }
 
     private String sanitizarReferencia(String rawRef) {
@@ -101,28 +131,16 @@ public class ComprobanteSanitizer {
             return null;
         }
         String ref = rawRef.trim();
-
-        // Si la referencia contiene palabras de pie de página / leyendas legales, descartarla
         String upper = ref.toUpperCase();
+
         for (String terminoProhibido : BLACKLIST_PIE_PAGINA) {
             if (upper.contains(terminoProhibido)) {
-                log.debug("Referencia descartada por contener término de pie de página/legal: '{}' (término: {})", ref, terminoProhibido);
                 return null;
             }
         }
-
-        // Descartar si excede una longitud razonable de referencia bancaria (ej. más de 25 caracteres no es una referencia estándar)
-        if (ref.length() > 25) {
-            log.debug("Referencia descartada por exceder longitud bancaria máxima: '{}'", ref);
+        if (ref.length() > 25 || (ref.contains(" ") && ref.split("\\s+").length > 2)) {
             return null;
         }
-
-        // Descartar si contiene muchas palabras con espacios (indica leyenda o texto descriptivo)
-        if (ref.contains(" ") && ref.split("\\s+").length > 2) {
-            log.debug("Referencia descartada por ser texto descriptivo: '{}'", ref);
-            return null;
-        }
-
         return ref;
     }
 
@@ -134,7 +152,6 @@ public class ComprobanteSanitizer {
         String upper = clave.toUpperCase();
         for (String terminoProhibido : BLACKLIST_PIE_PAGINA) {
             if (upper.contains(terminoProhibido)) {
-                log.debug("Clave de rastreo descartada por contener término sospechoso: '{}'", clave);
                 return null;
             }
         }
@@ -145,20 +162,22 @@ public class ComprobanteSanitizer {
     }
 
     private BigDecimal sanitizarMonto(BigDecimal monto) {
-        if (monto == null) {
-            return null;
-        }
-        if (monto.compareTo(BigDecimal.ZERO) <= 0) {
+        if (monto == null || monto.compareTo(BigDecimal.ZERO) <= 0) {
             return null;
         }
         return monto.setScale(2, RoundingMode.HALF_UP);
     }
 
+    /**
+     * Limpia completamente la cuenta, eliminando "CTA", "CLABE", asteriscos y espacios.
+     * EJ: "CTA**1144" -> "1144". "***8585" -> "8585"
+     */
     private String limpiarNumeroCuenta(String rawCuenta) {
         if (rawCuenta == null || rawCuenta.isBlank()) {
             return null;
         }
-        String limpia = rawCuenta.replaceAll("[^0-9X*]", "");
+        // Expresión regular corregida: elimina TODO lo que NO sea un número del 0 al 9.
+        String limpia = rawCuenta.replaceAll("[^0-9]", "");
         return limpia.isBlank() ? null : limpia;
     }
 
@@ -167,7 +186,6 @@ public class ComprobanteSanitizer {
             return null;
         }
         String fecha = rawFecha.trim();
-        // Convertir DD/MM/YYYY o DD-MM-YYYY a YYYY-MM-DD
         if (fecha.matches("^\\d{1,2}[/-]\\d{1,2}[/-]\\d{4}$")) {
             String[] parts = fecha.split("[/-]");
             String dia = String.format("%02d", Integer.parseInt(parts[0]));
@@ -178,12 +196,17 @@ public class ComprobanteSanitizer {
         return fecha;
     }
 
-    private String normalizarTipoOperacion(String tipo, String claveRastreo) {
-        if (claveRastreo != null && !claveRastreo.isBlank()) {
-            return "SPEI";
+    /**
+     * Respeta la decisión de la IA ("TRANSFERENCIA" o "DEPÓSITO"), pero maneja los caracteres Unicode y valores vacíos.
+     */
+    private String normalizarTipoOperacion(String tipo) {
+        if (tipo == null || tipo.isBlank()) {
+            return "TRANSFERENCIA";
         }
-        if (tipo != null && !tipo.isBlank()) {
-            return tipo.toUpperCase().trim();
+        String upper = tipo.toUpperCase().trim();
+        // Jackson ya deserializa Unicode (\u00d3), pero por seguridad normalizamos si la IA regresa variaciones.
+        if (upper.contains("DEP") || upper.contains("DEPOSITO") || upper.contains("DEPÓSITO")) {
+            return "DEPÓSITO";
         }
         return "TRANSFERENCIA";
     }
@@ -193,7 +216,7 @@ public class ComprobanteSanitizer {
             return false;
         }
         String upper = nombre.toUpperCase();
-        return upper.contains("CORAL") || upper.contains("FACIL") || upper.contains("CLUBES");
+        return upper.contains("CORAL") || upper.contains("FACIL") || upper.contains("CLUBES") || upper.contains("FIMEX");
     }
 
     private String normalizarTexto(String texto) {
