@@ -10,7 +10,7 @@ import com.coralclubes.facil.modules.clientes.dto.response.EstadoCuentaPuntosPdf
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.InfoArchivoDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaLegacyDto;
-import com.coralclubes.facil.shared.infrastructure.pdf.service.PdfGeneratorService;
+import com.coralclubes.facil.shared.platform.templating.service.PdfGeneratorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

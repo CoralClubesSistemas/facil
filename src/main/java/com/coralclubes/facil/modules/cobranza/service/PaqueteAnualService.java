@@ -15,7 +15,7 @@ import com.coralclubes.facil.modules.cobranza.dto.request.VenderPaqueteAnualRequ
 import com.coralclubes.facil.modules.cobranza.dto.response.*;
 import com.coralclubes.facil.modules.cobranza.engines.generador_movimientos.MovimientoPaqueteAnualStrategy;
 import com.coralclubes.facil.modules.cobranza.repository.PaqueteAnualRepository;
-import com.coralclubes.facil.modules.sistema.service.PlantillasCuerpoCorreoService;
+import com.coralclubes.facil.shared.platform.templating.service.PlantillasCuerpoCorreoService;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;

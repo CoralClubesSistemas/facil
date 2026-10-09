@@ -9,7 +9,7 @@ import com.coralclubes.facil.modules.cobranza.dto.request.SintetizarCuerpoCorreo
 import com.coralclubes.facil.modules.cobranza.dto.response.CuerpoCorreoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.EstadoCuentaAdeudoDto;
 import com.coralclubes.responses.ApiResponse;
-import com.coralclubes.facil.modules.sistema.service.PlantillasCuerpoCorreoService;
+import com.coralclubes.facil.shared.platform.templating.service.PlantillasCuerpoCorreoService;
 import com.coralclubes.facil.modules.usuarios.service.UsuarioService;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.NotificationClient;
 import com.coralclubes.facil.shared.infrastructure.integration.notifications.dto.SolicitudNotificacionDto;

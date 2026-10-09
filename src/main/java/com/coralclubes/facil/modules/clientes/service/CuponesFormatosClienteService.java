@@ -3,7 +3,7 @@ package com.coralclubes.facil.modules.clientes.service;
 import com.coralclubes.facil.modules.clientes.dto.response.CuponFormatoInfoResponse;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuponImagenFormatoResponse;
 import com.coralclubes.facil.modules.cobranza.service.CuponesService;
-import com.coralclubes.facil.shared.infrastructure.pdf.service.GotenbergClient;
+import com.coralclubes.facil.shared.platform.templating.service.GotenbergClient;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;

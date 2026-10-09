@@ -2,8 +2,8 @@ package com.coralclubes.facil.modules.reportes.service;
 
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.InfoArchivoDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaLegacyDto;
-import com.coralclubes.facil.shared.infrastructure.notificaciones.application.dto.PeticionNotificacionDto;
-import com.coralclubes.facil.shared.infrastructure.notificaciones.application.service.NotificacionEmisorService;
+import com.coralclubes.facil.shared.platform.notifications.dto.PeticionNotificacionDto;
+import com.coralclubes.facil.shared.platform.notifications.service.NotificacionEmisorService;
 import com.coralclubes.facil.modules.reportes.dto.request.EjecutarReporteRequest;
 import com.coralclubes.facil.modules.reportes.repository.ReportesMotorRepository;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;

@@ -14,7 +14,7 @@ import com.coralclubes.facil.modules.clientes.dto.response.CuponMembresiaResumen
 import com.coralclubes.facil.modules.clientes.repository.CuponesMembresiasRepository;
 import com.coralclubes.facil.modules.cobranza.dto.response.CuerpoCorreoResponse;
 import com.coralclubes.facil.modules.cobranza.repository.CuponesRepository;
-import com.coralclubes.facil.modules.sistema.service.PlantillasCuerpoCorreoService;
+import com.coralclubes.facil.shared.platform.templating.service.PlantillasCuerpoCorreoService;
 import com.coralclubes.logging.BusinessLogger;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

@@ -8,7 +8,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.request.ConfirmarReservaR
 import com.coralclubes.facil.modules.reservaciones.dto.request.DetallePagoCheckoutRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.response.ResumenReservacionDto;
 import com.coralclubes.facil.modules.reservaciones.service.ReservacionesService;
-import com.coralclubes.facil.shared.infrastructure.codes.MovimientosEnum;
+import com.coralclubes.facil.shared.domain.enums.MovimientosEnum;
 import com.coralclubes.facil.shared.events.dto.ReciboCanceladoEvent;
 import com.coralclubes.facil.shared.events.dto.ReciboPagadoEvent;
 import com.coralclubes.facil.shared.events.dto.ReservacionConfirmadaEvent;

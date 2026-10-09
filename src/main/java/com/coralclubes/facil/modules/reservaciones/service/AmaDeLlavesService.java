@@ -9,9 +9,9 @@ import com.coralclubes.facil.modules.reservaciones.dto.response.InventarioBodega
 import com.coralclubes.facil.modules.reservaciones.dto.response.SugerenciaAmenidadDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.TareaDashboardDto;
 import com.coralclubes.facil.modules.reservaciones.repository.AmaDeLlavesRepository;
-import com.coralclubes.facil.shared.infrastructure.notificaciones.application.dto.PeticionNotificacionDto;
-import com.coralclubes.facil.shared.infrastructure.notificaciones.application.service.NotificacionEmisorService;
-import com.coralclubes.facil.shared.infrastructure.codes.ClavesModulos;
+import com.coralclubes.facil.shared.platform.notifications.dto.PeticionNotificacionDto;
+import com.coralclubes.facil.shared.platform.notifications.service.NotificacionEmisorService;
+import com.coralclubes.facil.shared.domain.enums.ClavesModulos;
 import com.coralclubes.facil.modules.usuarios.service.SeguridadService;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.responses.ApiResponse;

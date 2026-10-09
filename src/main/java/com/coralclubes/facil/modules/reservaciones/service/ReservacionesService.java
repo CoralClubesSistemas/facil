@@ -39,7 +39,7 @@ import com.coralclubes.facil.shared.infrastructure.integration.notifications.dto
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaLegacyDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.InfoArchivoDto;
-import com.coralclubes.facil.shared.infrastructure.pdf.service.PdfGeneratorService;
+import com.coralclubes.facil.shared.platform.templating.service.PdfGeneratorService;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
@@ -87,6 +87,7 @@ public class ReservacionesService {
     private final CobranzaService cobranzaService;
     private final StorageClient storageClient;
     private final PdfGeneratorService pdfGeneratorService;
+    private final com.coralclubes.facil.shared.utils.QrCodeService qrCodeService;
     private final UnidadesRepository unidadesRepo;
     private final IntentoPagoService intentoPagoService;
     private final CuponesMembresiasService cuponesMembresiasService;
@@ -1354,6 +1355,11 @@ public class ReservacionesService {
         variables.put("fechaSalida", datosPdf.fechaSalida());
         variables.put("desarrollo", datosPdf.desarrollo());
 
+        // Generación provisional del código QR con un UUID random
+        String contenidoQr = UUID.randomUUID().toString();
+        String qrCodeUrl = qrCodeService.generarQrDataUri(contenidoQr);
+        variables.put("qrCodeUrl", qrCodeUrl);
+
         byte[] pdfBytes = pdfGeneratorService.generarPdfDesdeHtml("CARTA_OCUPACION", variables);
 
         String foliosLimpio = datosPdf.foliosReservacion().replace(" ", "").replace(",", "_");
@@ -1392,6 +1398,10 @@ public class ReservacionesService {
     }
 
     public void enviarNotificacionCartaOcupacion(ReservacionConfirmadaEvent event, UUID uuid, List<String> correosAdicionales) {
+        enviarNotificacionCartaOcupacion(event, uuid, correosAdicionales, null);
+    }
+
+    public void enviarNotificacionCartaOcupacion(ReservacionConfirmadaEvent event, UUID uuid, List<String> correosAdicionales, String qrCodeUrl) {
         List<String> destinatarios = new java.util.ArrayList<>();
 
         destinatarios.add(event.email());
@@ -1408,14 +1418,22 @@ public class ReservacionesService {
 
         String foliosStr = event.foliosGenerados().toString().replace("[", "").replace("]", "");
 
+        // Si no se proporcionó previamente el qrCodeUrl, generamos uno provisional con UUID random
+        String qrUrlFinal = qrCodeUrl;
+        if (qrUrlFinal == null || qrUrlFinal.isBlank()) {
+            qrUrlFinal = qrCodeService.generarQrDataUri(UUID.randomUUID().toString());
+        }
+
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("nombreUsuario", event.nombreReserva());
+        variables.put("numeroReserva", foliosStr);
+        variables.put("qrCodeUrl", qrUrlFinal);
+
         SolicitudNotificacionDto solicitudNotificacion = SolicitudNotificacionDto.builder()
                 .destinatarios(destinatarios)
                 .codigoPlantilla(templateReservaCreada)
                 // .remitenteOverride("reservaciones@lvivardev.com")
-                .variables(Map.of(
-                        "nombreUsuario", event.nombreReserva(),
-                        "numeroReserva", foliosStr
-                ))
+                .variables(variables)
                 .prioridad(10)
                 .adjuntos(List.of(uuid.toString()))
                 .build();
