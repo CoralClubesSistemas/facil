@@ -6,28 +6,24 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Repository
 @RequiredArgsConstructor
 public class PlantillasPdfRepository {
-
     private final StoredProcedureExecutor spExecutor;
 
-    private final RowMapper<PlantillaPdfProjection> rowMapper = (rs, rowNum) -> new PlantillaPdfProjection(
+    private final RowMapper<PlantillaPdfProjection> mapper = (rs, rowNum) -> new PlantillaPdfProjection(
             rs.getInt("id"),
             rs.getString("codigo"),
-            rs.getString("nombre"),
-            rs.getString("descripcion"),
-            rs.getString("contenido"),
-            rs.getBoolean("activo")
+            rs.getString("contenido")
     );
 
     public PlantillaPdfProjection obtenerPorCodigo(String codigo) {
-        return spExecutor.querySingle(
-                "spFacilObtenerPlantillaPdfPorCodigo",
-                Map.of("codigo", codigo),
-                rowMapper
-        ).orElseThrow(() -> new RuntimeException("Plantilla no encontrada: " + codigo));
+        Map<String, Object> params = new HashMap<>();
+        params.put("codigo", codigo);
+        return spExecutor.querySingle("sp_obtener_plantilla_por_codigo", params, mapper)
+                .orElseThrow(() -> new RuntimeException("Plantilla PDF no encontrada para el código: " + codigo));
     }
 }

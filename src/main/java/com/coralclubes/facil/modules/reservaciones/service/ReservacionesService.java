@@ -40,6 +40,10 @@ import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageCl
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaLegacyDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.InfoArchivoDto;
 import com.coralclubes.facil.shared.platform.templating.service.PdfGeneratorService;
+import com.coralclubes.facil.shared.platform.qr.dto.CreateQrRequest;
+import com.coralclubes.facil.shared.platform.qr.dto.SystemQrResponse;
+import com.coralclubes.facil.shared.platform.qr.enums.SystemQrStatus;
+import com.coralclubes.facil.shared.platform.qr.service.SystemQrService;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
@@ -87,6 +91,7 @@ public class ReservacionesService {
     private final CobranzaService cobranzaService;
     private final StorageClient storageClient;
     private final PdfGeneratorService pdfGeneratorService;
+    private final SystemQrService systemQrService;
     private final com.coralclubes.facil.shared.utils.QrCodeService qrCodeService;
     private final UnidadesRepository unidadesRepo;
     private final IntentoPagoService intentoPagoService;
@@ -1316,7 +1321,7 @@ public class ReservacionesService {
                 .build();
     }
 
-    public UUID generarYPersistirCartaOcupacion(ReservacionConfirmadaEvent event) {
+    public ResultadoCartaOcupacion generarYPersistirCartaOcupacion(ReservacionConfirmadaEvent event) {
         List<DatosCartaOcupacionDto.HabitacionCartaDto> habitacionesPdf = new java.util.ArrayList<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -1355,10 +1360,28 @@ public class ReservacionesService {
         variables.put("fechaSalida", datosPdf.fechaSalida());
         variables.put("desarrollo", datosPdf.desarrollo());
 
-        // Generación provisional del código QR con un UUID random
-        String contenidoQr = UUID.randomUUID().toString();
-        String qrCodeUrl = qrCodeService.generarQrDataUri(contenidoQr);
-        variables.put("qrCodeUrl", qrCodeUrl);
+        // Generación y almacenamiento oficial del código QR para la reservación
+        Integer folioPrincipal = event.foliosGenerados().getFirst();
+        String entityId = (event.membresia() != null ? event.membresia() : "GENERAL") + ":" + folioPrincipal;
+
+        CreateQrRequest qrRequest = CreateQrRequest.builder()
+                .module("RESERVACIONES")
+                .submodule("RECEPCION")
+                .actionType("CHECK_IN")
+                .entityId(entityId)
+                .entityType("RESERVATION")
+                .status(SystemQrStatus.ACTIVE)
+                .maxUses(1)
+                .urlAlmacenamiento("reservaciones/qrs/")
+                .metadata(String.format("{\"folios\":%s,\"titular\":\"%s\"}", event.foliosGenerados(), event.nombreReserva()))
+                .build();
+
+        SystemQrResponse qrResponse = systemQrService.crearQr(qrRequest);
+
+        // Descargar la imagen física del QR desde Storage en memoria para renderizar en el PDF
+        byte[] qrBytes = storageClient.descargarArchivo(qrResponse.urlDescarga());
+        String qrCodeDataUri = "data:image/png;base64," + java.util.Base64.getEncoder().encodeToString(qrBytes);
+        variables.put("qrCodeUrl", qrCodeDataUri);
 
         byte[] pdfBytes = pdfGeneratorService.generarPdfDesdeHtml("CARTA_OCUPACION", variables);
 
@@ -1388,27 +1411,25 @@ public class ReservacionesService {
                 solicitudCarga
         );
 
-        UUID uuid = info.uuid();
+        UUID uuidPdf = info.uuid();
 
         for (Integer consecutivo : event.foliosGenerados()) {
-            repository.spResvGuardarUuidCartaOcupacion(event.membresia(), consecutivo, uuid.toString());
+            repository.spResvGuardarUuidCartaOcupacion(event.membresia(), consecutivo, uuidPdf.toString());
         }
 
-        return uuid;
+        return new ResultadoCartaOcupacion(uuidPdf, qrResponse.qrFileId());
     }
 
-    public void enviarNotificacionCartaOcupacion(ReservacionConfirmadaEvent event, UUID uuid, List<String> correosAdicionales) {
-        enviarNotificacionCartaOcupacion(event, uuid, correosAdicionales, null);
-    }
-
-    public void enviarNotificacionCartaOcupacion(ReservacionConfirmadaEvent event, UUID uuid, List<String> correosAdicionales, String qrCodeUrl) {
+    public void enviarNotificacionCartaOcupacion(ReservacionConfirmadaEvent event, UUID uuidPdf, UUID qrFileId, List<String> correosAdicionales) {
         List<String> destinatarios = new java.util.ArrayList<>();
 
         destinatarios.add(event.email());
 
-        for (String correo : correosAdicionales) {
-            if (correo != null && !correo.isBlank()) {
-                destinatarios.add(correo);
+        if (correosAdicionales != null) {
+            for (String correo : correosAdicionales) {
+                if (correo != null && !correo.isBlank()) {
+                    destinatarios.add(correo);
+                }
             }
         }
 
@@ -1418,27 +1439,44 @@ public class ReservacionesService {
 
         String foliosStr = event.foliosGenerados().toString().replace("[", "").replace("]", "");
 
-        // Si no se proporcionó previamente el qrCodeUrl, generamos uno provisional con UUID random
-        String qrUrlFinal = qrCodeUrl;
-        if (qrUrlFinal == null || qrUrlFinal.isBlank()) {
-            qrUrlFinal = qrCodeService.generarQrDataUri(UUID.randomUUID().toString());
+        // Consultar URL temporal para visualización en plantilla de correo
+        String qrUrlDescarga = null;
+        if (qrFileId != null) {
+            try {
+                qrUrlDescarga = storageClient.consultarArchivo(qrFileId).urlDescarga();
+            } catch (Exception e) {
+                log.warn("No fue posible consultar la URL de descarga para el QR {}: {}", qrFileId, e.getMessage());
+            }
         }
 
         Map<String, Object> variables = new HashMap<>();
         variables.put("nombreUsuario", event.nombreReserva());
         variables.put("numeroReserva", foliosStr);
-        variables.put("qrCodeUrl", qrUrlFinal);
+        if (qrUrlDescarga != null) {
+            variables.put("qrCodeUrl", qrUrlDescarga);
+        }
+
+        List<String> adjuntos = new java.util.ArrayList<>();
+        if (uuidPdf != null) {
+            adjuntos.add(uuidPdf.toString());
+        }
+        if (qrFileId != null) {
+            adjuntos.add(qrFileId.toString());
+        }
 
         SolicitudNotificacionDto solicitudNotificacion = SolicitudNotificacionDto.builder()
                 .destinatarios(destinatarios)
                 .codigoPlantilla(templateReservaCreada)
-                // .remitenteOverride("reservaciones@lvivardev.com")
                 .variables(variables)
                 .prioridad(10)
-                .adjuntos(List.of(uuid.toString()))
+                .adjuntos(adjuntos)
                 .build();
 
         notificationClient.enviarNotificacion(solicitudNotificacion);
+    }
+
+    public void enviarNotificacionCartaOcupacion(ReservacionConfirmadaEvent event, UUID uuidPdf, List<String> correosAdicionales) {
+        enviarNotificacionCartaOcupacion(event, uuidPdf, null, correosAdicionales);
     }
 
     public ArchivoDescarga obtenerUrlCartaOcupacion(String membresia, Integer consecutivo) {
@@ -1448,14 +1486,14 @@ public class ReservacionesService {
             uuid = UUID.fromString(uuidStrOpt.get());
         } else {
             ReservacionConfirmadaEvent event = construirEventDesdeDb(membresia, consecutivo);
-            uuid = generarYPersistirCartaOcupacion(event);
+            ResultadoCartaOcupacion resultado = generarYPersistirCartaOcupacion(event);
+            uuid = resultado.uuidPdf();
         }
         return storageClient.obtenerUrlDescarga(uuid, "inline");
     }
 
     public void reenviarCartaOcupacion(String membresia, Integer consecutivo, String correos) {
         Optional<String> uuidStrOpt = repository.spResvObtenerUuidCartaOcupacion(membresia, consecutivo);
-        UUID uuid;
         ReservacionConfirmadaEvent event = construirEventDesdeDb(membresia, consecutivo);
 
         List<String> correosAdicionales = correos == null || correos.isBlank()
@@ -1465,13 +1503,18 @@ public class ReservacionesService {
                   .filter(correo -> !correo.isBlank())
                   .toList();
 
+        UUID uuidPdf;
+        UUID qrFileId = null;
+
         if (uuidStrOpt.isPresent() && !uuidStrOpt.get().isBlank()) {
-            uuid = UUID.fromString(uuidStrOpt.get());
+            uuidPdf = UUID.fromString(uuidStrOpt.get());
         } else {
-            uuid = generarYPersistirCartaOcupacion(event);
+            ResultadoCartaOcupacion resultado = generarYPersistirCartaOcupacion(event);
+            uuidPdf = resultado.uuidPdf();
+            qrFileId = resultado.qrFileId();
         }
 
-        enviarNotificacionCartaOcupacion(event, uuid, correosAdicionales);
+        enviarNotificacionCartaOcupacion(event, uuidPdf, qrFileId, correosAdicionales);
     }
 
     @Transactional
