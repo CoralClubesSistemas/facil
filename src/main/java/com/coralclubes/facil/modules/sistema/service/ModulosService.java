@@ -74,4 +74,15 @@ public class ModulosService {
                 result
         );
     }
+
+    /**
+     * Obtiene la información detallada de un módulo y su módulo padre a partir de sus claves.
+     *
+     * @param clavePadre  Clave del módulo padre (puede ser null).
+     * @param claveModulo Clave del módulo consultado.
+     * @return Optional con la proyección detallada del módulo.
+     */
+    public Optional<com.coralclubes.facil.modules.sistema.dto.projection.ModuloDetalleProjection> obtenerModuloPorClave(String clavePadre, String claveModulo) {
+        return repo.spFacilObtenerModuloPorClave(clavePadre, claveModulo);
+    }
 }

@@ -15,6 +15,7 @@ import com.coralclubes.facil.modules.cobranza.service.CuponesService;
 import com.coralclubes.facil.modules.reservaciones.engines.cupones_reservaciones.engine.CuponesReservacionesEngine;
 import com.coralclubes.facil.modules.reservaciones.repository.UnidadesRepository;
 import com.coralclubes.facil.shared.domain.dto.ArchivoDescarga;
+import com.coralclubes.facil.shared.domain.enums.ClavesModulos;
 import com.coralclubes.facil.shared.domain.enums.DesarrolloLogoEnum;
 import com.coralclubes.facil.shared.events.dto.ConsumoPuntosReservacionEvent;
 import com.coralclubes.facil.shared.events.dto.ReservacionConfirmadaEvent;
@@ -1361,12 +1362,14 @@ public class ReservacionesService {
         variables.put("desarrollo", datosPdf.desarrollo());
 
         // Generación y almacenamiento oficial del código QR para la reservación
-        Integer folioPrincipal = event.foliosGenerados().getFirst();
-        String entityId = (event.membresia() != null ? event.membresia() : "GENERAL") + ":" + folioPrincipal;
+        String foliosStrJoin = event.foliosGenerados().stream()
+                .map(String::valueOf)
+                .collect(java.util.stream.Collectors.joining(","));
+        String entityId = (event.membresia() != null ? event.membresia() : "GENERAL") + ":" + foliosStrJoin;
 
         CreateQrRequest qrRequest = CreateQrRequest.builder()
-                .module("RESERVACIONES")
-                .submodule("RECEPCION")
+                .module(ClavesModulos.RESERVACIONES.name())
+                .submodule(ClavesModulos.RESERVACIONES_RECEPCION.name())
                 .actionType("CHECK_IN")
                 .entityId(entityId)
                 .entityType("RESERVATION")
@@ -1440,10 +1443,10 @@ public class ReservacionesService {
         String foliosStr = event.foliosGenerados().toString().replace("[", "").replace("]", "");
 
         // Consultar URL temporal para visualización en plantilla de correo
-        String qrUrlDescarga = null;
+        String nombreArchivo = null;
         if (qrFileId != null) {
             try {
-                qrUrlDescarga = storageClient.consultarArchivo(qrFileId).urlDescarga();
+                nombreArchivo = storageClient.consultarArchivo(qrFileId).nombreOriginal();
             } catch (Exception e) {
                 log.warn("No fue posible consultar la URL de descarga para el QR {}: {}", qrFileId, e.getMessage());
             }
@@ -1452,8 +1455,8 @@ public class ReservacionesService {
         Map<String, Object> variables = new HashMap<>();
         variables.put("nombreUsuario", event.nombreReserva());
         variables.put("numeroReserva", foliosStr);
-        if (qrUrlDescarga != null) {
-            variables.put("qrCodeUrl", qrUrlDescarga);
+        if (nombreArchivo != null) {
+            variables.put("qrCodeUrl", nombreArchivo);
         }
 
         List<String> adjuntos = new java.util.ArrayList<>();
@@ -1508,6 +1511,36 @@ public class ReservacionesService {
 
         if (uuidStrOpt.isPresent() && !uuidStrOpt.get().isBlank()) {
             uuidPdf = UUID.fromString(uuidStrOpt.get());
+            String membresiaPrefijo = (event.membresia() != null ? event.membresia() : "GENERAL");
+            String exactEntityId = membresiaPrefijo + ":" + consecutivo;
+            String pattern = membresiaPrefijo + ":%" + consecutivo + "%";
+
+            qrFileId = systemQrService.obtenerQrActivoPorModuloYEntidad(
+                    ClavesModulos.RESERVACIONES.name(),
+                    "RESERVATION",
+                    exactEntityId,
+                    pattern
+            )
+                    .map(SystemQrResponse::qrFileId)
+                    .orElse(null);
+
+            if (qrFileId == null) {
+                log.info("No se encontró QR activo registrado para reservación {}:{}. Generando QR oficial de respaldo...",
+                        membresiaPrefijo, consecutivo);
+                CreateQrRequest qrRequest = CreateQrRequest.builder()
+                        .module(ClavesModulos.RESERVACIONES.name())
+                        .submodule(ClavesModulos.RESERVACIONES_RECEPCION.name())
+                        .actionType("CHECK_IN")
+                        .entityId(exactEntityId)
+                        .entityType("RESERVATION")
+                        .status(SystemQrStatus.ACTIVE)
+                        .maxUses(1)
+                        .urlAlmacenamiento("reservaciones/qrs/")
+                        .metadata(String.format("{\"folios\":%s,\"titular\":\"%s\"}", event.foliosGenerados(), event.nombreReserva()))
+                        .build();
+                SystemQrResponse nuevoQr = systemQrService.crearQr(qrRequest);
+                qrFileId = nuevoQr.qrFileId();
+            }
         } else {
             ResultadoCartaOcupacion resultado = generarYPersistirCartaOcupacion(event);
             uuidPdf = resultado.uuidPdf();

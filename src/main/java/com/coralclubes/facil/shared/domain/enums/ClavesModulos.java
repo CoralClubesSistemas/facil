@@ -1,7 +1,11 @@
 package com.coralclubes.facil.shared.domain.enums;
 
+import java.util.Optional;
+
 public enum ClavesModulos {
-    AMADELLAVES("smnuHousekeeping");
+    AMADELLAVES("smnuHousekeeping"),
+    RESERVACIONES("mnuControlDeReservaciones"),
+    RESERVACIONES_RECEPCION("smnuRecepcion");
 
     private final String clave;
 
@@ -11,5 +15,16 @@ public enum ClavesModulos {
 
     public String getClave() {
         return clave;
+    }
+
+    public static Optional<ClavesModulos> desdeNombre(String nombre) {
+        if (nombre == null || nombre.isBlank()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(valueOf(nombre.trim().toUpperCase()));
+        } catch (IllegalArgumentException e) {
+            return Optional.empty();
+        }
     }
 }

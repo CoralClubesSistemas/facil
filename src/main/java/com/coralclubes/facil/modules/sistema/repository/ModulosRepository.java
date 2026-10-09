@@ -1,5 +1,6 @@
 package com.coralclubes.facil.modules.sistema.repository;
 
+import com.coralclubes.facil.modules.sistema.dto.projection.ModuloDetalleProjection;
 import com.coralclubes.facil.modules.sistema.dto.projection.ModuloDtoResult;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import com.coralclubes.facil.shared.infrastructure.repository.rowmappers.ModuloMapper;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Repositorio para la gestión de módulos en el sistema.
@@ -25,6 +27,21 @@ public class ModulosRepository {
      * Mapper para obtener un solo entero (ID generado o status).
      */
     private final RowMapper<Integer> scalarIntMapper = (rs, rowNum) -> rs.getInt(1);
+
+    /**
+     * Mapper para ModuloDetalleProjection del SP spFacilObtenerModuloPorClave.
+     */
+    private final RowMapper<ModuloDetalleProjection> moduloDetalleMapper = (rs, rowNum) -> ModuloDetalleProjection.builder()
+            .id(rs.getObject("id") != null ? rs.getLong("id") : null)
+            .clave(rs.getString("clave"))
+            .padreId(rs.getObject("padre_id") != null ? rs.getLong("padre_id") : null)
+            .clavePadre(rs.getString("clave_padre"))
+            .nombre(rs.getString("nombre"))
+            .ruta(rs.getString("ruta"))
+            .icono(rs.getString("icono"))
+            .menuFacil(rs.getObject("menu_facil") != null ? rs.getInt("menu_facil") : null)
+            .menuFacilDescripcion(rs.getString("menu_facil_descripcion"))
+            .build();
 
     // =========================================================================
     // MÉTODOS
@@ -81,5 +98,24 @@ public class ModulosRepository {
                 Map.of("MODULO_ID", idModulo),
                 scalarIntMapper
         ).orElse(null);
+    }
+
+    /**
+     * Obtiene la información detallada de un módulo y su padre a partir de sus claves.
+     *
+     * @param clavePadre  Clave del módulo padre (puede ser null).
+     * @param claveModulo Clave del módulo a consultar.
+     * @return Optional con el ModuloDetalleProjection si existe.
+     */
+    public Optional<ModuloDetalleProjection> spFacilObtenerModuloPorClave(String clavePadre, String claveModulo) {
+        Map<String, Object> params = new java.util.HashMap<>();
+        params.put("clave_padre", clavePadre);
+        params.put("clave_modulo", claveModulo);
+
+        return spExecutor.querySingle(
+                "spFacilObtenerModuloPorClave",
+                params,
+                moduloDetalleMapper
+        );
     }
 }

@@ -1,9 +1,13 @@
 package com.coralclubes.facil.shared.platform.qr.service;
 
+import com.coralclubes.facil.modules.sistema.dto.projection.ModuloDetalleProjection;
+import com.coralclubes.facil.modules.sistema.service.ModulosService;
+import com.coralclubes.facil.shared.domain.enums.ClavesModulos;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageClient;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.InfoArchivoDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaLegacyDto;
 import com.coralclubes.facil.shared.platform.qr.dto.CreateQrRequest;
+import com.coralclubes.facil.shared.platform.qr.dto.SystemQrResolucionResponse;
 import com.coralclubes.facil.shared.platform.qr.dto.SystemQrResponse;
 import com.coralclubes.facil.shared.platform.qr.mapper.SystemQrMapper;
 import com.coralclubes.facil.shared.platform.qr.model.SystemQr;
@@ -20,7 +24,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -35,6 +41,7 @@ public class SystemQrService {
     private final SystemQrMapper systemQrMapper;
     private final QrCodeService qrCodeService;
     private final StorageClient storageClient;
+    private final ModulosService modulosService;
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final String DEFAULT_STORAGE_FOLDER = "qrs";
@@ -105,6 +112,77 @@ public class SystemQrService {
         return crearQr(request, false);
     }
 
+    /**
+     * Busca un código QR activo por módulo, tipo de entidad, coincidencia exacta de ID o coincidencia por patrón.
+     * Es ideal para entidades compuestas o listas de identificadores generadas por ejemplo en carritos de reservación.
+     *
+     * @param module        Módulo emisor (ej. 'RESERVACIONES').
+     * @param entityType    Tipo de entidad (ej. 'RESERVATION').
+     * @param exactEntityId Identificador exacto de la entidad (ej. 'MEMB-001:101').
+     * @param pattern       Patrón SQL LIKE (ej. 'MEMB-001:%101%').
+     * @return DTO de respuesta con los datos del QR si existe uno activo, u Optional vacío.
+     */
+    @Transactional(readOnly = true)
+    public Optional<SystemQrResponse> obtenerQrActivoPorModuloYEntidad(
+            String module,
+            String entityType,
+            String exactEntityId,
+            String pattern
+    ) {
+        List<SystemQr> resultados = systemQrRepository.buscarActivosPorModuloEntidadYPatron(
+                module, entityType, com.coralclubes.facil.shared.platform.qr.enums.SystemQrStatus.ACTIVE, exactEntityId, pattern
+        );
+        return resultados.stream().findFirst().map(systemQrMapper::toResponse);
+    }
+
+    /**
+     * Resuelve un código QR a partir de su token público, obteniendo su información completa
+     * y los datos del módulo/submódulo destino en el sistema a partir del SP spFacilObtenerModuloPorClave.
+     *
+     * @param qrToken Token público del QR.
+     * @return DTO compuesto con la información del QR y del módulo resuelto.
+     */
+    @Transactional(readOnly = true)
+    public SystemQrResolucionResponse resolverQrPorToken(String qrToken) {
+        SystemQr qr = systemQrRepository.findByQrToken(qrToken)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró ningún código QR con el token especificado"));
+
+        // Mapear módulo y submódulo a ClavesModulos
+        String clavePadre = null;
+        String claveModulo = null;
+
+        var optModulo = ClavesModulos.desdeNombre(qr.getModule());
+        var optSubmodulo = ClavesModulos.desdeNombre(qr.getSubmodule());
+
+        if (optSubmodulo.isPresent()) {
+            claveModulo = optSubmodulo.get().getClave();
+            clavePadre = optModulo.map(ClavesModulos::getClave).orElse(null);
+        } else if (optModulo.isPresent()) {
+            claveModulo = optModulo.get().getClave();
+            clavePadre = null;
+        }
+
+        String rutaModulo = null;
+        if (claveModulo != null) {
+            rutaModulo = modulosService.obtenerModuloPorClave(clavePadre, claveModulo)
+                    .map(ModuloDetalleProjection::ruta)
+                    .orElse(null);
+        }
+
+        return SystemQrResolucionResponse.builder()
+                .id(qr.getId())
+                .token(qr.getQrToken())
+                .module(qr.getModule())
+                .submodule(qr.getSubmodule())
+                .actionType(qr.getActionType())
+                .entityId(qr.getEntityId())
+                .entityType(qr.getEntityType())
+                .status(qr.getStatus())
+                .metadata(qr.getMetadata())
+                .rutaModulo(rutaModulo)
+                .build();
+    }
+
     // =========================================================================
     // MÉTODOS PRIVADOS AUXILIARES (HELPERS)
     // =========================================================================
@@ -132,14 +210,8 @@ public class SystemQrService {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(payload.getBytes(StandardCharsets.UTF_8));
-            String hashHex = HexFormat.of().formatHex(hash);
-
-            // Prefijo semántico legible + firma criptográfica (longitud total <= 80 chars, cabe en VARCHAR(128))
-            String token = String.format("%s_%s_%s",
-                    sanitizar(request.module()).toUpperCase(),
-                    sanitizar(request.actionType()).toUpperCase(),
-                    hashHex.substring(0, 48)
-            );
+            // Token puramente alfanumérico resultante de la codificación (64 caracteres alfanuméricos)
+            String token = HexFormat.of().formatHex(hash);
 
             // Garantizar unicidad contra la base de datos
             if (systemQrRepository.existsByQrToken(token)) {
