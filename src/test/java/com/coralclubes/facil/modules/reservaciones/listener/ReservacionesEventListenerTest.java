@@ -1,6 +1,6 @@
 package com.coralclubes.facil.modules.reservaciones.listener;
 
-import com.coralclubes.facil.modules.reservaciones.dto.response.ResultadoCartaOcupacion;
+import com.coralclubes.facil.modules.reservaciones.dto.response.ResultadoQrReservacion;
 import com.coralclubes.facil.modules.reservaciones.service.ReservacionesService;
 import com.coralclubes.facil.shared.events.dto.ReservacionConfirmadaEvent;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +29,7 @@ class ReservacionesEventListenerTest {
     private ReservacionesEventListener eventListener;
 
     @Test
-    @DisplayName("Debe orquestar la generación de carta de ocupación y envío de notificación con ambos UUIDs")
+    @DisplayName("Debe orquestar los 3 procesos: generación de QR, persistencia de carta y envío de notificación")
     void testProcesarCartaOcupacionExitoso() {
         ReservacionConfirmadaEvent event = ReservacionConfirmadaEvent.builder()
                 .membresia("MEMB-001")
@@ -44,14 +44,18 @@ class ReservacionesEventListenerTest {
 
         UUID uuidPdf = UUID.randomUUID();
         UUID qrFileId = UUID.randomUUID();
-        ResultadoCartaOcupacion resultado = new ResultadoCartaOcupacion(uuidPdf, qrFileId);
+        String fakeDataUri = "data:image/png;base64,fakeData";
+        ResultadoQrReservacion resultadoQr = new ResultadoQrReservacion(qrFileId, fakeDataUri);
 
         when(reservacionesService.construirEventDesdeDb("MEMB-001", 101)).thenReturn(event);
-        when(reservacionesService.generarYPersistirCartaOcupacion(any(ReservacionConfirmadaEvent.class))).thenReturn(resultado);
+        when(reservacionesService.generarQrReservacion(any(ReservacionConfirmadaEvent.class))).thenReturn(resultadoQr);
+        when(reservacionesService.generarYPersistirCartaOcupacion(any(ReservacionConfirmadaEvent.class), eq(fakeDataUri))).thenReturn(uuidPdf);
 
         eventListener.procesarCartaOcupacion(event);
 
-        verify(reservacionesService).generarYPersistirCartaOcupacion(any(ReservacionConfirmadaEvent.class));
+        verify(reservacionesService).generarQrReservacion(any(ReservacionConfirmadaEvent.class));
+        verify(reservacionesService).generarYPersistirCartaOcupacion(any(ReservacionConfirmadaEvent.class), eq(fakeDataUri));
         verify(reservacionesService).enviarNotificacionCartaOcupacion(any(ReservacionConfirmadaEvent.class), eq(uuidPdf), eq(qrFileId), eq(List.of()));
     }
 }
+

@@ -1,6 +1,6 @@
 package com.coralclubes.facil.modules.reservaciones.listener;
 
-import com.coralclubes.facil.modules.reservaciones.dto.response.ResultadoCartaOcupacion;
+import com.coralclubes.facil.modules.reservaciones.dto.response.ResultadoQrReservacion;
 import com.coralclubes.facil.modules.reservaciones.service.ReservacionesService;
 import com.coralclubes.facil.shared.events.dto.ReservacionConfirmadaEvent;
 import lombok.RequiredArgsConstructor;
@@ -11,10 +11,15 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Listener encargado de procesar la generación y envío de cartas de ocupación y códigos QR oficiales,
  * ejecutándose de forma asíncrona una vez que la transacción en BD de la reservación ha sido confirmada.
+ * Coordina explícitamente los 3 procesos:
+ * 1. Generación de QR oficial.
+ * 2. Generación y persistencia de Carta de Ocupación (PDF).
+ * 3. Envío de notificación por correo.
  */
 @Component
 @RequiredArgsConstructor
@@ -26,7 +31,7 @@ public class ReservacionesEventListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void procesarCartaOcupacion(ReservacionConfirmadaEvent event) {
-        log.info("Iniciando procesamiento asíncrono en listener [{}] para carta de ocupación de folios: {}",
+        log.info("Iniciando procesamiento asíncrono en listener [{}] para folios: {}",
                 Thread.currentThread().getName(), event.foliosGenerados());
         try {
             // Reconstruimos el evento desde la base de datos para asegurar que refleje los datos definitivos
@@ -51,18 +56,21 @@ public class ReservacionesEventListener {
                         .build();
             }
 
-            // 1. Generar la carta de ocupación (incluyendo QR oficial), subirla a Storage y persistir en BD
-            ResultadoCartaOcupacion resultado = reservacionesService.generarYPersistirCartaOcupacion(eventoFinal);
+            // 1. Proceso de Generación del Código QR oficial
+            ResultadoQrReservacion qrResultado = reservacionesService.generarQrReservacion(eventoFinal);
 
-            // 2. Enviar la notificación por correo adjuntando los UUIDs del PDF y del QR oficial
+            // 2. Proceso de Generación y Persistencia de la Carta de Ocupación en PDF con el QR vinculado
+            UUID uuidPdf = reservacionesService.generarYPersistirCartaOcupacion(eventoFinal, qrResultado.qrCodeDataUri());
+
+            // 3. Proceso de Envío de Notificación por correo adjuntando los UUIDs del PDF y del QR
             reservacionesService.enviarNotificacionCartaOcupacion(
                     eventoFinal,
-                    resultado.uuidPdf(),
-                    resultado.qrFileId(),
+                    uuidPdf,
+                    qrResultado.qrFileId(),
                     List.of()
             );
 
-            log.info("Carta de ocupación y QR generados y notificación enviada exitosamente para folios: {}",
+            log.info("Flujo asíncrono completado exitosamente: QR y Carta de Ocupación generados y notificación enviada para folios: {}",
                     eventoFinal.foliosGenerados());
         } catch (Exception e) {
             log.error("Error durante el procesamiento de carta de ocupación para folios {}: {}",

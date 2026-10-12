@@ -32,7 +32,7 @@ public record SystemQrResolucionResponse(
         String entityId,
         String entityType,
         SystemQrStatus status,
-        Map<String, Object> metadata,
+        String metadata,
         String rutaModulo
 ) {
 }

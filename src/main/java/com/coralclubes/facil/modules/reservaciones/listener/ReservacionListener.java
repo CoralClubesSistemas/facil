@@ -158,8 +158,9 @@ public class ReservacionListener {
                                         try {
                                             log.info("Generando y enviando carta de ocupación para folio: {}", rcd.reservacionConsecutivo());
                                             ReservacionConfirmadaEvent resEvent = reservacionesService.construirEventDesdeDb(event.membresia(), rcd.reservacionConsecutivo());
-                                            com.coralclubes.facil.modules.reservaciones.dto.response.ResultadoCartaOcupacion resultado = reservacionesService.generarYPersistirCartaOcupacion(resEvent);
-                                            reservacionesService.enviarNotificacionCartaOcupacion(resEvent, resultado.uuidPdf(), resultado.qrFileId(), List.of());
+                                            com.coralclubes.facil.modules.reservaciones.dto.response.ResultadoQrReservacion qrResultado = reservacionesService.generarQrReservacion(resEvent);
+                                            UUID uuidCarta = reservacionesService.generarYPersistirCartaOcupacion(resEvent, qrResultado.qrCodeDataUri());
+                                            reservacionesService.enviarNotificacionCartaOcupacion(resEvent, uuidCarta, qrResultado.qrFileId(), List.of());
                                             log.info("Carta de ocupación enviada correctamente para consecutivo: {}", rcd.reservacionConsecutivo());
                                         } catch (Exception ex) {
                                             log.error("Error al enviar la carta de ocupación para folio " + rcd.reservacionConsecutivo() + ": " + ex.getMessage(), ex);

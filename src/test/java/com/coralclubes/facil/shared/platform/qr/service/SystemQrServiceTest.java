@@ -47,6 +47,9 @@ class SystemQrServiceTest {
     @Mock
     private ModulosService modulosService;
 
+    @Spy
+    private com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+
     @Mock
     private BusinessLogger businessLogger;
 

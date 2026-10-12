@@ -7,6 +7,7 @@ import com.coralclubes.facil.shared.infrastructure.integration.storage.StorageCl
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.InfoArchivoDto;
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.SolicitudCargaLegacyDto;
 import com.coralclubes.facil.shared.platform.qr.dto.CreateQrRequest;
+import com.coralclubes.facil.shared.platform.qr.dto.SystemQrDataUriResponse;
 import com.coralclubes.facil.shared.platform.qr.dto.SystemQrResolucionResponse;
 import com.coralclubes.facil.shared.platform.qr.dto.SystemQrResponse;
 import com.coralclubes.facil.shared.platform.qr.mapper.SystemQrMapper;
@@ -72,6 +73,54 @@ public class SystemQrService {
         log.info("Código QR creado y almacenado exitosamente. Modulo: {}, Acción: {}, Entidad: {}, Token: {}, UUID Archivo: {}",
                 request.module(), request.actionType(), request.entityId(), token, qrFileId);
         return systemQrMapper.toResponse(guardado, urlDescarga);
+    }
+
+    /**
+     * Crea un código QR generando un token seguro, generando la imagen física,
+     * subiéndola al servicio de almacenamiento, persistiendo en la base de datos
+     * y retornando directamente el Data URI Base64 sin requerir descargas adicionales.
+     *
+     * @param request Datos de la solicitud de creación del QR.
+     * @return DTO con la respuesta del QR persistido y el Data URI de la imagen física.
+     */
+    @Transactional
+    public SystemQrDataUriResponse crearQrConDataUri(CreateQrRequest request) {
+        String token = generarTokenSeguro(request);
+        byte[] qrBytes = qrCodeService.generarQr(token);
+
+        // 1. Subir al servicio de almacenamiento
+        InfoArchivoDto archivoSubido = subirAStorage(request, qrBytes);
+        UUID qrFileId = archivoSubido.uuid();
+        String urlDescarga = archivoSubido.urlDescarga();
+
+        // 2. Persistir en la base de datos
+        SystemQr entity = systemQrMapper.toEntity(request, token, qrFileId);
+        SystemQr guardado = systemQrRepository.save(entity);
+
+        String dataUri = "data:image/png;base64," + java.util.Base64.getEncoder().encodeToString(qrBytes);
+
+        log.info("Código QR creado y almacenado exitosamente con Data URI. Modulo: {}, Acción: {}, Entidad: {}, Token: {}, UUID Archivo: {}",
+                request.module(), request.actionType(), request.entityId(), token, qrFileId);
+
+        return SystemQrDataUriResponse.builder()
+                .qr(systemQrMapper.toResponse(guardado, urlDescarga))
+                .dataUri(dataUri)
+                .build();
+    }
+
+    /**
+     * Obtiene el Data URI en Base64 de un código QR ya existente a partir de su ID de archivo en Storage.
+     *
+     * @param qrFileId UUID del archivo en el servicio de almacenamiento.
+     * @return Data URI Base64 del código QR.
+     */
+    public String obtenerQrDataUri(UUID qrFileId) {
+        if (qrFileId == null) {
+            return null;
+        }
+        InfoArchivoDto info = storageClient.consultarArchivo(qrFileId);
+        byte[] bytes = storageClient.descargarArchivo(info.urlDescarga());
+        return "data:image/png;base64," + java.util.Base64.getEncoder().encodeToString(bytes);
     }
 
     /**
@@ -180,7 +229,7 @@ public class SystemQrService {
                 .entityId(qr.getEntityId())
                 .entityType(qr.getEntityType())
                 .status(qr.getStatus())
-                .metadata(objectMapper.valueToTree(qr.getMetadata()))
+                .metadata(qr.getMetadata())
                 .rutaModulo(rutaModulo)
                 .build();
     }

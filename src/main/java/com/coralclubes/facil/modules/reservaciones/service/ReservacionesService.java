@@ -42,6 +42,7 @@ import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.Solic
 import com.coralclubes.facil.shared.infrastructure.integration.storage.dto.InfoArchivoDto;
 import com.coralclubes.facil.shared.platform.templating.service.PdfGeneratorService;
 import com.coralclubes.facil.shared.platform.qr.dto.CreateQrRequest;
+import com.coralclubes.facil.shared.platform.qr.dto.SystemQrDataUriResponse;
 import com.coralclubes.facil.shared.platform.qr.dto.SystemQrResponse;
 import com.coralclubes.facil.shared.platform.qr.enums.SystemQrStatus;
 import com.coralclubes.facil.shared.platform.qr.service.SystemQrService;
@@ -1322,7 +1323,29 @@ public class ReservacionesService {
                 .build();
     }
 
-    public ResultadoCartaOcupacion generarYPersistirCartaOcupacion(ReservacionConfirmadaEvent event) {
+    public ResultadoQrReservacion generarQrReservacion(ReservacionConfirmadaEvent event) {
+        String foliosStrJoin = event.foliosGenerados().stream()
+                .map(String::valueOf)
+                .collect(java.util.stream.Collectors.joining(","));
+        String entityId = (event.membresia() != null ? event.membresia() : "GENERAL") + ":" + foliosStrJoin;
+
+        CreateQrRequest qrRequest = CreateQrRequest.builder()
+                .module(ClavesModulos.RESERVACIONES.name())
+                .submodule(ClavesModulos.RESERVACIONES_RECEPCION.name())
+                .actionType("CHECK_IN")
+                .entityId(entityId)
+                .entityType("RESERVATION")
+                .status(SystemQrStatus.ACTIVE)
+                .maxUses(1)
+                .urlAlmacenamiento("reservaciones/qrs/")
+                .metadata(String.format("{\"folios\":%s,\"titular\":\"%s\"}", event.foliosGenerados(), event.nombreReserva()))
+                .build();
+
+        SystemQrDataUriResponse qrResponse = systemQrService.crearQrConDataUri(qrRequest);
+        return new ResultadoQrReservacion(qrResponse.qrFileId(), qrResponse.dataUri());
+    }
+
+    public UUID generarYPersistirCartaOcupacion(ReservacionConfirmadaEvent event, String qrCodeDataUri) {
         List<DatosCartaOcupacionDto.HabitacionCartaDto> habitacionesPdf = new java.util.ArrayList<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -1360,30 +1383,6 @@ public class ReservacionesService {
         variables.put("fechaEntrada", datosPdf.fechaEntrada());
         variables.put("fechaSalida", datosPdf.fechaSalida());
         variables.put("desarrollo", datosPdf.desarrollo());
-
-        // Generación y almacenamiento oficial del código QR para la reservación
-        String foliosStrJoin = event.foliosGenerados().stream()
-                .map(String::valueOf)
-                .collect(java.util.stream.Collectors.joining(","));
-        String entityId = (event.membresia() != null ? event.membresia() : "GENERAL") + ":" + foliosStrJoin;
-
-        CreateQrRequest qrRequest = CreateQrRequest.builder()
-                .module(ClavesModulos.RESERVACIONES.name())
-                .submodule(ClavesModulos.RESERVACIONES_RECEPCION.name())
-                .actionType("CHECK_IN")
-                .entityId(entityId)
-                .entityType("RESERVATION")
-                .status(SystemQrStatus.ACTIVE)
-                .maxUses(1)
-                .urlAlmacenamiento("reservaciones/qrs/")
-                .metadata(String.format("{\"folios\":%s,\"titular\":\"%s\"}", event.foliosGenerados(), event.nombreReserva()))
-                .build();
-
-        SystemQrResponse qrResponse = systemQrService.crearQr(qrRequest);
-
-        // Descargar la imagen física del QR desde Storage en memoria para renderizar en el PDF
-        byte[] qrBytes = storageClient.descargarArchivo(qrResponse.urlDescarga());
-        String qrCodeDataUri = "data:image/png;base64," + java.util.Base64.getEncoder().encodeToString(qrBytes);
         variables.put("qrCodeUrl", qrCodeDataUri);
 
         byte[] pdfBytes = pdfGeneratorService.generarPdfDesdeHtml("CARTA_OCUPACION", variables);
@@ -1420,7 +1419,7 @@ public class ReservacionesService {
             repository.spResvGuardarUuidCartaOcupacion(event.membresia(), consecutivo, uuidPdf.toString());
         }
 
-        return new ResultadoCartaOcupacion(uuidPdf, qrResponse.qrFileId());
+        return uuidPdf;
     }
 
     public void enviarNotificacionCartaOcupacion(ReservacionConfirmadaEvent event, UUID uuidPdf, UUID qrFileId, List<String> correosAdicionales) {
@@ -1478,10 +1477,6 @@ public class ReservacionesService {
         notificationClient.enviarNotificacion(solicitudNotificacion);
     }
 
-    public void enviarNotificacionCartaOcupacion(ReservacionConfirmadaEvent event, UUID uuidPdf, List<String> correosAdicionales) {
-        enviarNotificacionCartaOcupacion(event, uuidPdf, null, correosAdicionales);
-    }
-
     public ArchivoDescarga obtenerUrlCartaOcupacion(String membresia, Integer consecutivo) {
         Optional<String> uuidStrOpt = repository.spResvObtenerUuidCartaOcupacion(membresia, consecutivo);
         UUID uuid;
@@ -1489,8 +1484,8 @@ public class ReservacionesService {
             uuid = UUID.fromString(uuidStrOpt.get());
         } else {
             ReservacionConfirmadaEvent event = construirEventDesdeDb(membresia, consecutivo);
-            ResultadoCartaOcupacion resultado = generarYPersistirCartaOcupacion(event);
-            uuid = resultado.uuidPdf();
+            ResultadoQrReservacion qrResultado = obtenerOGenerarQrReservacion(event, consecutivo);
+            uuid = generarYPersistirCartaOcupacion(event, qrResultado.qrCodeDataUri());
         }
         return storageClient.obtenerUrlDescarga(uuid, "inline");
     }
@@ -1507,47 +1502,51 @@ public class ReservacionesService {
                   .toList();
 
         UUID uuidPdf;
-        UUID qrFileId = null;
+        UUID qrFileId;
 
         if (uuidStrOpt.isPresent() && !uuidStrOpt.get().isBlank()) {
             uuidPdf = UUID.fromString(uuidStrOpt.get());
-            String membresiaPrefijo = (event.membresia() != null ? event.membresia() : "GENERAL");
-            String exactEntityId = membresiaPrefijo + ":" + consecutivo;
-            String pattern = membresiaPrefijo + ":%" + consecutivo + "%";
-
-            qrFileId = systemQrService.obtenerQrActivoPorModuloYEntidad(
-                    ClavesModulos.RESERVACIONES.name(),
-                    "RESERVATION",
-                    exactEntityId,
-                    pattern
-            )
-                    .map(SystemQrResponse::qrFileId)
-                    .orElse(null);
-
-            if (qrFileId == null) {
-                log.info("No se encontró QR activo registrado para reservación {}:{}. Generando QR oficial de respaldo...",
-                        membresiaPrefijo, consecutivo);
-                CreateQrRequest qrRequest = CreateQrRequest.builder()
-                        .module(ClavesModulos.RESERVACIONES.name())
-                        .submodule(ClavesModulos.RESERVACIONES_RECEPCION.name())
-                        .actionType("CHECK_IN")
-                        .entityId(exactEntityId)
-                        .entityType("RESERVATION")
-                        .status(SystemQrStatus.ACTIVE)
-                        .maxUses(1)
-                        .urlAlmacenamiento("reservaciones/qrs/")
-                        .metadata(String.format("{\"folios\":%s,\"titular\":\"%s\"}", event.foliosGenerados(), event.nombreReserva()))
-                        .build();
-                SystemQrResponse nuevoQr = systemQrService.crearQr(qrRequest);
-                qrFileId = nuevoQr.qrFileId();
-            }
+            ResultadoQrReservacion qrResultado = obtenerOGenerarQrReservacion(event, consecutivo);
+            qrFileId = qrResultado.qrFileId();
         } else {
-            ResultadoCartaOcupacion resultado = generarYPersistirCartaOcupacion(event);
-            uuidPdf = resultado.uuidPdf();
-            qrFileId = resultado.qrFileId();
+            ResultadoQrReservacion qrResultado = obtenerOGenerarQrReservacion(event, consecutivo);
+            uuidPdf = generarYPersistirCartaOcupacion(event, qrResultado.qrCodeDataUri());
+            qrFileId = qrResultado.qrFileId();
         }
 
         enviarNotificacionCartaOcupacion(event, uuidPdf, qrFileId, correosAdicionales);
+    }
+
+    private ResultadoQrReservacion obtenerOGenerarQrReservacion(ReservacionConfirmadaEvent event, Integer consecutivo) {
+        String membresiaPrefijo = (event.membresia() != null ? event.membresia() : "GENERAL");
+        String exactEntityId = membresiaPrefijo + ":" + consecutivo;
+        String pattern = membresiaPrefijo + ":%" + consecutivo + "%";
+
+        Optional<SystemQrResponse> qrOpt = systemQrService.obtenerQrActivoPorModuloYEntidad(
+                ClavesModulos.RESERVACIONES.name(),
+                "RESERVATION",
+                exactEntityId,
+                pattern
+        );
+
+        if (qrOpt.isPresent()) {
+            UUID qrFileId = qrOpt.get().qrFileId();
+            String qrDataUri = null;
+            if (qrFileId != null) {
+                try {
+                    qrDataUri = systemQrService.obtenerQrDataUri(qrFileId);
+                } catch (Exception e) {
+                    log.warn("No fue posible obtener Data URI para QR existente {}: {}", qrFileId, e.getMessage());
+                }
+            }
+            if (qrDataUri != null) {
+                return new ResultadoQrReservacion(qrFileId, qrDataUri);
+            }
+        }
+
+        log.info("No se encontró QR activo válido con archivo para reservación {}:{}. Generando nuevo QR oficial...",
+                membresiaPrefijo, consecutivo);
+        return generarQrReservacion(event);
     }
 
     @Transactional
