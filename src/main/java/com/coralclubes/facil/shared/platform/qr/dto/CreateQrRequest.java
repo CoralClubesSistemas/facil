@@ -10,6 +10,18 @@ import java.time.Instant;
 /**
  * DTO para la solicitud de creación de un código QR en el sistema.
  * El token es generado internamente de forma criptográficamente segura por el servicio.
+ *
+ * @param module            Módulo emisor del QR (ej. RESERVACIONES), Generalmente debe provenir del enum ClavesModulos
+ * @param submodule         Submódulo emisor del QR (ej. RESERVACIONES_RECEPCION), Generalmente debe provenir del enum ClavesModulos
+ * @param actionType        Tipo de acción a ejecutar (ej. CHECK_IN), un valor que cada consumidor sepa interpretar.
+ * @param entityId          Identificador de la entidad vinculada, si es un valor compuesto por multiples campos lo expresamos como valor1:valor2:valor3...
+ * @param entityType        Tipo de entidad vinculada (ej. RESERVATION), un valor que cada consumidor sepa interpretar.
+ * @param urlAlmacenamiento Ruta lógica donde se desea almacenar el archivo QR generado.
+ * @param status            Estado del QR (ej. ACTIVO, INACTIVO).
+ * @param maxUses           Número máximo de usos permitidos.
+ * @param expiresAt         Fecha de expiración del QR.
+ * @param metadata          Datos adicionales del QR.
+ * @param createdBy         Usuario que creó el QR.
  */
 @Builder
 public record CreateQrRequest(
@@ -32,9 +44,6 @@ public record CreateQrRequest(
         @Size(max = 50, message = "El tipo de entidad no puede exceder 50 caracteres")
         String entityType,
 
-        /**
-         * Ruta lógica o URL base de almacenamiento en el servicio de archivos (ej. 'reservaciones/qrs').
-         */
         @Size(max = 255, message = "La URL de almacenamiento no puede exceder 255 caracteres")
         String urlAlmacenamiento,
 

@@ -99,6 +99,7 @@ public class SystemQr {
     @Column(name = "updated_by", length = 100)
     private String updatedBy;
 
+    // antes de persistir, valida campos nulos y establece valores por defecto
     @PrePersist
     public void prePersist() {
         if (this.id == null) {

@@ -3,6 +3,7 @@ package com.coralclubes.facil.shared.platform.qr.dto;
 import com.coralclubes.facil.shared.platform.qr.enums.SystemQrStatus;
 import lombok.Builder;
 
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -31,7 +32,7 @@ public record SystemQrResolucionResponse(
         String entityId,
         String entityType,
         SystemQrStatus status,
-        String metadata,
+        Map<String, Object> metadata,
         String rutaModulo
 ) {
 }

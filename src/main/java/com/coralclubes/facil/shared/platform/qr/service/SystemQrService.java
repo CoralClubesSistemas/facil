@@ -14,6 +14,7 @@ import com.coralclubes.facil.shared.platform.qr.model.SystemQr;
 import com.coralclubes.facil.shared.platform.qr.repository.SystemQrRepository;
 import com.coralclubes.facil.shared.utils.QrCodeService;
 import com.coralclubes.facil.shared.utils.UuidUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,7 @@ public class SystemQrService {
     private final QrCodeService qrCodeService;
     private final StorageClient storageClient;
     private final ModulosService modulosService;
+    private final ObjectMapper objectMapper;
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final String DEFAULT_STORAGE_FOLDER = "qrs";
@@ -178,14 +180,14 @@ public class SystemQrService {
                 .entityId(qr.getEntityId())
                 .entityType(qr.getEntityType())
                 .status(qr.getStatus())
-                .metadata(qr.getMetadata())
+                .metadata(objectMapper.valueToTree(qr.getMetadata()))
                 .rutaModulo(rutaModulo)
                 .build();
     }
 
-    // =========================================================================
+    // =================================================================================================================
     // MÉTODOS PRIVADOS AUXILIARES (HELPERS)
-    // =========================================================================
+    // =================================================================================================================
 
     /**
      * Genera un token único y seguro codificando la información de la solicitud (módulo, tipo de acción,
