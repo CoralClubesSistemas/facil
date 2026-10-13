@@ -32,6 +32,8 @@ public record SystemQrResolucionResponse(
         String entityId,
         String entityType,
         SystemQrStatus status,
+        Integer maxUses,
+        Integer usedCount,
         String metadata,
         String rutaModulo
 ) {

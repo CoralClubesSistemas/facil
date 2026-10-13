@@ -82,6 +82,10 @@ public class ReservacionesDocumentosService {
                 .collect(java.util.stream.Collectors.joining(","));
         String entityId = (event.membresia() != null ? event.membresia() : "GENERAL") + ":" + foliosStrJoin;
 
+        int cantidadUsos = !event.foliosGenerados().isEmpty()
+                ? event.foliosGenerados().size()
+                : 1;
+
         CreateQrRequest qrRequest = CreateQrRequest.builder()
                 .module(ClavesModulos.RESERVACIONES.name())
                 .submodule(ClavesModulos.RESERVACIONES_RECEPCION.name())
@@ -89,7 +93,7 @@ public class ReservacionesDocumentosService {
                 .entityId(entityId)
                 .entityType("RESERVATION")
                 .status(SystemQrStatus.ACTIVE)
-                .maxUses(1)
+                .maxUses(cantidadUsos)
                 .urlAlmacenamiento("reservaciones/qrs/")
                 .metadata(String.format("{\"folios\":%s,\"titular\":\"%s\"}", event.foliosGenerados(), event.nombreReserva()))
                 .build();

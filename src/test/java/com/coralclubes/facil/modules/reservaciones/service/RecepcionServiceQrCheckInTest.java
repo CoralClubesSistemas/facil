@@ -53,9 +53,9 @@ class RecepcionServiceQrCheckInTest {
 
         when(systemQrService.resolverQrPorToken(token)).thenReturn(qr);
 
-        DetalleReservacionDto det101 = DetalleReservacionDto.builder().membresia("MEMB-001").consecutivo(101).build();
-        DetalleReservacionDto det102 = DetalleReservacionDto.builder().membresia("MEMB-001").consecutivo(102).build();
-        DetalleReservacionDto det103 = DetalleReservacionDto.builder().membresia("MEMB-001").consecutivo(103).build();
+        DetalleReservacionDto det101 = DetalleReservacionDto.builder().membresia("MEMB-001").consecutivo(101).desarrolloId(1).build();
+        DetalleReservacionDto det102 = DetalleReservacionDto.builder().membresia("MEMB-001").consecutivo(102).desarrolloId(1).build();
+        DetalleReservacionDto det103 = DetalleReservacionDto.builder().membresia("MEMB-001").consecutivo(103).desarrolloId(1).build();
 
         when(reservacionesRepo.obtenerDetalleReservacion("MEMB-001", 101)).thenReturn(det101);
         when(reservacionesRepo.obtenerDetalleReservacion("MEMB-001", 102)).thenReturn(det102);
@@ -66,6 +66,7 @@ class RecepcionServiceQrCheckInTest {
         assertNotNull(response);
         assertEquals("MEMB-001", response.membresia());
         assertEquals(token, response.token());
+        assertTrue(response.consumible());
         assertEquals(3, response.reservaciones().size());
         assertEquals(101, response.reservaciones().get(0).consecutivo());
         assertEquals(102, response.reservaciones().get(1).consecutivo());
@@ -73,7 +74,44 @@ class RecepcionServiceQrCheckInTest {
     }
 
     @Test
-    @DisplayName("Debe rechazar QR si no está activo")
+    @DisplayName("Debe aceptar QR con estatus USED devolviendo consumible = false y mensaje informativo")
+    void testResolverQrUsed() {
+        String token = "used123token";
+        Integer desarrolloUsuario = 1;
+
+        SystemQrResolucionResponse qr = SystemQrResolucionResponse.builder()
+                .id(UUID.randomUUID())
+                .token(token)
+                .module("RESERVACIONES")
+                .submodule("RESERVACIONES_RECEPCION")
+                .actionType("CHECK_IN")
+                .entityId("MEMB-001:101")
+                .entityType("RESERVATION")
+                .status(SystemQrStatus.USED)
+                .maxUses(1)
+                .usedCount(1)
+                .build();
+
+        when(systemQrService.resolverQrPorToken(token)).thenReturn(qr);
+
+        DetalleReservacionDto det101 = DetalleReservacionDto.builder().membresia("MEMB-001").consecutivo(101).desarrolloId(1).build();
+        when(reservacionesRepo.obtenerDetalleReservacion("MEMB-001", 101)).thenReturn(det101);
+
+        ResolucionQrCheckInResponse response = recepcionService.resolverQrParaCheckIn(token, desarrolloUsuario);
+
+        assertNotNull(response);
+        assertEquals("MEMB-001", response.membresia());
+        assertEquals(token, response.token());
+        assertEquals(SystemQrStatus.USED, response.status());
+        assertFalse(response.consumible());
+        assertEquals(0, response.usosDisponibles());
+        assertNotNull(response.mensaje());
+        assertTrue(response.mensaje().contains("utilizado") || response.mensaje().contains("agotado"));
+        assertEquals(1, response.reservaciones().size());
+    }
+
+    @Test
+    @DisplayName("Debe rechazar QR si está expirado o revocado")
     void testResolverQrInactivo() {
         String token = "exp123token";
         SystemQrResolucionResponse qr = SystemQrResolucionResponse.builder()
@@ -86,7 +124,7 @@ class RecepcionServiceQrCheckInTest {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
                 recepcionService.resolverQrParaCheckIn(token, desarrolloUsuario));
 
-        assertTrue(ex.getMessage().contains("no está activo"));
+        assertTrue(ex.getMessage().contains("no es válido"));
     }
 
     @Test

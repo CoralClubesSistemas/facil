@@ -63,6 +63,28 @@ public class RecepcionService {
     public ApiResponse<Boolean> registrarCheckIn(CheckInRequest request) {
         String usuario = userContext.getUsername();
         recepcionRepo.ejecutarCheckIn(request, usuario);
+
+        // Consumir un uso del código QR activo asociado a la reservación si existe
+        try {
+            String exactEntityId = request.membresia() + ":" + request.consecutivo();
+            String pattern = request.membresia() + ":%" + request.consecutivo() + "%";
+            String metadataJson = String.format("{\"folio\":%s,\"idUnidad\":%s}", request.consecutivo(), request.idUnidad());
+
+            systemQrService.consumirUsoQrPorEntidad(
+                    "RESERVACIONES",
+                    "RESERVATION",
+                    exactEntityId,
+                    pattern,
+                    "CHECK_IN",
+                    usuario,
+                    null,
+                    metadataJson
+            );
+        } catch (Exception ex) {
+            log.warn("No fue posible consumir uso de QR para reservación {}:{}: {}",
+                    request.membresia(), request.consecutivo(), ex.getMessage());
+        }
+
         return ApiResponse.success("Check-In registrado exitosamente", true);
     }
 
@@ -227,9 +249,9 @@ public class RecepcionService {
         // 1. Obtener y resolver el token mediante el servicio de QR global
         SystemQrResolucionResponse qr = systemQrService.resolverQrPorToken(token);
 
-        // 2. Validar estatus activo
-        if (qr.status() != SystemQrStatus.ACTIVE) {
-            throw new IllegalArgumentException("El código QR proporcionado no está activo o ya ha expirado.");
+        // 2. Validar estatus permitido (Se aceptan ACTIVE y USED; otros como EXPIRED o REVOKED lanzan error)
+        if (qr.status() != SystemQrStatus.ACTIVE && qr.status() != SystemQrStatus.USED) {
+            throw new IllegalArgumentException("El código QR proporcionado no es válido (estado actual: " + qr.status() + ").");
         }
 
         // 3. Validar que corresponda al dominio de reservaciones
@@ -285,21 +307,41 @@ public class RecepcionService {
         }
 
         if (reservaciones.isEmpty()) {
-            throw new IllegalArgumentException("No se encontraron reservaciones activas para los folios indicados en el código QR.");
+            throw new IllegalArgumentException("No se encontraron reservaciones para los folios indicados en el código QR.");
         }
 
-        // validar que todas las reservaciones pertenezcan al desarrollo del usuario
+        // Validar que todas las reservaciones pertenezcan al desarrollo del usuario
         for (DetalleReservacionDto reservacion : reservaciones) {
-            if (!reservacion.desarrolloId().equals(usuarioDesarrollo)) {
+            if (usuarioDesarrollo != null && reservacion.desarrolloId() != null && !reservacion.desarrolloId().equals(usuarioDesarrollo)) {
                 throw new IllegalArgumentException("Una o más reservaciones del código QR no pertenecen al desarrollo asignado a su usuario.");
             }
         }
 
-        log.debug("QR resuelto exitosamente para membresía {} con folios: {}", membresia, folios);
+        int maxUses = qr.maxUses() != null ? qr.maxUses() : 1;
+        int usedCount = qr.usedCount() != null ? qr.usedCount() : 0;
+        int usosDisponibles = Math.max(0, maxUses - usedCount);
+
+        boolean consumible = qr.status() == SystemQrStatus.ACTIVE && usosDisponibles > 0;
+        String mensaje;
+
+        if (qr.status() == SystemQrStatus.USED || usosDisponibles == 0) {
+            mensaje = "El código QR ya ha sido utilizado en su totalidad y no cuenta con check-in(s) disponibles.";
+        } else {
+            mensaje = String.format("Código QR válido. Check-in(s) disponible(s): %d de %d.", usosDisponibles, maxUses);
+        }
+
+        log.debug("QR resuelto para membresía {} con folios {}. Consumible: {}, Usos disponibles: {}/{}",
+                membresia, folios, consumible, usosDisponibles, maxUses);
 
         return ResolucionQrCheckInResponse.builder()
                 .token(token)
                 .membresia(membresia)
+                .status(qr.status())
+                .consumible(consumible)
+                .maxUses(maxUses)
+                .usedCount(usedCount)
+                .usosDisponibles(usosDisponibles)
+                .mensaje(mensaje)
                 .reservaciones(reservaciones)
                 .build();
     }

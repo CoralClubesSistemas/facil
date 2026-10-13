@@ -10,9 +10,12 @@ import com.coralclubes.facil.shared.platform.qr.dto.CreateQrRequest;
 import com.coralclubes.facil.shared.platform.qr.dto.SystemQrDataUriResponse;
 import com.coralclubes.facil.shared.platform.qr.dto.SystemQrResolucionResponse;
 import com.coralclubes.facil.shared.platform.qr.dto.SystemQrResponse;
+import com.coralclubes.facil.shared.platform.qr.enums.SystemQrStatus;
 import com.coralclubes.facil.shared.platform.qr.mapper.SystemQrMapper;
 import com.coralclubes.facil.shared.platform.qr.model.SystemQr;
 import com.coralclubes.facil.shared.platform.qr.repository.SystemQrRepository;
+import com.coralclubes.facil.shared.platform.qr.model.SystemQrAudit;
+import com.coralclubes.facil.shared.platform.qr.repository.SystemQrAuditRepository;
 import com.coralclubes.facil.shared.utils.QrCodeService;
 import com.coralclubes.facil.shared.utils.UuidUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +44,7 @@ import java.util.UUID;
 public class SystemQrService {
 
     private final SystemQrRepository systemQrRepository;
+    private final SystemQrAuditRepository systemQrAuditRepository;
     private final SystemQrMapper systemQrMapper;
     private final QrCodeService qrCodeService;
     private final StorageClient storageClient;
@@ -229,9 +234,99 @@ public class SystemQrService {
                 .entityId(qr.getEntityId())
                 .entityType(qr.getEntityType())
                 .status(qr.getStatus())
+                .maxUses(qr.getMaxUses())
+                .usedCount(qr.getUsedCount())
                 .metadata(qr.getMetadata())
                 .rutaModulo(rutaModulo)
                 .build();
+    }
+
+    /**
+     * Consume un uso del código QR por su token público.
+     * Valida que esté en estatus ACTIVE y que queden usos disponibles.
+     * Incrementa usedCount, actualiza lastUsedAt, transiciona a USED si se agotaron los usos
+     * y genera el registro en system_qrs_audit.
+     */
+    @Transactional
+    public SystemQr consumirUsoQr(String qrToken, String action, String usuario, String ipAddress, String metadata) {
+        SystemQr qr = systemQrRepository.findByQrToken(qrToken)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró ningún código QR con el token especificado."));
+
+        return procesarConsumoQr(qr, action, usuario, ipAddress, metadata);
+    }
+
+    /**
+     * Busca el código QR activo asociado a un módulo, tipo de entidad e ID/patrón (ej. folios de reservación)
+     * y consume uno de sus usos registrando la auditoría.
+     * Retorna Optional vacío si la entidad no cuenta con un QR activo.
+     */
+    @Transactional
+    public Optional<SystemQr> consumirUsoQrPorEntidad(
+            String module,
+            String entityType,
+            String exactEntityId,
+            String pattern,
+            String action,
+            String usuario,
+            String ipAddress,
+            String metadata
+    ) {
+        List<SystemQr> resultados = systemQrRepository.buscarActivosPorModuloEntidadYPatron(
+                module, entityType, SystemQrStatus.ACTIVE, exactEntityId, pattern
+        );
+
+        if (resultados.isEmpty()) {
+            log.info("No se encontró ningún QR activo para consumir. Modulo: {}, Entidad: {}", module, exactEntityId);
+            return Optional.empty();
+        }
+
+        SystemQr qr = resultados.getFirst();
+        return Optional.of(procesarConsumoQr(qr, action, usuario, ipAddress, metadata));
+    }
+
+    private SystemQr procesarConsumoQr(SystemQr qr, String action, String usuario, String ipAddress, String metadata) {
+        if (qr.getStatus() != SystemQrStatus.ACTIVE) {
+            throw new IllegalStateException("El código QR no se encuentra activo (estado actual: " + qr.getStatus() + ").");
+        }
+
+        int max = qr.getMaxUses() != null ? qr.getMaxUses() : 1;
+        int used = qr.getUsedCount() != null ? qr.getUsedCount() : 0;
+
+        if (used >= max) {
+            qr.setStatus(SystemQrStatus.USED);
+            systemQrRepository.save(qr);
+            throw new IllegalStateException("El código QR ya ha agotado todos sus usos disponibles (" + used + "/" + max + ").");
+        }
+
+        used++;
+        qr.setUsedCount(used);
+        qr.setLastUsedAt(Instant.now());
+        qr.setUpdatedAt(Instant.now());
+        qr.setUpdatedBy(usuario != null ? usuario : "SYSTEM");
+
+        if (used >= max) {
+            qr.setStatus(SystemQrStatus.USED);
+            log.info("Código QR {} ha alcanzado su límite de usos ({}/{}). Estatus actualizado a USED.", qr.getId(), used, max);
+        }
+
+        SystemQr guardado = systemQrRepository.save(qr);
+
+        // Registrar en tabla de auditoría
+        SystemQrAudit audit = new SystemQrAudit();
+        audit.setQr(guardado);
+        audit.setAction(action != null ? action : qr.getActionType());
+        audit.setStatusResult("SUCCESS");
+        audit.setPerformedBy(usuario != null ? usuario : "SYSTEM");
+        audit.setIpAddress(ipAddress);
+        audit.setActionAt(Instant.now());
+        audit.setMetadata(metadata);
+
+        systemQrAuditRepository.save(audit);
+
+        log.info("Consumo de QR registrado. QR ID: {}, Usos: {}/{}, Estatus: {}, Usuario: {}",
+                guardado.getId(), used, max, guardado.getStatus(), usuario);
+
+        return guardado;
     }
 
     // =================================================================================================================
