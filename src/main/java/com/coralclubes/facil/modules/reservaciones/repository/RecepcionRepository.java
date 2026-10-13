@@ -59,7 +59,14 @@ public class RecepcionRepository {
             rs.getInt("Piso"),
             rs.getInt("Capacidad"),
             rs.getString("EstatusClave"),
-            rs.getString("EstatusDescripcion")
+            rs.getString("EstatusDescripcion"),
+            
+            rs.getObject("FechaEntrada") != null ? rs.getTimestamp("FechaEntrada").toLocalDateTime() : null,
+            rs.getObject("FechaSalida") != null ? rs.getTimestamp("FechaSalida").toLocalDateTime() : null,
+
+            rs.getObject("FechaBloqueoInicial") != null ? rs.getTimestamp("FechaBloqueoInicial").toLocalDateTime() : null,
+            rs.getObject("FechaBloqueoFinal") != null ? rs.getTimestamp("FechaBloqueoFinal").toLocalDateTime() : null,
+            rs.getString("RazonBloqueo")
     );
 
     private final RowMapper<CheckInOutEspecialCotizacionDto> cotizacionCheckInOutMapper = (rs, rowNum) -> CheckInOutEspecialCotizacionDto.builder()
