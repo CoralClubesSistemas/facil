@@ -2,6 +2,8 @@ package com.coralclubes.facil.modules.reservaciones.controller.admin;
 
 import com.coralclubes.facil.modules.reservaciones.dto.request.*;
 import com.coralclubes.facil.modules.reservaciones.dto.response.*;
+import com.coralclubes.facil.modules.reservaciones.service.RecepcionService;
+import com.coralclubes.facil.modules.reservaciones.service.ReservacionesDocumentosService;
 import com.coralclubes.facil.modules.reservaciones.service.ReservacionesService;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
@@ -22,7 +24,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RecepcionController {
 
-    private final ReservacionesService recepcionService;
+    private final RecepcionService recepcionService;
+    private final ReservacionesService reservacionesService;
+    private final ReservacionesDocumentosService documentosService;
     private final UserContext userContext;
 
     @GetMapping("/operaciones/hoy")
@@ -45,7 +49,7 @@ public class RecepcionController {
             @RequestParam String membresia,
             @RequestParam Integer consecutivo) {
 
-        var response = recepcionService.obtenerDetalleReservacion(membresia, consecutivo);
+        var response = reservacionesService.obtenerDetalleReservacion(membresia, consecutivo);
         return ResponseEntity.ok(response);
     }
 
@@ -85,7 +89,7 @@ public class RecepcionController {
             @RequestParam String membresia,
             @RequestParam Integer consecutivo) {
 
-        var response = recepcionService.obtenerCargosReservacion(membresia, consecutivo);
+        var response = reservacionesService.obtenerCargosReservacion(membresia, consecutivo);
         return ResponseEntity.ok(response);
     }
 
@@ -128,7 +132,7 @@ public class RecepcionController {
             @RequestParam String membresia,
             @RequestParam Integer consecutivo) {
 
-        var response = recepcionService.calcularPenalizacionCancelacion(membresia, consecutivo);
+        var response = reservacionesService.calcularPenalizacionCancelacion(membresia, consecutivo);
         return ResponseEntity.ok(response);
     }
 
@@ -137,7 +141,7 @@ public class RecepcionController {
             @Valid @RequestBody CancelarReservacionRequest request) {
         String usuario = userContext.getUsername();
 
-        var response = recepcionService.cancelarReservacion(request, usuario);
+        var response = reservacionesService.cancelarReservacion(request, usuario);
         return ResponseEntity.ok(response);
     }
 
@@ -157,7 +161,7 @@ public class RecepcionController {
             @RequestParam Integer consecutivo
     ) {
         String usuario = userContext.getUsername();
-        byte[] pdf = recepcionService.generarPdfRegistroCheckIn(membresia, consecutivo, usuario);
+        byte[] pdf = documentosService.generarPdfRegistroCheckIn(membresia, consecutivo, usuario);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=registro-checkin-" + membresia + "-" + consecutivo + ".pdf")

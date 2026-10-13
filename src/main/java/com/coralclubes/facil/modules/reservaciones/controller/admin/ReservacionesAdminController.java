@@ -5,6 +5,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.request.*;
 import com.coralclubes.facil.modules.reservaciones.dto.response.CuponMembresiaReservacionDto;
 import com.coralclubes.facil.modules.reservaciones.dto.response.DisponibilidadUnidadUI;
 import com.coralclubes.facil.modules.reservaciones.dto.response.ResumenCheckoutResponse;
+import com.coralclubes.facil.modules.reservaciones.service.ReservacionesDocumentosService;
 import com.coralclubes.facil.modules.reservaciones.service.ReservacionesService;
 import com.coralclubes.facil.shared.domain.dto.ArchivoDescarga;
 import com.coralclubes.facil.modules.usuarios.service.UserContext;
@@ -28,6 +29,7 @@ import java.util.UUID;
 public class ReservacionesAdminController {
 
     private final ReservacionesService service;
+    private final ReservacionesDocumentosService documentosService;
     private final ClientIpUtil clientIpUtil;
     private final UserContext userContext;
 
@@ -109,7 +111,7 @@ public class ReservacionesAdminController {
     public ResponseEntity<ApiResponse<ArchivoDescarga>> obtenerUrlCartaOcupacion(
             @RequestParam String membresia,
             @RequestParam Integer consecutivo) {
-        return ResponseEntity.ok(ApiResponse.success(service.obtenerUrlCartaOcupacion(membresia, consecutivo)));
+        return ResponseEntity.ok(ApiResponse.success(documentosService.obtenerUrlCartaOcupacion(membresia, consecutivo)));
     }
 
     @PostMapping("/carta-ocupacion/reenviar")
@@ -119,7 +121,7 @@ public class ReservacionesAdminController {
             @RequestParam Integer consecutivo,
             @RequestParam String correos
     ) {
-        service.reenviarCartaOcupacion(membresia, consecutivo, correos);
+        documentosService.reenviarCartaOcupacion(membresia, consecutivo, correos);
         return ResponseEntity.ok(ApiResponse.success("Carta de ocupación reenviada correctamente", true));
     }
 
@@ -130,7 +132,7 @@ public class ReservacionesAdminController {
             @RequestParam Integer numeroReservacion
     ) {
         String usuario = userContext.getUsername();
-        byte[] pdf = service.generarPdfRegistroCheckIn(membresia, numeroReservacion, usuario);
+        byte[] pdf = documentosService.generarPdfRegistroCheckIn(membresia, numeroReservacion, usuario);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=registro-checkin-" + membresia + "-" + numeroReservacion + ".pdf")

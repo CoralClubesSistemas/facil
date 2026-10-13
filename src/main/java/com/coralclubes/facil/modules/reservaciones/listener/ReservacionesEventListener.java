@@ -1,7 +1,7 @@
 package com.coralclubes.facil.modules.reservaciones.listener;
 
 import com.coralclubes.facil.modules.reservaciones.dto.response.ResultadoQrReservacion;
-import com.coralclubes.facil.modules.reservaciones.service.ReservacionesService;
+import com.coralclubes.facil.modules.reservaciones.service.ReservacionesDocumentosService;
 import com.coralclubes.facil.shared.events.dto.ReservacionConfirmadaEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ import java.util.UUID;
 @Slf4j
 public class ReservacionesEventListener {
 
-    private final ReservacionesService reservacionesService;
+    private final ReservacionesDocumentosService documentosService;
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
@@ -39,7 +39,7 @@ public class ReservacionesEventListener {
             ReservacionConfirmadaEvent eventoFinal = event;
             if (event.foliosGenerados() != null && !event.foliosGenerados().isEmpty() && event.membresia() != null) {
                 Integer folioPrincipal = event.foliosGenerados().getFirst();
-                ReservacionConfirmadaEvent eventoDb = reservacionesService.construirEventDesdeDb(event.membresia(), folioPrincipal);
+                ReservacionConfirmadaEvent eventoDb = documentosService.construirEventDesdeDb(event.membresia(), folioPrincipal);
 
                 eventoFinal = ReservacionConfirmadaEvent.builder()
                         .nombreReserva(eventoDb.nombreReserva() != null ? eventoDb.nombreReserva() : event.nombreReserva())
@@ -57,13 +57,13 @@ public class ReservacionesEventListener {
             }
 
             // 1. Proceso de Generación del Código QR oficial
-            ResultadoQrReservacion qrResultado = reservacionesService.generarQrReservacion(eventoFinal);
+            ResultadoQrReservacion qrResultado = documentosService.generarQrReservacion(eventoFinal);
 
             // 2. Proceso de Generación y Persistencia de la Carta de Ocupación en PDF con el QR vinculado
-            UUID uuidPdf = reservacionesService.generarYPersistirCartaOcupacion(eventoFinal, qrResultado.qrCodeDataUri());
+            UUID uuidPdf = documentosService.generarYPersistirCartaOcupacion(eventoFinal, qrResultado.qrCodeDataUri());
 
             // 3. Proceso de Envío de Notificación por correo adjuntando los UUIDs del PDF y del QR
-            reservacionesService.enviarNotificacionCartaOcupacion(
+            documentosService.enviarNotificacionCartaOcupacion(
                     eventoFinal,
                     uuidPdf,
                     qrResultado.qrFileId(),

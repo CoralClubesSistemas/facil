@@ -7,6 +7,7 @@ import com.coralclubes.facil.modules.reservaciones.dto.request.CancelarReservaci
 import com.coralclubes.facil.modules.reservaciones.dto.request.ConfirmarReservaRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.request.DetallePagoCheckoutRequest;
 import com.coralclubes.facil.modules.reservaciones.dto.response.ResumenReservacionDto;
+import com.coralclubes.facil.modules.reservaciones.service.ReservacionesDocumentosService;
 import com.coralclubes.facil.modules.reservaciones.service.ReservacionesService;
 import com.coralclubes.facil.shared.domain.enums.MovimientosEnum;
 import com.coralclubes.facil.shared.events.dto.ReciboCanceladoEvent;
@@ -31,6 +32,7 @@ import java.util.UUID;
 public class ReservacionListener {
 
     private final ReservacionesService reservacionesService;
+    private final ReservacionesDocumentosService documentosService;
     private final IntentoPagoRepository intentoPagoRepository;
 
     /**
@@ -156,15 +158,15 @@ public class ReservacionListener {
                                     // Generar y enviar la carta de ocupación para cada reservación física creada
                                     for (com.coralclubes.facil.modules.reservaciones.dto.response.ReservacionCreadaDetalle rcd : reservaciones) {
                                         try {
-                                            log.info("Generando y enviando carta de ocupación para folio: {}", rcd.reservacionConsecutivo());
-                                            ReservacionConfirmadaEvent resEvent = reservacionesService.construirEventDesdeDb(event.membresia(), rcd.reservacionConsecutivo());
-                                            com.coralclubes.facil.modules.reservaciones.dto.response.ResultadoQrReservacion qrResultado = reservacionesService.generarQrReservacion(resEvent);
-                                            UUID uuidCarta = reservacionesService.generarYPersistirCartaOcupacion(resEvent, qrResultado.qrCodeDataUri());
-                                            reservacionesService.enviarNotificacionCartaOcupacion(resEvent, uuidCarta, qrResultado.qrFileId(), List.of());
-                                            log.info("Carta de ocupación enviada correctamente para consecutivo: {}", rcd.reservacionConsecutivo());
-                                        } catch (Exception ex) {
-                                            log.error("Error al enviar la carta de ocupación para folio " + rcd.reservacionConsecutivo() + ": " + ex.getMessage(), ex);
-                                        }
+                                             log.info("Generando y enviando carta de ocupación para folio: {}", rcd.reservacionConsecutivo());
+                                             ReservacionConfirmadaEvent resEvent = documentosService.construirEventDesdeDb(event.membresia(), rcd.reservacionConsecutivo());
+                                             com.coralclubes.facil.modules.reservaciones.dto.response.ResultadoQrReservacion qrResultado = documentosService.generarQrReservacion(resEvent);
+                                             UUID uuidCarta = documentosService.generarYPersistirCartaOcupacion(resEvent, qrResultado.qrCodeDataUri());
+                                             documentosService.enviarNotificacionCartaOcupacion(resEvent, uuidCarta, qrResultado.qrFileId(), List.of());
+                                             log.info("Carta de ocupación enviada correctamente para consecutivo: {}", rcd.reservacionConsecutivo());
+                                         } catch (Exception ex) {
+                                             log.error("Error al enviar la carta de ocupación para folio " + rcd.reservacionConsecutivo() + ": " + ex.getMessage(), ex);
+                                         }
                                     }
                                 }
                             } else {
