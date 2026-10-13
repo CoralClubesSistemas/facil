@@ -39,10 +39,6 @@ public class RecepcionRepository {
             .nombre(rs.getString("Nombre"))
             .valor(rs.getInt("Valor"))
             .adicional(rs.getString("Adicional"))
-            .border(rs.getString("Border"))
-            .icono(rs.getString("Icono"))
-            .text(rs.getString("Text"))
-            .bg(rs.getString("Bg"))
             .build();
 
     private final RowMapper<UnidadDisponibleDto> unidadDisponibleMapper = (rs, rowNum) -> new UnidadDisponibleDto(

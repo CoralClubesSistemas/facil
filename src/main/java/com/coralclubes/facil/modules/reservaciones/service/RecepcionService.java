@@ -12,11 +12,16 @@ import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.logging.BusinessLogger;
 import com.coralclubes.responses.ApiResponse;
 import com.coralclubes.responses.codes.GeneralResponseCode;
+import com.coralclubes.facil.shared.platform.qr.dto.SystemQrResolucionResponse;
+import com.coralclubes.facil.shared.platform.qr.enums.SystemQrStatus;
+import com.coralclubes.facil.shared.platform.qr.service.SystemQrService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,6 +34,7 @@ public class RecepcionService {
     private final ReservacionesRepository reservacionesRepo;
     private final AmaDeLlavesService amaDeLlavesService;
     private final CobranzaService cobranzaService;
+    private final SystemQrService systemQrService;
     private final BusinessLogger businessLogger;
     private final UserContext userContext;
 
@@ -211,5 +217,90 @@ public class RecepcionService {
                 .build();
 
         return cobranzaService.generarOrdenCobranza(ordenRequest, userContext.getUsername()).data().ordenUuid();
+    }
+
+    public ResolucionQrCheckInResponse resolverQrParaCheckIn(String token, Integer usuarioDesarrollo) {
+        if (token == null || token.isBlank()) {
+            throw new IllegalArgumentException("El token del código QR es obligatorio.");
+        }
+
+        // 1. Obtener y resolver el token mediante el servicio de QR global
+        SystemQrResolucionResponse qr = systemQrService.resolverQrPorToken(token);
+
+        // 2. Validar estatus activo
+        if (qr.status() != SystemQrStatus.ACTIVE) {
+            throw new IllegalArgumentException("El código QR proporcionado no está activo o ya ha expirado.");
+        }
+
+        // 3. Validar que corresponda al dominio de reservaciones
+        boolean esModuloValido = (qr.module() != null && qr.module().equalsIgnoreCase("RESERVACIONES"))
+                || (qr.entityType() != null && qr.entityType().equalsIgnoreCase("RESERVATION"));
+
+        if (!esModuloValido) {
+            throw new IllegalArgumentException("El código QR no corresponde a una reservación válida.");
+        }
+
+        String entityId = qr.entityId();
+        if (entityId == null || entityId.isBlank()) {
+            throw new IllegalArgumentException("El código QR no contiene información de reservación vinculada.");
+        }
+
+        // 4. Parsear entityId (Formato: membresia:consecutivo1:consecutivo2 o membresia:consecutivo1,consecutivo2)
+        String[] partes = entityId.split(":", 2);
+        String membresia = partes[0].trim();
+
+        if (partes.length < 2 || partes[1].isBlank()) {
+            throw new IllegalArgumentException("El código QR no contiene folios de reservación válidos.");
+        }
+
+        // Los folios restantes pueden venir separados por ':' o por ','
+        String[] tokensFolios = partes[1].split("[: ,]+");
+        List<Integer> folios = new ArrayList<>();
+        for (String fStr : tokensFolios) {
+            fStr = fStr.trim();
+            if (!fStr.isEmpty()) {
+                try {
+                    folios.add(Integer.parseInt(fStr));
+                } catch (NumberFormatException ignored) {
+                    log.warn("Se ignoró segmento no numérico en folios de QR: {}", fStr);
+                }
+            }
+        }
+
+        if (folios.isEmpty()) {
+            throw new IllegalArgumentException("No se pudieron extraer folios de reservación válidos del código QR.");
+        }
+
+        // 5. Consultar los detalles de cada reservación
+        List<DetalleReservacionDto> reservaciones = new ArrayList<>();
+        for (Integer folio : folios) {
+            try {
+                DetalleReservacionDto detalle = reservacionesRepo.obtenerDetalleReservacion(membresia, folio);
+                if (detalle != null) {
+                    reservaciones.add(detalle);
+                }
+            } catch (Exception ex) {
+                log.warn("No fue posible obtener el detalle para la reservación {}:{} desde QR: {}", membresia, folio, ex.getMessage());
+            }
+        }
+
+        if (reservaciones.isEmpty()) {
+            throw new IllegalArgumentException("No se encontraron reservaciones activas para los folios indicados en el código QR.");
+        }
+
+        // validar que todas las reservaciones pertenezcan al desarrollo del usuario
+        for (DetalleReservacionDto reservacion : reservaciones) {
+            if (!reservacion.desarrolloId().equals(usuarioDesarrollo)) {
+                throw new IllegalArgumentException("Una o más reservaciones del código QR no pertenecen al desarrollo asignado a su usuario.");
+            }
+        }
+
+        log.debug("QR resuelto exitosamente para membresía {} con folios: {}", membresia, folios);
+
+        return ResolucionQrCheckInResponse.builder()
+                .token(token)
+                .membresia(membresia)
+                .reservaciones(reservaciones)
+                .build();
     }
 }

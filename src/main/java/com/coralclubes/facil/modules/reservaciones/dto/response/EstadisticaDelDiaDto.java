@@ -7,9 +7,5 @@ public record EstadisticaDelDiaDto(
         String clave,
         String nombre,
         Integer valor,
-        String adicional,
-        String border,
-        String icono,
-        String text,
-        String bg
+        String adicional
 ) {}

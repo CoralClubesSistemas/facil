@@ -44,6 +44,14 @@ public class RecepcionController {
         return ResponseEntity.ok(recepcionService.registrarCheckIn(request));
     }
 
+    @GetMapping("/qr/{token}/check-in")
+    public ResponseEntity<ApiResponse<ResolucionQrCheckInResponse>> resolverQrCheckIn(@PathVariable String token) {
+        Integer desarrolloUsuario = userContext.getIdDesarrollo();
+
+        return ResponseEntity.ok(ApiResponse.success("Detalle de reservaciones resuelto exitosamente desde QR",
+                recepcionService.resolverQrParaCheckIn(token, desarrolloUsuario)));
+    }
+
     @GetMapping("/operaciones/detalle")
     public ResponseEntity<ApiResponse<DetalleReservacionDto>> obtenerDetalleReservacion(
             @RequestParam String membresia,
@@ -73,8 +81,6 @@ public class RecepcionController {
     public ResponseEntity<ApiResponse<CheckInOutEspecialCotizacionDto>> cotizarCheckInOutEspecial(
             @RequestParam String membresia,
             @RequestParam Integer consecutivo) {
-        System.out.println("Recibido cotizarCheckInOutEspecial para membresia: " + membresia + ", consecutivo: " + consecutivo);
-
         return ResponseEntity.ok(recepcionService.cotizarCheckInOutEspecial(membresia, consecutivo));
     }
 
