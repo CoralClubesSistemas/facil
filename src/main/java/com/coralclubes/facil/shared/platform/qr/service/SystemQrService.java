@@ -29,6 +29,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
@@ -282,6 +283,93 @@ public class SystemQrService {
 
         SystemQr qr = resultados.getFirst();
         return Optional.of(procesarConsumoQr(qr, action, usuario, ipAddress, metadata));
+    }
+
+    /**
+     * Revoca un folio específico dentro de los códigos QR activos vinculados a una entidad.
+     * Si el QR contenía múltiples folios (carrito), actualiza su entityId retirando el folio cancelado,
+     * decrementa maxUses y mantiene el QR ACTIVE si aún le quedan usos/folios.
+     * Si el QR solo correspondía a este folio o ya no tiene folios restantes, cambia su estatus a REVOKED.
+     * En ambos casos, registra la auditoría correspondiente.
+     */
+    @Transactional
+    public Optional<SystemQr> revocarFolioQrPorEntidad(
+            String module,
+            String entityType,
+            String exactEntityId,
+            String pattern,
+            String folioRevocado,
+            String usuario,
+            String motivoCancelacion
+    ) {
+        List<SystemQr> resultados = systemQrRepository.buscarActivosPorModuloEntidadYPatron(
+                module, entityType, SystemQrStatus.ACTIVE, exactEntityId, pattern
+        );
+
+        if (resultados.isEmpty()) {
+            log.info("No se encontró ningún QR activo para revocar. Modulo: {}, Entidad: {}", module, exactEntityId);
+            return Optional.empty();
+        }
+
+        SystemQr qr = resultados.getFirst();
+        String currentEntityId = qr.getEntityId();
+        String[] partes = currentEntityId != null ? currentEntityId.split(":", 2) : new String[]{""};
+        String prefix = partes[0].trim();
+        List<String> foliosRestantes = new ArrayList<>();
+
+        if (partes.length > 1 && !partes[1].isBlank()) {
+            String[] tokensFolios = partes[1].split("[: ,]+");
+            for (String fStr : tokensFolios) {
+                fStr = fStr.trim();
+                if (!fStr.isEmpty() && !fStr.equalsIgnoreCase(folioRevocado)) {
+                    foliosRestantes.add(fStr);
+                }
+            }
+        }
+
+        Instant ahora = Instant.now();
+        String actor = usuario != null ? usuario : "SYSTEM";
+        qr.setUpdatedAt(ahora);
+        qr.setUpdatedBy(actor);
+
+        int max = qr.getMaxUses() != null ? qr.getMaxUses() : 1;
+        int used = qr.getUsedCount() != null ? qr.getUsedCount() : 0;
+
+        if (foliosRestantes.isEmpty()) {
+            // No quedan folios activos en este QR: revocar totalmente
+            qr.setStatus(SystemQrStatus.REVOKED);
+            log.info("QR ID {} revocado totalmente por cancelación del folio {}.", qr.getId(), folioRevocado);
+        } else {
+            // Aún quedan otros folios en el carrito: actualizar lista de folios y ajustar maxUses
+            String nuevoEntityId = prefix + ":" + String.join(",", foliosRestantes);
+            qr.setEntityId(nuevoEntityId);
+            int nuevoMax = Math.max(used, max - 1);
+            qr.setMaxUses(nuevoMax);
+
+            if (used >= nuevoMax) {
+                qr.setStatus(SystemQrStatus.USED);
+            }
+            log.info("QR ID {} actualizado tras cancelar folio {}. Nuevo entityId: {}, maxUses: {}/{}",
+                    qr.getId(), folioRevocado, nuevoEntityId, used, nuevoMax);
+        }
+
+        SystemQr guardado = systemQrRepository.save(qr);
+
+        // Registro de auditoría
+        SystemQrAudit audit = new SystemQrAudit();
+        audit.setQr(guardado);
+        audit.setAction("REVOKE_RESERVATION_CANCELLED");
+        audit.setStatusResult("SUCCESS");
+        audit.setPerformedBy(actor);
+        audit.setActionAt(ahora);
+        audit.setMetadata(String.format("{\"folioCancelado\":\"%s\",\"motivo\":\"%s\",\"statusResultante\":\"%s\"}",
+                folioRevocado,
+                motivoCancelacion != null ? motivoCancelacion.replace("\"", "\\\"") : "",
+                guardado.getStatus().name()));
+
+        systemQrAuditRepository.save(audit);
+
+        return Optional.of(guardado);
     }
 
     private SystemQr procesarConsumoQr(SystemQr qr, String action, String usuario, String ipAddress, String metadata) {

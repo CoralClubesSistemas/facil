@@ -98,12 +98,10 @@ public class ReservacionesService {
     private final CuponesReservacionesEngine cuponesReservacionesEngine;
     private final TemporadasService temporadasService;
     private final ReservacionesDocumentosService documentosService;
+    private final SystemQrService systemQrService;
 
     @Value("${app.clients.notifications.templates.reserva-cancelada}")
     private String templateReservaCancelada;
-
-    @Value("${app.clients.notifications.templates.reserva-creada}")
-    private String templateReservaCreada;
 
     @Value("${app.clients.checkout.urls.portal-resv.redirect-success}")
     private String urlCheckoutSuccess;
@@ -830,10 +828,24 @@ public class ReservacionesService {
         return ApiResponse.success("Cálculo de penalización completado.", penalizacion);
     }
 
+    @Transactional
     public ApiResponse<Boolean> cancelarReservacion(CancelarReservacionRequest request, String usuario) {
         ResumenReservacionDto detalle = obtenerResumenReservacion(request.membresia(), request.consecutivo()).data();
 
         repository.cancelarReservacion(request, usuario);
+
+        // Revocar / actualizar QR asociado dentro de la misma transacción
+        String exactEntityId = request.membresia() + ":" + request.consecutivo();
+        String pattern = request.membresia() + ":%" + request.consecutivo() + "%";
+        systemQrService.revocarFolioQrPorEntidad(
+                "RESERVACIONES",
+                "RESERVATION",
+                exactEntityId,
+                pattern,
+                String.valueOf(request.consecutivo()),
+                usuario,
+                request.motivoCancelacion()
+        );
 
         businessLogger.info(usuario, "Cancelación de reservación realizada para Membresía: {}, Consecutivo: {}, Motivo: {}, Cobro Penalización: {}",
                 request.membresia(), request.consecutivo(), request.motivoCancelacion(), request.cobrarCuotaCancelacion());
@@ -1073,7 +1085,6 @@ public class ReservacionesService {
         SolicitudNotificacionDto solicitudNotificacion = SolicitudNotificacionDto.builder()
                 .destinatarios(List.of(destinatario))
                 .codigoPlantilla(templateReservaCancelada)
-                .remitenteOverride("reservaciones@lvivardev.com")
                 .variables(urlVariables)
                 .prioridad(10)
                 .build();

@@ -249,8 +249,8 @@ public class RecepcionService {
         // 1. Obtener y resolver el token mediante el servicio de QR global
         SystemQrResolucionResponse qr = systemQrService.resolverQrPorToken(token);
 
-        // 2. Validar estatus permitido (Se aceptan ACTIVE y USED; otros como EXPIRED o REVOKED lanzan error)
-        if (qr.status() != SystemQrStatus.ACTIVE && qr.status() != SystemQrStatus.USED) {
+        // 2. Validar estatus permitido (Se aceptan ACTIVE, USED y REVOKED; otros como EXPIRED lanzan error)
+        if (qr.status() != SystemQrStatus.ACTIVE && qr.status() != SystemQrStatus.USED && qr.status() != SystemQrStatus.REVOKED) {
             throw new IllegalArgumentException("El código QR proporcionado no es válido (estado actual: " + qr.status() + ").");
         }
 
@@ -324,7 +324,10 @@ public class RecepcionService {
         boolean consumible = qr.status() == SystemQrStatus.ACTIVE && usosDisponibles > 0;
         String mensaje;
 
-        if (qr.status() == SystemQrStatus.USED || usosDisponibles == 0) {
+        if (qr.status() == SystemQrStatus.REVOKED) {
+            usosDisponibles = 0;
+            mensaje = "El código QR ha sido cancelado / revocado debido a que la reservación fue cancelada.";
+        } else if (qr.status() == SystemQrStatus.USED || usosDisponibles == 0) {
             mensaje = "El código QR ya ha sido utilizado en su totalidad y no cuenta con check-in(s) disponibles.";
         } else {
             mensaje = String.format("Código QR válido. Check-in(s) disponible(s): %d de %d.", usosDisponibles, maxUses);

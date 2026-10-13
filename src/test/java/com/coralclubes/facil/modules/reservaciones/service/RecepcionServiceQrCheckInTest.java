@@ -111,7 +111,44 @@ class RecepcionServiceQrCheckInTest {
     }
 
     @Test
-    @DisplayName("Debe rechazar QR si está expirado o revocado")
+    @DisplayName("Debe aceptar QR con estatus REVOKED devolviendo consumible = false y mensaje amigable de cancelación")
+    void testResolverQrRevoked() {
+        String token = "rev123token";
+        Integer desarrolloUsuario = 1;
+
+        SystemQrResolucionResponse qr = SystemQrResolucionResponse.builder()
+                .id(UUID.randomUUID())
+                .token(token)
+                .module("RESERVACIONES")
+                .submodule("RESERVACIONES_RECEPCION")
+                .actionType("CHECK_IN")
+                .entityId("MEMB-001:101")
+                .entityType("RESERVATION")
+                .status(SystemQrStatus.REVOKED)
+                .maxUses(1)
+                .usedCount(0)
+                .build();
+
+        when(systemQrService.resolverQrPorToken(token)).thenReturn(qr);
+
+        DetalleReservacionDto det101 = DetalleReservacionDto.builder().membresia("MEMB-001").consecutivo(101).desarrolloId(1).build();
+        when(reservacionesRepo.obtenerDetalleReservacion("MEMB-001", 101)).thenReturn(det101);
+
+        ResolucionQrCheckInResponse response = recepcionService.resolverQrParaCheckIn(token, desarrolloUsuario);
+
+        assertNotNull(response);
+        assertEquals("MEMB-001", response.membresia());
+        assertEquals(token, response.token());
+        assertEquals(SystemQrStatus.REVOKED, response.status());
+        assertFalse(response.consumible());
+        assertEquals(0, response.usosDisponibles());
+        assertNotNull(response.mensaje());
+        assertTrue(response.mensaje().contains("cancelado") || response.mensaje().contains("revocado"));
+        assertEquals(1, response.reservaciones().size());
+    }
+
+    @Test
+    @DisplayName("Debe rechazar QR si está expirado")
     void testResolverQrInactivo() {
         String token = "exp123token";
         SystemQrResolucionResponse qr = SystemQrResolucionResponse.builder()
