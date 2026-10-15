@@ -22,16 +22,4 @@ public record TotalCategoriaResponse<T>(
         Integer totalElementos,
         BigDecimal total,
         Map<String, Object> metadata
-) {
-    /**
-     * Constructor adicional sin metadata.
-     */
-    public TotalCategoriaResponse(
-            T id,
-            String categoria,
-            Integer totalElementos,
-            BigDecimal total
-    ) {
-        this(id, categoria, totalElementos, total, null);
-    }
-}
+) {}
