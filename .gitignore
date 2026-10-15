@@ -32,6 +32,10 @@ build/
 ### VS Code ###
 .vscode/
 
+### Claude Code ###
+.claude/
+.mcp.json
+
 ### Otros ###
 nul
 
