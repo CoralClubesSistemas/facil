@@ -34,18 +34,18 @@ public class DashInmobiliariaCobranzaRepository {
                     rs.getBigDecimal("total")
             );
 
-    public Optional<TotalCategoriaResponse> spDashInmobiliariaTotales(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> spDashInmobiliariaTotales(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
-        return spExecutor.querySingle("spDashInmobiliariaTotales", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.querySingle("spDashInmobiliariaTotales", params, DashboardRowMappers.crearMapper());
     }
 
-    public List<TotalCategoriaResponse> spDashInmobiliariaClasificacion(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spDashInmobiliariaClasificacion(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
-        return spExecutor.queryList("spDashInmobiliariaClasificacion", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.queryList("spDashInmobiliariaClasificacion", params, DashboardRowMappers.crearMapper());
     }
 
     public List<InmobiliariaMovimientosCobranzaResponse> spDashInmobiliariaCasas(String fechaInicio, String fechaFin) {

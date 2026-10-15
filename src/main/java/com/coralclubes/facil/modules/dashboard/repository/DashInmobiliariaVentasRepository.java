@@ -38,18 +38,18 @@ public class DashInmobiliariaVentasRepository {
                     rs.getString("montoPagado")
             );
 
-    public Optional<TotalCategoriaResponse> spDashInmobiliariaTotalesVentas(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> spDashInmobiliariaTotalesVentas(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
-        return spExecutor.querySingle("spDashInmobiliariaTotalesVentas", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.querySingle("spDashInmobiliariaTotalesVentas", params, DashboardRowMappers.crearMapper());
     }
 
-    public List<TotalCategoriaResponse> spDashInmobiliariaClasificacionVentas(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spDashInmobiliariaClasificacionVentas(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
-        return spExecutor.queryList("spDashInmobiliariaClasificacionVentas", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.queryList("spDashInmobiliariaClasificacionVentas", params, DashboardRowMappers.crearMapper());
     }
 
     public List<InmobiliariaMovimientosResponse> spDashInmobiliariaCasasVentas(String fechaInicio, String fechaFin) {

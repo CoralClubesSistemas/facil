@@ -65,26 +65,26 @@ public class DashHospedajeRepository {
                     rs.getObject("NumeroRecibo") != null ? rs.getInt("NumeroRecibo") : null
             );
 
-    public Optional<TotalCategoriaResponse> spDashHospedajeTotales(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> spDashHospedajeTotales(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
-        return spExecutor.querySingle("spDashHospedajeTotales", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.querySingle("spDashHospedajeTotales", params, DashboardRowMappers.crearMapper());
     }
 
-    public List<TotalCategoriaResponse> spDashHospedajeTotalesEstatus(String fechaInicio, String fechaFin, Integer desarrollo) {
+    public List<TotalCategoriaResponse<Long>> spDashHospedajeTotalesEstatus(String fechaInicio, String fechaFin, Integer desarrollo) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
         params.put("Desarrollo", desarrollo);
-        return spExecutor.queryList("spDashHospedajeTotalesEstatus", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.queryList("spDashHospedajeTotalesEstatus", params, DashboardRowMappers.crearMapper());
     }
 
-    public List<TotalCategoriaResponse> spDashHospedajesDesarrollos(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spDashHospedajesDesarrollos(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
-        return spExecutor.queryList("spDashHospedajesDesarrollos", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.queryList("spDashHospedajesDesarrollos", params, DashboardRowMappers.crearMapper());
     }
 
     public List<HospedajeLibreResponse> spDashHospedajesLibres(String fechaInicio, String fechaFin, Integer desarrollo) {

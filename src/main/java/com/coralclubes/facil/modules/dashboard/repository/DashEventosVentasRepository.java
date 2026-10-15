@@ -43,18 +43,18 @@ public class DashEventosVentasRepository {
                     rs.getString("recibo")
             );
 
-    public Optional<TotalCategoriaResponse> spDashEventosTotalesVentas(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> spDashEventosTotalesVentas(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
-        return spExecutor.querySingle("spDashEventosTotalesVentas", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.querySingle("spDashEventosTotalesVentas", params, DashboardRowMappers.crearMapper());
     }
 
-    public List<TotalCategoriaResponse> spDashEventosDesarrollosVentas(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spDashEventosDesarrollosVentas(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
-        return spExecutor.queryList("spDashEventosDesarrollosVentas", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.queryList("spDashEventosDesarrollosVentas", params, DashboardRowMappers.crearMapper());
     }
 
     public List<EventosDetallesResponse> spDashEventosDetallesVentas(String fechaInicio, String fechaFin, Integer desarrollo) {

@@ -61,18 +61,18 @@ public class DashEventosCobranzaRepository {
                     rs.getString("descripcionMovimiento")
             );
 
-    public Optional<TotalCategoriaResponse> spDashEventosTotales(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> spDashEventosTotales(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
-        return spExecutor.querySingle("spDashEventosTotales", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.querySingle("spDashEventosTotales", params, DashboardRowMappers.crearMapper());
     }
 
-    public List<TotalCategoriaResponse> spDashEventosDesarrollos(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spDashEventosDesarrollos(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
-        return spExecutor.queryList("spDashEventosDesarrollos", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.queryList("spDashEventosDesarrollos", params, DashboardRowMappers.crearMapper());
     }
 
     public List<EventosDetallesResponse> spDashEventosDetalles(String fechaInicio, String fechaFin, Integer desarrollo) {
@@ -99,12 +99,12 @@ public class DashEventosCobranzaRepository {
         return spExecutor.queryList("spDashEventosAnticipos", params, eventosDetallesMapper);
     }
 
-    public Optional<TotalCategoriaResponse> spDashEventosAnticiposTotal(String fechaInicio, String fechaFin, Integer desarrollo) {
+    public Optional<TotalCategoriaResponse<Long>> spDashEventosAnticiposTotal(String fechaInicio, String fechaFin, Integer desarrollo) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
         params.put("desarrollo", desarrollo);
-        return spExecutor.querySingle("spDashEventosAnticiposTotal", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.querySingle("spDashEventosAnticiposTotal", params, DashboardRowMappers.crearMapper());
     }
 
     public List<EventosDetallesResponse> spDashEventosLiquidacion(String fechaInicio, String fechaFin, Integer desarrollo) {
@@ -115,12 +115,12 @@ public class DashEventosCobranzaRepository {
         return spExecutor.queryList("spDashEventosLiquidacion", params, eventosDetallesMapper);
     }
 
-    public Optional<TotalCategoriaResponse> spDashEventosLiquidacionTotal(String fechaInicio, String fechaFin, Integer desarrollo) {
+    public Optional<TotalCategoriaResponse<Long>> spDashEventosLiquidacionTotal(String fechaInicio, String fechaFin, Integer desarrollo) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
         params.put("desarrollo", desarrollo);
-        return spExecutor.querySingle("spDashEventosLiquidacionTotal", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.querySingle("spDashEventosLiquidacionTotal", params, DashboardRowMappers.crearMapper());
     }
 
     public List<EventosOperadosResponse> spDashEventosOperados(String fechaInicio, String fechaFin, Integer desarrollo) {
@@ -131,11 +131,11 @@ public class DashEventosCobranzaRepository {
         return spExecutor.queryList("spDashEventosOperados", params, eventosOperadosMapper);
     }
 
-    public List<TotalCategoriaResponse> spDashObtenerAdendasEventos(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spDashObtenerAdendasEventos(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
-        return spExecutor.queryList("spDashObtenerAdendasEventos", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.queryList("spDashObtenerAdendasEventos", params, DashboardRowMappers.crearMapper());
     }
 
     public List<AdendasDetallesResponse> spDashObtenerAdendasEventosDetalles(String fechaInicio, String fechaFin, Integer desarrollo) {

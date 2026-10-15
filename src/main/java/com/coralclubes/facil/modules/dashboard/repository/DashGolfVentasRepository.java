@@ -52,18 +52,18 @@ public class DashGolfVentasRepository {
                     rs.getString("total")
             );
 
-    public Optional<TotalCategoriaResponse> spDashGolfTotalesVentas(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> spDashGolfTotalesVentas(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
-        return spExecutor.querySingle("spDashGolfTotalesVentas", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.querySingle("spDashGolfTotalesVentas", params, DashboardRowMappers.crearMapper());
     }
 
-    public List<TotalCategoriaResponse> spDashGreenFeesVentas(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spDashGreenFeesVentas(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
-        return spExecutor.queryList("spDashGreenFeesVentas", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.queryList("spDashGreenFeesVentas", params, DashboardRowMappers.crearMapper());
     }
 
     public List<GreenFeesXDiaResponse> spDashGreenFeesXDiaVentas(String fechaInicio, String fechaFin) {
@@ -80,11 +80,11 @@ public class DashGolfVentasRepository {
         return spExecutor.queryList("spDashGreenFeesXPteVentas", params, greenFeesXDiaMapper);
     }
 
-    public List<TotalCategoriaResponse> spDashGreenFeesPromociones(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spDashGreenFeesPromociones(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
-        return spExecutor.queryList("spDashGreenFeesPromociones", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.queryList("spDashGreenFeesPromociones", params, DashboardRowMappers.crearMapper());
     }
 
     public List<DetallesMovimientosResponse> spDashGreenFeesPromocionesDetalles(String fechaInicio, String fechaFin, String promocion) {
@@ -102,17 +102,17 @@ public class DashGolfVentasRepository {
         return spExecutor.queryList("spDashGreenFeesPromocionesXFecha", params, promocionesXFechaMapper);
     }
 
-    public List<TotalCategoriaResponse> spDashTorneosPeriodo(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spDashTorneosPeriodo(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
-        return spExecutor.queryList("spDashTorneosPeriodo", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.queryList("spDashTorneosPeriodo", params, DashboardRowMappers.crearMapper());
     }
 
-    public Optional<TotalCategoriaResponse> spDashTorneosTotales(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> spDashTorneosTotales(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
-        return spExecutor.querySingle("spDashTorneosTotales", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.querySingle("spDashTorneosTotales", params, DashboardRowMappers.crearMapper());
     }
 }

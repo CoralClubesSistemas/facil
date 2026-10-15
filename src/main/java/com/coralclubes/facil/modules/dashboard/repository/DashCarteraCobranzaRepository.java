@@ -43,26 +43,26 @@ public class DashCarteraCobranzaRepository {
         return spExecutor.queryList("spObtieneInventarioMembresiasDesarrollo", params, inventarioMembresiasMapper);
     }
 
-    public List<TotalCategoriaResponse> spInventarioMembresiasTotalesGlobal(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spInventarioMembresiasTotalesGlobal(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
-        return spExecutor.queryList("spInventarioMembresiasTotalesGlobal", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.queryList("spInventarioMembresiasTotalesGlobal", params, DashboardRowMappers.crearMapper());
     }
 
-    public List<TotalCategoriaResponse> spObtieneInventarioMembresiasTotalesXCartera(String fechaInicio, String fechaFin, String desarrollo) {
+    public List<TotalCategoriaResponse<Long>> spObtieneInventarioMembresiasTotalesXCartera(String fechaInicio, String fechaFin, String desarrollo) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
         params.put("desarrollo", desarrollo);
-        return spExecutor.queryList("spObtieneInventarioMembresiasTotalesXCartera", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.queryList("spObtieneInventarioMembresiasTotalesXCartera", params, DashboardRowMappers.crearMapper());
     }
 
-    public List<TotalCategoriaResponse> spObtieneInventarioMembresiasTotalesXTipo(String fechaInicio, String fechaFin, String desarrollo) {
+    public List<TotalCategoriaResponse<Long>> spObtieneInventarioMembresiasTotalesXTipo(String fechaInicio, String fechaFin, String desarrollo) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
         params.put("desarrollo", desarrollo);
-        return spExecutor.queryList("spObtieneInventarioMembresiasTotalesXTipo", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.queryList("spObtieneInventarioMembresiasTotalesXTipo", params, DashboardRowMappers.crearMapper());
     }
 }

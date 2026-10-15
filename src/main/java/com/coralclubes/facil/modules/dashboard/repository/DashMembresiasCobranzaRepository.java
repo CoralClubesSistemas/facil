@@ -15,10 +15,10 @@ public class DashMembresiasCobranzaRepository {
 
     private final StoredProcedureExecutor spExecutor;
 
-    public Optional<TotalCategoriaResponse> spDashMembresiasTotales(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> spDashMembresiasTotales(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
-        return spExecutor.querySingle("spDashMembresiasTotales", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.querySingle("spDashMembresiasTotales", params, DashboardRowMappers.crearMapper());
     }
 }

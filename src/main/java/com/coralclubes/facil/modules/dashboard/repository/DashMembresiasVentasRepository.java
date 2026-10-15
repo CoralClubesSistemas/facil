@@ -71,18 +71,18 @@ public class DashMembresiasVentasRepository {
                     rs.getObject("total") != null ? rs.getInt("total") : null
             );
 
-    public Optional<TotalCategoriaResponse> spDashMembresiasTotalesVentas(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> spDashMembresiasTotalesVentas(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
-        return spExecutor.querySingle("spDashMembresiasTotalesVentas", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.querySingle("spDashMembresiasTotalesVentas", params, DashboardRowMappers.crearMapper());
     }
 
-    public List<TotalCategoriaResponse> spDashMembresiasDesarrollos(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spDashMembresiasDesarrollos(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
-        return spExecutor.queryList("spDashMembresiasDesarrollos", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.queryList("spDashMembresiasDesarrollos", params, DashboardRowMappers.crearMapper());
     }
 
     public List<MovimientoVentaXDesarrolloResponse> spDashMovimientosVentasXDesarrollo(String fechaInicio, String fechaFin, String desarrollo) {
@@ -93,11 +93,11 @@ public class DashMembresiasVentasRepository {
         return spExecutor.queryList("spDashMovimientosVentasXDesarrollo", params, movimientoVentaXDesarrolloMapper);
     }
 
-    public List<TotalCategoriaResponse> spDashMembresiasProcesables(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spDashMembresiasProcesables(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", fechaInicio);
         params.put("fechaFin", fechaFin);
-        return spExecutor.queryList("spDashMembresiasProcesables", params, DashboardRowMappers.TOTAL_CATEGORIA_MAPPER);
+        return spExecutor.queryList("spDashMembresiasProcesables", params, DashboardRowMappers.crearMapper());
     }
 
     public List<MembresiasProcesablesDetallesResponse> spDashMembresiasProcesablesDetalles(String fechaInicio, String fechaFin, String desarrollo) {
