@@ -43,12 +43,6 @@ public class DashEventosVentasRepository {
                     rs.getString("recibo")
             );
 
-    public Optional<TotalCategoriaResponse<Long>> spDashEventosTotalesVentas(String fechaInicio, String fechaFin) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
-        return spExecutor.querySingle("spDashEventosTotalesVentas", params, DashboardRowMappers.crearMapper());
-    }
 
     public List<TotalCategoriaResponse<Long>> spDashEventosDesarrollosVentas(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();

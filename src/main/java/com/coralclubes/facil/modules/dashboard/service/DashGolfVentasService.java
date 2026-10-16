@@ -18,10 +18,6 @@ public class DashGolfVentasService {
 
     private final DashGolfVentasRepository dashGolfVentasRepository;
 
-    @Transactional(readOnly = true)
-    public Optional<TotalCategoriaResponse<Long>> spDashGolfTotalesVentas(String fechaInicio, String fechaFin) {
-        return dashGolfVentasRepository.spDashGolfTotalesVentas(fechaInicio, fechaFin);
-    }
 
     @Transactional(readOnly = true)
     public List<TotalCategoriaResponse<Long>> spDashGreenFeesVentas(String fechaInicio, String fechaFin) {

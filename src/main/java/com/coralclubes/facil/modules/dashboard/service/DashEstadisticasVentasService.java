@@ -1,9 +1,9 @@
 package com.coralclubes.facil.modules.dashboard.service;
 
 import com.coralclubes.facil.modules.dashboard.repository.DashEstadisticasVentasRepository;
-import com.coralclubes.facil.modules.dashboard.dto.response.DetallesMovimientosResponse;
 import com.coralclubes.facil.modules.dashboard.dto.response.EstadisticasTotalesResponse;
 import com.coralclubes.facil.modules.dashboard.dto.response.IngresosTotalesResponse;
+import com.coralclubes.facil.modules.dashboard.dto.response.TotalCategoriaResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +18,26 @@ public class DashEstadisticasVentasService {
     private final DashEstadisticasVentasRepository dashEstadisticasVentasRepository;
 
     @Transactional(readOnly = true)
+    public Optional<TotalCategoriaResponse<Long>> spDashMembresiasTotalesVentas(String fechaInicio, String fechaFin) {
+        return dashEstadisticasVentasRepository.spDashMembresiasTotalesVentas(fechaInicio, fechaFin);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<TotalCategoriaResponse<Long>> spDashGolfTotalesVentas(String fechaInicio, String fechaFin) {
+        return dashEstadisticasVentasRepository.spDashGolfTotalesVentas(fechaInicio, fechaFin);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<TotalCategoriaResponse<Long>> spDashEventosTotalesVentas(String fechaInicio, String fechaFin) {
+        return dashEstadisticasVentasRepository.spDashEventosTotalesVentas(fechaInicio, fechaFin);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<TotalCategoriaResponse<Long>> spDashInmobiliariaTotalesVentas(String fechaInicio, String fechaFin) {
+        return dashEstadisticasVentasRepository.spDashInmobiliariaTotalesVentas(fechaInicio, fechaFin);
+    }
+
+    @Transactional(readOnly = true)
     public Optional<IngresosTotalesResponse> spDashBoardIngresosTotalesVentas(String fechaInicio, String fechaFin) {
         return dashEstadisticasVentasRepository.spDashBoardIngresosTotalesVentas(fechaInicio, fechaFin);
     }
@@ -30,10 +50,5 @@ public class DashEstadisticasVentasService {
     @Transactional(readOnly = true)
     public List<EstadisticasTotalesResponse> spDashEstadisticasTotalesXDesarrolloVentas(Integer anio, String desarrollo) {
         return dashEstadisticasVentasRepository.spDashEstadisticasTotalesXDesarrolloVentas(anio, desarrollo);
-    }
-
-    @Transactional(readOnly = true)
-    public List<DetallesMovimientosResponse> spDashDetallesMovimientos(String fechaInicio, String fechaFin, String desarrollo, String movimientos) {
-        return dashEstadisticasVentasRepository.spDashDetallesMovimientos(fechaInicio, fechaFin, desarrollo, movimientos);
     }
 }

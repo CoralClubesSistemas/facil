@@ -21,11 +21,6 @@ public class DashGolfVentasController {
 
     private final DashGolfVentasService dashGolfVentasService;
 
-    @GetMapping("/golf-totales-ventas")
-    public ResponseEntity<ApiResponse<TotalCategoriaResponse<Long>>> spDashGolfTotalesVentas(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin) {
-        return ResponseEntity.ok(ApiResponse.success(dashGolfVentasService.spDashGolfTotalesVentas(fechaInicio, fechaFin).orElse(null)));
-    }
-
     @GetMapping("/green-fees-ventas")
     public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> spDashGreenFeesVentas(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin) {
         return ResponseEntity.ok(ApiResponse.success(dashGolfVentasService.spDashGreenFeesVentas(fechaInicio, fechaFin)));

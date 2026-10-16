@@ -17,10 +17,6 @@ public class DashEventosVentasService {
 
     private final DashEventosVentasRepository dashEventosVentasRepository;
 
-    @Transactional(readOnly = true)
-    public Optional<TotalCategoriaResponse<Long>> spDashEventosTotalesVentas(String fechaInicio, String fechaFin) {
-        return dashEventosVentasRepository.spDashEventosTotalesVentas(fechaInicio, fechaFin);
-    }
 
     @Transactional(readOnly = true)
     public List<TotalCategoriaResponse<Long>> spDashEventosDesarrollosVentas(String fechaInicio, String fechaFin) {

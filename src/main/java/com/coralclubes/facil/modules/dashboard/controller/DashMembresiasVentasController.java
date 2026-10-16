@@ -24,10 +24,6 @@ public class DashMembresiasVentasController {
 
     private final DashMembresiasVentasService dashMembresiasVentasService;
 
-    @GetMapping("/membresias-totales-ventas")
-    public ResponseEntity<ApiResponse<TotalCategoriaResponse<Long>>> spDashMembresiasTotalesVentas(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin) {
-        return ResponseEntity.ok(ApiResponse.success(dashMembresiasVentasService.spDashMembresiasTotalesVentas(fechaInicio, fechaFin).orElse(null)));
-    }
 
     @GetMapping("/membresias-desarrollos")
     public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> spDashMembresiasDesarrollos(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin) {

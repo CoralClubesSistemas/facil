@@ -19,10 +19,6 @@ public class DashInmobiliariaVentasController {
 
     private final DashInmobiliariaVentasService dashInmobiliariaVentasService;
 
-    @GetMapping("/inmobiliaria-totales-ventas")
-    public ResponseEntity<ApiResponse<TotalCategoriaResponse<Long>>> spDashInmobiliariaTotalesVentas(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin) {
-        return ResponseEntity.ok(ApiResponse.success(dashInmobiliariaVentasService.spDashInmobiliariaTotalesVentas(fechaInicio, fechaFin).orElse(null)));
-    }
 
     @GetMapping("/inmobiliaria-clasificacion-ventas")
     public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> spDashInmobiliariaClasificacionVentas(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin) {

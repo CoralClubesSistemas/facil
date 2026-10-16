@@ -20,10 +20,6 @@ public class DashEventosVentasController {
 
     private final DashEventosVentasService dashEventosVentasService;
 
-    @GetMapping("/eventos-totales-ventas")
-    public ResponseEntity<ApiResponse<TotalCategoriaResponse<Long>>> spDashEventosTotalesVentas(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin) {
-        return ResponseEntity.ok(ApiResponse.success(dashEventosVentasService.spDashEventosTotalesVentas(fechaInicio, fechaFin).orElse(null)));
-    }
 
     @GetMapping("/eventos-desarrollos-ventas")
     public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> spDashEventosDesarrollosVentas(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin) {

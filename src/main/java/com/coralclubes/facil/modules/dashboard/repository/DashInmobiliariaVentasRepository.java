@@ -38,12 +38,6 @@ public class DashInmobiliariaVentasRepository {
                     rs.getString("montoPagado")
             );
 
-    public Optional<TotalCategoriaResponse<Long>> spDashInmobiliariaTotalesVentas(String fechaInicio, String fechaFin) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
-        return spExecutor.querySingle("spDashInmobiliariaTotalesVentas", params, DashboardRowMappers.crearMapper());
-    }
 
     public List<TotalCategoriaResponse<Long>> spDashInmobiliariaClasificacionVentas(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();

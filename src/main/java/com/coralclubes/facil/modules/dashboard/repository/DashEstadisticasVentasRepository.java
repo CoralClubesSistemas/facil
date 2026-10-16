@@ -1,8 +1,8 @@
 package com.coralclubes.facil.modules.dashboard.repository;
 
-import com.coralclubes.facil.modules.dashboard.dto.response.DetallesMovimientosResponse;
 import com.coralclubes.facil.modules.dashboard.dto.response.EstadisticasTotalesResponse;
 import com.coralclubes.facil.modules.dashboard.dto.response.IngresosTotalesResponse;
+import com.coralclubes.facil.modules.dashboard.dto.response.TotalCategoriaResponse;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
@@ -29,18 +29,33 @@ public class DashEstadisticasVentasRepository {
                     rs.getBigDecimal("TOTAL")
             );
 
-    private final RowMapper<DetallesMovimientosResponse> detallesMovimientosMapper = (rs, rowNum) ->
-            new DetallesMovimientosResponse(
-                    rs.getObject("Id") != null ? rs.getLong("Id") : null,
-                    rs.getObject("mvt_Id") != null ? rs.getInt("mvt_Id") : null,
-                    rs.getString("Desarrollo"),
-                    rs.getString("Membresia"),
-                    rs.getString("Cliente"),
-                    rs.getString("Movimiento"),
-                    rs.getBigDecimal("Total"),
-                    rs.getString("FechaDePago"),
-                    rs.getString("NumeroRecibo")
-            );
+    public Optional<TotalCategoriaResponse<Long>> spDashMembresiasTotalesVentas(String fechaInicio, String fechaFin) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("fechaInicio", fechaInicio);
+        params.put("fechaFin", fechaFin);
+        return spExecutor.querySingle("spDashMembresiasTotalesVentas", params, DashboardRowMappers.crearMapper());
+    }
+
+    public Optional<TotalCategoriaResponse<Long>> spDashGolfTotalesVentas(String fechaInicio, String fechaFin) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("fechaInicio", fechaInicio);
+        params.put("fechaFin", fechaFin);
+        return spExecutor.querySingle("spDashGolfTotalesVentas", params, DashboardRowMappers.crearMapper());
+    }
+
+    public Optional<TotalCategoriaResponse<Long>> spDashEventosTotalesVentas(String fechaInicio, String fechaFin) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("fechaInicio", fechaInicio);
+        params.put("fechaFin", fechaFin);
+        return spExecutor.querySingle("spDashEventosTotalesVentas", params, DashboardRowMappers.crearMapper());
+    }
+
+    public Optional<TotalCategoriaResponse<Long>> spDashInmobiliariaTotalesVentas(String fechaInicio, String fechaFin) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("fechaInicio", fechaInicio);
+        params.put("fechaFin", fechaFin);
+        return spExecutor.querySingle("spDashInmobiliariaTotalesVentas", params, DashboardRowMappers.crearMapper());
+    }
 
     public Optional<IngresosTotalesResponse> spDashBoardIngresosTotalesVentas(String fechaInicio, String fechaFin) {
         Map<String, Object> params = new HashMap<>();
@@ -60,14 +75,5 @@ public class DashEstadisticasVentasRepository {
         params.put("anio", anio);
         params.put("desarrollo", desarrollo);
         return spExecutor.queryList("spDashEstadisticasTotalesXDesarrolloVentas", params, estadisticasTotalesMapper);
-    }
-
-    public List<DetallesMovimientosResponse> spDashDetallesMovimientos(String fechaInicio, String fechaFin, String desarrollo, String movimientos) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
-        params.put("desarrollo", desarrollo);
-        params.put("movimientos", movimientos);
-        return spExecutor.queryList("spDashDetallesMovimientos", params, detallesMovimientosMapper);
     }
 }

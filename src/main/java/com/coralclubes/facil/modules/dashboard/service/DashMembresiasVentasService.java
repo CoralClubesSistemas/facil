@@ -21,10 +21,6 @@ public class DashMembresiasVentasService {
 
     private final DashMembresiasVentasRepository dashMembresiasVentasRepository;
 
-    @Transactional(readOnly = true)
-    public Optional<TotalCategoriaResponse<Long>> spDashMembresiasTotalesVentas(String fechaInicio, String fechaFin) {
-        return dashMembresiasVentasRepository.spDashMembresiasTotalesVentas(fechaInicio, fechaFin);
-    }
 
     @Transactional(readOnly = true)
     public List<TotalCategoriaResponse<Long>> spDashMembresiasDesarrollos(String fechaInicio, String fechaFin) {

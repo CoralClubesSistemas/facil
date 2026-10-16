@@ -16,10 +16,6 @@ public class DashInmobiliariaVentasService {
 
     private final DashInmobiliariaVentasRepository dashInmobiliariaVentasRepository;
 
-    @Transactional(readOnly = true)
-    public Optional<TotalCategoriaResponse<Long>> spDashInmobiliariaTotalesVentas(String fechaInicio, String fechaFin) {
-        return dashInmobiliariaVentasRepository.spDashInmobiliariaTotalesVentas(fechaInicio, fechaFin);
-    }
 
     @Transactional(readOnly = true)
     public List<TotalCategoriaResponse<Long>> spDashInmobiliariaClasificacionVentas(String fechaInicio, String fechaFin) {
