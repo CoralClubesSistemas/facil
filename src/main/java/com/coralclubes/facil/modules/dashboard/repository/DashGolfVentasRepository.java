@@ -5,8 +5,8 @@ import com.coralclubes.facil.modules.dashboard.dto.response.GreenFeesPromociones
 import com.coralclubes.facil.modules.dashboard.dto.response.GreenFeesXDiaResponse;
 import com.coralclubes.facil.modules.dashboard.dto.response.TotalCategoriaResponse;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
-import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -16,10 +16,13 @@ import java.util.Map;
 import java.util.Optional;
 
 @Repository
-@RequiredArgsConstructor
 public class DashGolfVentasRepository {
 
     private final StoredProcedureExecutor spExecutor;
+
+    public DashGolfVentasRepository(@Qualifier("replicaStoredProcedureExecutor") StoredProcedureExecutor spExecutor) {
+        this.spExecutor = spExecutor;
+    }
 
     private final RowMapper<DetallesMovimientosResponse> detallesMovimientosMapper = (rs, rowNum) ->
             new DetallesMovimientosResponse(

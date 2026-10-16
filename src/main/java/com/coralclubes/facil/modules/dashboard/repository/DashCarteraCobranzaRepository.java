@@ -3,8 +3,8 @@ package com.coralclubes.facil.modules.dashboard.repository;
 import com.coralclubes.facil.modules.dashboard.dto.response.InventarioMembresiasResponse;
 import com.coralclubes.facil.modules.dashboard.dto.response.TotalCategoriaResponse;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
-import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -13,10 +13,13 @@ import java.util.List;
 import java.util.Map;
 
 @Repository
-@RequiredArgsConstructor
 public class DashCarteraCobranzaRepository {
 
     private final StoredProcedureExecutor spExecutor;
+
+    public DashCarteraCobranzaRepository(@Qualifier("replicaStoredProcedureExecutor") StoredProcedureExecutor spExecutor) {
+        this.spExecutor = spExecutor;
+    }
 
     private final RowMapper<InventarioMembresiasResponse> inventarioMembresiasMapper = (rs, rowNum) ->
             new InventarioMembresiasResponse(

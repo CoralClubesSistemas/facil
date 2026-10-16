@@ -4,8 +4,8 @@ import com.coralclubes.facil.modules.dashboard.dto.response.InmobiliariaXCobrarD
 import com.coralclubes.facil.modules.dashboard.dto.response.InmobiliariaXCobrarDetallesResponse;
 import com.coralclubes.facil.modules.dashboard.dto.response.InmobiliariaXCobrarTotalesResponse;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
-import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -14,10 +14,13 @@ import java.util.List;
 import java.util.Map;
 
 @Repository
-@RequiredArgsConstructor
 public class DashInmobiliariaCxcRepository {
 
     private final StoredProcedureExecutor spExecutor;
+
+    public DashInmobiliariaCxcRepository(@Qualifier("replicaStoredProcedureExecutor") StoredProcedureExecutor spExecutor) {
+        this.spExecutor = spExecutor;
+    }
 
     private final RowMapper<InmobiliariaXCobrarTotalesResponse> totalesMapper = (rs, rowNum) ->
             new InmobiliariaXCobrarTotalesResponse(

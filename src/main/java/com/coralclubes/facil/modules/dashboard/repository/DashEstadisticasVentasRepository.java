@@ -4,8 +4,8 @@ import com.coralclubes.facil.modules.dashboard.dto.response.EstadisticasTotalesR
 import com.coralclubes.facil.modules.dashboard.dto.response.IngresosTotalesResponse;
 import com.coralclubes.facil.modules.dashboard.dto.response.TotalCategoriaResponse;
 import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
-import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -15,10 +15,13 @@ import java.util.Map;
 import java.util.Optional;
 
 @Repository
-@RequiredArgsConstructor
 public class DashEstadisticasVentasRepository {
 
     private final StoredProcedureExecutor spExecutor;
+
+    public DashEstadisticasVentasRepository(@Qualifier("replicaStoredProcedureExecutor") StoredProcedureExecutor spExecutor) {
+        this.spExecutor = spExecutor;
+    }
 
     private final RowMapper<IngresosTotalesResponse> ingresosTotalesMapper = (rs, rowNum) ->
             new IngresosTotalesResponse(rs.getBigDecimal("total"));

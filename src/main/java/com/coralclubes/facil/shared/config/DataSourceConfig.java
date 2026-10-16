@@ -1,6 +1,9 @@
 package com.coralclubes.facil.shared.config;
 
+import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExecutor;
+import com.coralclubes.logging.SqlLogger;
 import com.zaxxer.hikari.HikariDataSource;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -60,5 +63,13 @@ public class DataSourceConfig {
     @Bean("replicaJdbcTemplate")
     public JdbcTemplate replicaJdbcTemplate() {
         return new JdbcTemplate(replicaDataSource());
+    }
+
+    @Bean("replicaStoredProcedureExecutor")
+    public StoredProcedureExecutor replicaStoredProcedureExecutor(
+            @Qualifier("replicaJdbcTemplate") JdbcTemplate replicaJdbcTemplate,
+            SqlLogger sqlLogger
+    ) {
+        return new StoredProcedureExecutor(replicaJdbcTemplate, sqlLogger);
     }
 }
