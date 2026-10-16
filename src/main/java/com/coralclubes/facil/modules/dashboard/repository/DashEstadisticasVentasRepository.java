@@ -75,7 +75,7 @@ public class DashEstadisticasVentasRepository {
         return spExecutor.queryList("spDashEstadisticasTotalesVentas", params, estadisticasTotalesMapper);
     }
 
-    public List<EstadisticasTotalesResponse> spDashEstadisticasTotalesXDesarrolloVentas(Integer anio, String desarrollo) {
+    public List<EstadisticasTotalesResponse> spDashEstadisticasTotalesXDesarrolloVentas(Integer anio, Integer desarrollo) {
         Map<String, Object> params = new HashMap<>();
         params.put("anio", anio);
         params.put("desarrollo", desarrollo);

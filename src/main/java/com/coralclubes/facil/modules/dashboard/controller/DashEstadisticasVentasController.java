@@ -1,5 +1,6 @@
 package com.coralclubes.facil.modules.dashboard.controller;
 
+import com.coralclubes.facil.modules.dashboard.dto.response.EstadisticasTotalesXDesarrolloResponse;
 import com.coralclubes.facil.modules.dashboard.service.DashEstadisticasVentasService;
 import com.coralclubes.facil.modules.dashboard.dto.response.EstadisticasTotalesResponse;
 import com.coralclubes.facil.modules.dashboard.dto.response.IngresosTotalesResponse;
@@ -23,7 +24,7 @@ public class DashEstadisticasVentasController {
     private final DashEstadisticasVentasService dashEstadisticasVentasService;
     private final UserContext userContext;
 
-    @GetMapping("/membresias-totales-ventas")
+    @GetMapping("/membresias-totales")
     public ResponseEntity<ApiResponse<TotalCategoriaResponse<Long>>> obtenerMembresiasTotalesVentas(
             @RequestParam(required = false) LocalDate fechaInicio,
             @RequestParam(required = false) LocalDate fechaFin
@@ -31,7 +32,7 @@ public class DashEstadisticasVentasController {
         return ResponseEntity.ok(ApiResponse.success(dashEstadisticasVentasService.obtenerMembresiasTotalesVentas(fechaInicio, fechaFin).orElse(null)));
     }
 
-    @GetMapping("/golf-totales-ventas")
+    @GetMapping("/golf-totales")
     public ResponseEntity<ApiResponse<TotalCategoriaResponse<Long>>> obtenerGolfTotalesVentas(
             @RequestParam(required = false) LocalDate fechaInicio,
             @RequestParam(required = false) LocalDate fechaFin
@@ -39,7 +40,7 @@ public class DashEstadisticasVentasController {
         return ResponseEntity.ok(ApiResponse.success(dashEstadisticasVentasService.obtenerGolfTotalesVentas(fechaInicio, fechaFin).orElse(null)));
     }
 
-    @GetMapping("/eventos-totales-ventas")
+    @GetMapping("/eventos-totales")
     public ResponseEntity<ApiResponse<TotalCategoriaResponse<Long>>> obtenerEventosTotalesVentas(
             @RequestParam(required = false) LocalDate fechaInicio,
             @RequestParam(required = false) LocalDate fechaFin
@@ -47,7 +48,7 @@ public class DashEstadisticasVentasController {
         return ResponseEntity.ok(ApiResponse.success(dashEstadisticasVentasService.obtenerEventosTotalesVentas(fechaInicio, fechaFin).orElse(null)));
     }
 
-    @GetMapping("/inmobiliaria-totales-ventas")
+    @GetMapping("/inmobiliaria-totales")
     public ResponseEntity<ApiResponse<TotalCategoriaResponse<Long>>> obtenerInmobiliariaTotalesVentas(
             @RequestParam(required = false) LocalDate fechaInicio,
             @RequestParam(required = false) LocalDate fechaFin
@@ -55,7 +56,7 @@ public class DashEstadisticasVentasController {
         return ResponseEntity.ok(ApiResponse.success(dashEstadisticasVentasService.obtenerInmobiliariaTotalesVentas(fechaInicio, fechaFin).orElse(null)));
     }
 
-    @GetMapping("/ingresos-totales-ventas")
+    @GetMapping("/ingresos-totales")
     public ResponseEntity<ApiResponse<IngresosTotalesResponse>> obtenerIngresosTotalesVentas(
             @RequestParam(required = false) LocalDate fechaInicio,
             @RequestParam(required = false) LocalDate fechaFin
@@ -64,16 +65,26 @@ public class DashEstadisticasVentasController {
         return ResponseEntity.ok(ApiResponse.success(dashEstadisticasVentasService.obtenerIngresosTotalesVentas(fechaInicio, fechaFin, desarrollo).orElse(null)));
     }
 
-    @GetMapping("/estadisticas-totales-ventas")
+    @GetMapping("/estadisticas-totales")
     public ResponseEntity<ApiResponse<List<EstadisticasTotalesResponse>>> obtenerEstadisticasTotalesVentas(@RequestParam(required = false) Integer anio) {
         return ResponseEntity.ok(ApiResponse.success(dashEstadisticasVentasService.obtenerEstadisticasTotalesVentas(anio)));
     }
 
-    @GetMapping("/estadisticas-totales-x-desarrollo-ventas")
-    public ResponseEntity<ApiResponse<List<EstadisticasTotalesResponse>>> obtenerEstadisticasTotalesXDesarrolloVentas(
-            @RequestParam(required = false) Integer anio,
-            @RequestParam(required = false) String desarrollo
+    @GetMapping("/estadisticas-totales-x-desarrollo")
+    public ResponseEntity<ApiResponse<List<EstadisticasTotalesXDesarrolloResponse>>> obtenerEstadisticasTotalesXDesarrolloVentas(
+            @RequestParam(required = false) Integer anio
     ) {
+        Integer desarrollo = userContext.getIdDesarrollo();
+
         return ResponseEntity.ok(ApiResponse.success(dashEstadisticasVentasService.obtenerEstadisticasTotalesXDesarrolloVentas(anio, desarrollo)));
+    }
+
+    @GetMapping("/estadisticas-totales-crecimiento-mensual")
+    public ResponseEntity<ApiResponse<List<EstadisticasTotalesXDesarrolloResponse>>> obtenerCrecimientoMensualXDesarrolloVentas(
+            @RequestParam(required = false) Integer anio
+    ) {
+        Integer desarrollo = userContext.getIdDesarrollo();
+
+        return ResponseEntity.ok(ApiResponse.success(dashEstadisticasVentasService.obtenerCrecimientoMensualXDesarrolloVentas(anio, desarrollo)));
     }
 }
