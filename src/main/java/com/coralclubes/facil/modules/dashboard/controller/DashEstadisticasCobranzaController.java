@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/dashboard/estadisticas/cobranza")
+@RequestMapping("/api/v1/admin/dashboard/estadisticas/cobranza")
 @RequiredArgsConstructor
-@PreAuthorize("hasAuthority('MOD_DASHBOARD')")
+@PreAuthorize("hasAuthority('MOD_MNUDASHBOARD')")
 public class DashEstadisticasCobranzaController {
 
     private final DashEstadisticasCobranzaService dashEstadisticasCobranzaService;

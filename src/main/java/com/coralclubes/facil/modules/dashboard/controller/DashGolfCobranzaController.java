@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/dashboard/golf/cobranza")
+@RequestMapping("/api/v1/admin/dashboard/golf/cobranza")
 @RequiredArgsConstructor
-@PreAuthorize("hasAuthority('MOD_DASHBOARD')")
+@PreAuthorize("hasAuthority('MOD_MNUDASHBOARD')")
 public class DashGolfCobranzaController {
 
     private final DashGolfCobranzaService dashGolfCobranzaService;

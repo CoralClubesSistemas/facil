@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/dashboard/inmobiliaria/cxc")
+@RequestMapping("/api/v1/admin/dashboard/inmobiliaria/cxc")
 @RequiredArgsConstructor
-@PreAuthorize("hasAuthority('MOD_DASHBOARD')")
+@PreAuthorize("hasAuthority('MOD_MNUDASHBOARD')")
 public class DashInmobiliariaCxcController {
 
     private final DashInmobiliariaCxcService dashInmobiliariaCxcService;

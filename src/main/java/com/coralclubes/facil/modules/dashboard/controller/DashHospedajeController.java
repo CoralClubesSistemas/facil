@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/dashboard/hospedaje")
+@RequestMapping("/api/v1/admin/dashboard/hospedaje")
 @RequiredArgsConstructor
-@PreAuthorize("hasAuthority('MOD_DASHBOARD')")
+@PreAuthorize("hasAuthority('MOD_MNUDASHBOARD')")
 public class DashHospedajeController {
 
     private final DashHospedajeService dashHospedajeService;

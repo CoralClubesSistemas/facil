@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/dashboard/cartera/cobranza")
+@RequestMapping("/api/v1/admin/dashboard/cartera/cobranza")
 @RequiredArgsConstructor
-@PreAuthorize("hasAuthority('MOD_DASHBOARD')")
+@PreAuthorize("hasAuthority('MOD_MNUDASHBOARD')")
 public class DashCarteraCobranzaController {
 
     private final DashCarteraCobranzaService dashCarteraCobranzaService;
