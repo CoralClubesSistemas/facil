@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,44 +19,43 @@ public class DashGolfVentasService {
 
     private final DashGolfVentasRepository dashGolfVentasRepository;
 
-
     @Transactional(readOnly = true)
-    public List<TotalCategoriaResponse<Long>> spDashGreenFeesVentas(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> obtenerGreenFeesVentas(LocalDate fechaInicio, LocalDate fechaFin) {
         return dashGolfVentasRepository.spDashGreenFeesVentas(fechaInicio, fechaFin);
     }
 
     @Transactional(readOnly = true)
-    public List<GreenFeesXDiaResponse> spDashGreenFeesXDiaVentas(String fechaInicio, String fechaFin) {
+    public List<GreenFeesXDiaResponse> obtenerGreenFeesXDiaVentas(LocalDate fechaInicio, LocalDate fechaFin) {
         return dashGolfVentasRepository.spDashGreenFeesXDiaVentas(fechaInicio, fechaFin);
     }
 
     @Transactional(readOnly = true)
-    public List<GreenFeesXDiaResponse> spDashGreenFeesXPteVentas(String fechaInicio, String fechaFin) {
+    public List<GreenFeesXDiaResponse> obtenerGreenFeesXPteVentas(LocalDate fechaInicio, LocalDate fechaFin) {
         return dashGolfVentasRepository.spDashGreenFeesXPteVentas(fechaInicio, fechaFin);
     }
 
     @Transactional(readOnly = true)
-    public List<TotalCategoriaResponse<Long>> spDashGreenFeesPromociones(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> obtenerGreenFeesPromociones(LocalDate fechaInicio, LocalDate fechaFin) {
         return dashGolfVentasRepository.spDashGreenFeesPromociones(fechaInicio, fechaFin);
     }
 
     @Transactional(readOnly = true)
-    public List<DetallesMovimientosResponse> spDashGreenFeesPromocionesDetalles(String fechaInicio, String fechaFin, String promocion) {
+    public List<DetallesMovimientosResponse> obtenerGreenFeesPromocionesDetalles(LocalDate fechaInicio, LocalDate fechaFin, String promocion) {
         return dashGolfVentasRepository.spDashGreenFeesPromocionesDetalles(fechaInicio, fechaFin, promocion);
     }
 
     @Transactional(readOnly = true)
-    public List<GreenFeesPromocionesXFechaResponse> spDashGreenFeesPromocionesXFecha(String fechaInicio, String fechaFin) {
+    public List<GreenFeesPromocionesXFechaResponse> obtenerGreenFeesPromocionesXFecha(LocalDate fechaInicio, LocalDate fechaFin) {
         return dashGolfVentasRepository.spDashGreenFeesPromocionesXFecha(fechaInicio, fechaFin);
     }
 
     @Transactional(readOnly = true)
-    public List<TotalCategoriaResponse<Long>> spDashTorneosPeriodo(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> obtenerTorneosPeriodo(LocalDate fechaInicio, LocalDate fechaFin) {
         return dashGolfVentasRepository.spDashTorneosPeriodo(fechaInicio, fechaFin);
     }
 
     @Transactional(readOnly = true)
-    public Optional<TotalCategoriaResponse<Long>> spDashTorneosTotales(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> obtenerTorneosTotales(LocalDate fechaInicio, LocalDate fechaFin) {
         return dashGolfVentasRepository.spDashTorneosTotales(fechaInicio, fechaFin);
     }
 }

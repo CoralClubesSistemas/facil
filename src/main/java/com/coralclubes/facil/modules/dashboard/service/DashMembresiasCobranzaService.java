@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.time.LocalDate;
 import java.util.Optional;
 
 @Service
@@ -16,7 +16,7 @@ public class DashMembresiasCobranzaService {
     private final DashMembresiasCobranzaRepository dashMembresiasCobranzaRepository;
 
     @Transactional(readOnly = true)
-    public Optional<TotalCategoriaResponse<Long>> spDashMembresiasTotales(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> obtenerMembresiasTotales(LocalDate fechaInicio, LocalDate fechaFin) {
         return dashMembresiasCobranzaRepository.spDashMembresiasTotales(fechaInicio, fechaFin);
     }
 }

@@ -8,8 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,17 +18,17 @@ public class DashInmobiliariaCxcService {
     private final DashInmobiliariaCxcRepository dashInmobiliariaCxcRepository;
 
     @Transactional(readOnly = true)
-    public List<InmobiliariaXCobrarTotalesResponse> spDashInmobiliariaXCobrarTotales(String fechaInicio, String fechaFin) {
+    public List<InmobiliariaXCobrarTotalesResponse> obtenerInmobiliariaXCobrarTotales(LocalDate fechaInicio, LocalDate fechaFin) {
         return dashInmobiliariaCxcRepository.spDashInmobiliariaXCobrarTotales(fechaInicio, fechaFin);
     }
 
     @Transactional(readOnly = true)
-    public List<InmobiliariaXCobrarDetallesResponse> spDashInmobiliariaXCobrarDetalles(String fechaInicio, String fechaFin, String clasificacion) {
+    public List<InmobiliariaXCobrarDetallesResponse> obtenerInmobiliariaXCobrarDetalles(LocalDate fechaInicio, LocalDate fechaFin, String clasificacion) {
         return dashInmobiliariaCxcRepository.spDashInmobiliariaXCobrarDetalles(fechaInicio, fechaFin, clasificacion);
     }
 
     @Transactional(readOnly = true)
-    public List<InmobiliariaXCobrarDetalleClienteResponse> spDashInmobiliariaXCobrarDetallesXCliente(String fechaInicio, String fechaFin, String membresia) {
+    public List<InmobiliariaXCobrarDetalleClienteResponse> obtenerInmobiliariaXCobrarDetallesXCliente(LocalDate fechaInicio, LocalDate fechaFin, String membresia) {
         return dashInmobiliariaCxcRepository.spDashInmobiliariaXCobrarDetallesXCliente(fechaInicio, fechaFin, membresia);
     }
 }

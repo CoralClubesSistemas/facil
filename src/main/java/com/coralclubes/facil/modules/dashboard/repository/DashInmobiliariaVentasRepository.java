@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,25 +39,24 @@ public class DashInmobiliariaVentasRepository {
                     rs.getString("montoPagado")
             );
 
-
-    public List<TotalCategoriaResponse<Long>> spDashInmobiliariaClasificacionVentas(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spDashInmobiliariaClasificacionVentas(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.queryList("spDashInmobiliariaClasificacionVentas", params, DashboardRowMappers.crearMapper());
     }
 
-    public List<InmobiliariaMovimientosResponse> spDashInmobiliariaCasasVentas(String fechaInicio, String fechaFin) {
+    public List<InmobiliariaMovimientosResponse> spDashInmobiliariaCasasVentas(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.queryList("spDashInmobiliariaCasasVentas", params, inmobiliariaMovimientosMapper);
     }
 
-    public List<InmobiliariaMovimientosResponse> spDashInmobiliariaTerrenosVentas(String fechaInicio, String fechaFin) {
+    public List<InmobiliariaMovimientosResponse> spDashInmobiliariaTerrenosVentas(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.queryList("spDashInmobiliariaTerrenosVentas", params, inmobiliariaMovimientosMapper);
     }
 }

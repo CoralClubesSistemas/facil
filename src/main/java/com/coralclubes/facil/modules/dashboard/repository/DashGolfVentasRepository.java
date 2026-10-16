@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,61 +53,60 @@ public class DashGolfVentasRepository {
                     rs.getString("total")
             );
 
-
-    public List<TotalCategoriaResponse<Long>> spDashGreenFeesVentas(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spDashGreenFeesVentas(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.queryList("spDashGreenFeesVentas", params, DashboardRowMappers.crearMapper());
     }
 
-    public List<GreenFeesXDiaResponse> spDashGreenFeesXDiaVentas(String fechaInicio, String fechaFin) {
+    public List<GreenFeesXDiaResponse> spDashGreenFeesXDiaVentas(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.queryList("spDashGreenFeesXDiaVentas", params, greenFeesXDiaMapper);
     }
 
-    public List<GreenFeesXDiaResponse> spDashGreenFeesXPteVentas(String fechaInicio, String fechaFin) {
+    public List<GreenFeesXDiaResponse> spDashGreenFeesXPteVentas(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.queryList("spDashGreenFeesXPteVentas", params, greenFeesXDiaMapper);
     }
 
-    public List<TotalCategoriaResponse<Long>> spDashGreenFeesPromociones(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spDashGreenFeesPromociones(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.queryList("spDashGreenFeesPromociones", params, DashboardRowMappers.crearMapper());
     }
 
-    public List<DetallesMovimientosResponse> spDashGreenFeesPromocionesDetalles(String fechaInicio, String fechaFin, String promocion) {
+    public List<DetallesMovimientosResponse> spDashGreenFeesPromocionesDetalles(LocalDate fechaInicio, LocalDate fechaFin, String promocion) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         params.put("promocion", promocion);
         return spExecutor.queryList("spDashGreenFeesPromocionesDetalles", params, detallesMovimientosMapper);
     }
 
-    public List<GreenFeesPromocionesXFechaResponse> spDashGreenFeesPromocionesXFecha(String fechaInicio, String fechaFin) {
+    public List<GreenFeesPromocionesXFechaResponse> spDashGreenFeesPromocionesXFecha(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.queryList("spDashGreenFeesPromocionesXFecha", params, promocionesXFechaMapper);
     }
 
-    public List<TotalCategoriaResponse<Long>> spDashTorneosPeriodo(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spDashTorneosPeriodo(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.queryList("spDashTorneosPeriodo", params, DashboardRowMappers.crearMapper());
     }
 
-    public Optional<TotalCategoriaResponse<Long>> spDashTorneosTotales(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> spDashTorneosTotales(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.querySingle("spDashTorneosTotales", params, DashboardRowMappers.crearMapper());
     }
 }

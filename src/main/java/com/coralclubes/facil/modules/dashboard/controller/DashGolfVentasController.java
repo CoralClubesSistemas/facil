@@ -7,10 +7,12 @@ import com.coralclubes.facil.modules.dashboard.dto.response.GreenFeesXDiaRespons
 import com.coralclubes.facil.modules.dashboard.dto.response.TotalCategoriaResponse;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -22,42 +24,67 @@ public class DashGolfVentasController {
     private final DashGolfVentasService dashGolfVentasService;
 
     @GetMapping("/green-fees-ventas")
-    public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> spDashGreenFeesVentas(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin) {
-        return ResponseEntity.ok(ApiResponse.success(dashGolfVentasService.spDashGreenFeesVentas(fechaInicio, fechaFin)));
+    public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> obtenerGreenFeesVentas(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(dashGolfVentasService.obtenerGreenFeesVentas(fechaInicio, fechaFin)));
     }
 
     @GetMapping("/green-fees-x-dia-ventas")
-    public ResponseEntity<ApiResponse<List<GreenFeesXDiaResponse>>> spDashGreenFeesXDiaVentas(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin) {
-        return ResponseEntity.ok(ApiResponse.success(dashGolfVentasService.spDashGreenFeesXDiaVentas(fechaInicio, fechaFin)));
+    public ResponseEntity<ApiResponse<List<GreenFeesXDiaResponse>>> obtenerGreenFeesXDiaVentas(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(dashGolfVentasService.obtenerGreenFeesXDiaVentas(fechaInicio, fechaFin)));
     }
 
     @GetMapping("/green-fees-x-pte-ventas")
-    public ResponseEntity<ApiResponse<List<GreenFeesXDiaResponse>>> spDashGreenFeesXPteVentas(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin) {
-        return ResponseEntity.ok(ApiResponse.success(dashGolfVentasService.spDashGreenFeesXPteVentas(fechaInicio, fechaFin)));
+    public ResponseEntity<ApiResponse<List<GreenFeesXDiaResponse>>> obtenerGreenFeesXPteVentas(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(dashGolfVentasService.obtenerGreenFeesXPteVentas(fechaInicio, fechaFin)));
     }
 
     @GetMapping("/green-fees-promociones")
-    public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> spDashGreenFeesPromociones(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin) {
-        return ResponseEntity.ok(ApiResponse.success(dashGolfVentasService.spDashGreenFeesPromociones(fechaInicio, fechaFin)));
+    public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> obtenerGreenFeesPromociones(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(dashGolfVentasService.obtenerGreenFeesPromociones(fechaInicio, fechaFin)));
     }
 
     @GetMapping("/green-fees-promociones-detalles")
-    public ResponseEntity<ApiResponse<List<DetallesMovimientosResponse>>> spDashGreenFeesPromocionesDetalles(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin, @RequestParam(required = false) String promocion) {
-        return ResponseEntity.ok(ApiResponse.success(dashGolfVentasService.spDashGreenFeesPromocionesDetalles(fechaInicio, fechaFin, promocion)));
+    public ResponseEntity<ApiResponse<List<DetallesMovimientosResponse>>> obtenerGreenFeesPromocionesDetalles(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) String promocion
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(dashGolfVentasService.obtenerGreenFeesPromocionesDetalles(fechaInicio, fechaFin, promocion)));
     }
 
     @GetMapping("/green-fees-promociones-x-fecha")
-    public ResponseEntity<ApiResponse<List<GreenFeesPromocionesXFechaResponse>>> spDashGreenFeesPromocionesXFecha(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin) {
-        return ResponseEntity.ok(ApiResponse.success(dashGolfVentasService.spDashGreenFeesPromocionesXFecha(fechaInicio, fechaFin)));
+    public ResponseEntity<ApiResponse<List<GreenFeesPromocionesXFechaResponse>>> obtenerGreenFeesPromocionesXFecha(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(dashGolfVentasService.obtenerGreenFeesPromocionesXFecha(fechaInicio, fechaFin)));
     }
 
     @GetMapping("/torneos-periodo")
-    public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> spDashTorneosPeriodo(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin) {
-        return ResponseEntity.ok(ApiResponse.success(dashGolfVentasService.spDashTorneosPeriodo(fechaInicio, fechaFin)));
+    public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> obtenerTorneosPeriodo(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(dashGolfVentasService.obtenerTorneosPeriodo(fechaInicio, fechaFin)));
     }
 
     @GetMapping("/torneos-totales")
-    public ResponseEntity<ApiResponse<TotalCategoriaResponse<Long>>> spDashTorneosTotales(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin) {
-        return ResponseEntity.ok(ApiResponse.success(dashGolfVentasService.spDashTorneosTotales(fechaInicio, fechaFin).orElse(null)));
+    public ResponseEntity<ApiResponse<TotalCategoriaResponse<Long>>> obtenerTorneosTotales(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(dashGolfVentasService.obtenerTorneosTotales(fechaInicio, fechaFin).orElse(null)));
     }
 }

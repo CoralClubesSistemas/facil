@@ -6,10 +6,12 @@ import com.coralclubes.facil.modules.dashboard.dto.response.EventosOperadosRespo
 import com.coralclubes.facil.modules.dashboard.dto.response.TotalCategoriaResponse;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -20,19 +22,29 @@ public class DashEventosVentasController {
 
     private final DashEventosVentasService dashEventosVentasService;
 
-
     @GetMapping("/eventos-desarrollos-ventas")
-    public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> spDashEventosDesarrollosVentas(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin) {
-        return ResponseEntity.ok(ApiResponse.success(dashEventosVentasService.spDashEventosDesarrollosVentas(fechaInicio, fechaFin)));
+    public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> obtenerEventosDesarrollosVentas(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(dashEventosVentasService.obtenerEventosDesarrollosVentas(fechaInicio, fechaFin)));
     }
 
     @GetMapping("/eventos-detalles-ventas")
-    public ResponseEntity<ApiResponse<List<EventosDetallesResponse>>> spDashEventosDetallesVentas(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin, @RequestParam(required = false) Integer desarrollo) {
-        return ResponseEntity.ok(ApiResponse.success(dashEventosVentasService.spDashEventosDetallesVentas(fechaInicio, fechaFin, desarrollo)));
+    public ResponseEntity<ApiResponse<List<EventosDetallesResponse>>> obtenerEventosDetallesVentas(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) Integer desarrollo
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(dashEventosVentasService.obtenerEventosDetallesVentas(fechaInicio, fechaFin, desarrollo)));
     }
 
     @GetMapping("/eventos-vendidos")
-    public ResponseEntity<ApiResponse<List<EventosOperadosResponse>>> spDashEventosVendidos(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin, @RequestParam(required = false) String desarrollo) {
-        return ResponseEntity.ok(ApiResponse.success(dashEventosVentasService.spDashEventosVendidos(fechaInicio, fechaFin, desarrollo)));
+    public ResponseEntity<ApiResponse<List<EventosOperadosResponse>>> obtenerEventosVendidos(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) String desarrollo
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(dashEventosVentasService.obtenerEventosVendidos(fechaInicio, fechaFin, desarrollo)));
     }
 }

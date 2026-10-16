@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,38 +30,38 @@ public class DashEstadisticasVentasRepository {
                     rs.getBigDecimal("TOTAL")
             );
 
-    public Optional<TotalCategoriaResponse<Long>> spDashMembresiasTotalesVentas(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> spDashMembresiasTotalesVentas(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.querySingle("spDashMembresiasTotalesVentas", params, DashboardRowMappers.crearMapper());
     }
 
-    public Optional<TotalCategoriaResponse<Long>> spDashGolfTotalesVentas(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> spDashGolfTotalesVentas(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.querySingle("spDashGolfTotalesVentas", params, DashboardRowMappers.crearMapper());
     }
 
-    public Optional<TotalCategoriaResponse<Long>> spDashEventosTotalesVentas(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> spDashEventosTotalesVentas(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.querySingle("spDashEventosTotalesVentas", params, DashboardRowMappers.crearMapper());
     }
 
-    public Optional<TotalCategoriaResponse<Long>> spDashInmobiliariaTotalesVentas(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> spDashInmobiliariaTotalesVentas(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.querySingle("spDashInmobiliariaTotalesVentas", params, DashboardRowMappers.crearMapper());
     }
 
-    public Optional<IngresosTotalesResponse> spDashBoardIngresosTotalesVentas(String fechaInicio, String fechaFin) {
+    public Optional<IngresosTotalesResponse> spDashBoardIngresosTotalesVentas(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.querySingle("spDashBoardIngresosTotalesVentas", params, ingresosTotalesMapper);
     }
 

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,40 +72,40 @@ public class DashMembresiasVentasRepository {
                     rs.getObject("total") != null ? rs.getInt("total") : null
             );
 
-    public List<TotalCategoriaResponse<Long>> spDashMembresiasDesarrollos(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spDashMembresiasDesarrollos(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.queryList("spDashMembresiasDesarrollos", params, DashboardRowMappers.crearMapper());
     }
 
-    public List<MovimientoVentaXDesarrolloResponse> spDashMovimientosVentasXDesarrollo(String fechaInicio, String fechaFin, String desarrollo) {
+    public List<MovimientoVentaXDesarrolloResponse> spDashMovimientosVentasXDesarrollo(LocalDate fechaInicio, LocalDate fechaFin, String desarrollo) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         params.put("desarrollo", desarrollo);
         return spExecutor.queryList("spDashMovimientosVentasXDesarrollo", params, movimientoVentaXDesarrolloMapper);
     }
 
-    public List<TotalCategoriaResponse<Long>> spDashMembresiasProcesables(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spDashMembresiasProcesables(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.queryList("spDashMembresiasProcesables", params, DashboardRowMappers.crearMapper());
     }
 
-    public List<MembresiasProcesablesDetallesResponse> spDashMembresiasProcesablesDetalles(String fechaInicio, String fechaFin, String desarrollo) {
+    public List<MembresiasProcesablesDetallesResponse> spDashMembresiasProcesablesDetalles(LocalDate fechaInicio, LocalDate fechaFin, String desarrollo) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         params.put("desarrollo", desarrollo);
         return spExecutor.queryList("spDashMembresiasProcesablesDetalles", params, procesablesDetallesMapper);
     }
 
-    public List<MejoresClientesResponse> spDashMejoresClientes(String fechaInicio, String fechaFin, Integer desarrollo) {
+    public List<MejoresClientesResponse> spDashMejoresClientes(LocalDate fechaInicio, LocalDate fechaFin, Integer desarrollo) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         params.put("desarrollo", desarrollo);
         return spExecutor.queryList("spDashMejoresClientes", params, mejoresClientesMapper);
     }
@@ -119,10 +120,10 @@ public class DashMembresiasVentasRepository {
         return spExecutor.queryList("spDashUltimasMembresias", Map.of(), ultimasMembresiasMapper);
     }
 
-    public List<EstatusMembresiasResponse> spDashEstatusMembresias(String fechaInicio, String fechaFin) {
+    public List<EstatusMembresiasResponse> spDashEstatusMembresias(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.queryList("spDashEstatusMembresias", params, estatusMembresiasMapper);
     }
 }

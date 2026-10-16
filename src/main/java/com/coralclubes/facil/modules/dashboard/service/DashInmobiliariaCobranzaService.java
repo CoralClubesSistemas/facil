@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,22 +18,22 @@ public class DashInmobiliariaCobranzaService {
     private final DashInmobiliariaCobranzaRepository dashInmobiliariaCobranzaRepository;
 
     @Transactional(readOnly = true)
-    public Optional<TotalCategoriaResponse<Long>> spDashInmobiliariaTotales(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> obtenerInmobiliariaTotales(LocalDate fechaInicio, LocalDate fechaFin) {
         return dashInmobiliariaCobranzaRepository.spDashInmobiliariaTotales(fechaInicio, fechaFin);
     }
 
     @Transactional(readOnly = true)
-    public List<TotalCategoriaResponse<Long>> spDashInmobiliariaClasificacion(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> obtenerInmobiliariaClasificacion(LocalDate fechaInicio, LocalDate fechaFin) {
         return dashInmobiliariaCobranzaRepository.spDashInmobiliariaClasificacion(fechaInicio, fechaFin);
     }
 
     @Transactional(readOnly = true)
-    public List<InmobiliariaMovimientosCobranzaResponse> spDashInmobiliariaCasas(String fechaInicio, String fechaFin) {
+    public List<InmobiliariaMovimientosCobranzaResponse> obtenerInmobiliariaCasas(LocalDate fechaInicio, LocalDate fechaFin) {
         return dashInmobiliariaCobranzaRepository.spDashInmobiliariaCasas(fechaInicio, fechaFin);
     }
 
     @Transactional(readOnly = true)
-    public List<InmobiliariaMovimientosCobranzaResponse> spDashInmobiliariaTerrenos(String fechaInicio, String fechaFin) {
+    public List<InmobiliariaMovimientosCobranzaResponse> obtenerInmobiliariaTerrenos(LocalDate fechaInicio, LocalDate fechaFin) {
         return dashInmobiliariaCobranzaRepository.spDashInmobiliariaTerrenos(fechaInicio, fechaFin);
     }
 }

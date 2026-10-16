@@ -6,10 +6,12 @@ import com.coralclubes.facil.modules.dashboard.dto.response.InmobiliariaXCobrarD
 import com.coralclubes.facil.modules.dashboard.dto.response.InmobiliariaXCobrarTotalesResponse;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -21,17 +23,28 @@ public class DashInmobiliariaCxcController {
     private final DashInmobiliariaCxcService dashInmobiliariaCxcService;
 
     @GetMapping("/inmobiliaria-x-cobrar-totales")
-    public ResponseEntity<ApiResponse<List<InmobiliariaXCobrarTotalesResponse>>> spDashInmobiliariaXCobrarTotales(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin) {
-        return ResponseEntity.ok(ApiResponse.success(dashInmobiliariaCxcService.spDashInmobiliariaXCobrarTotales(fechaInicio, fechaFin)));
+    public ResponseEntity<ApiResponse<List<InmobiliariaXCobrarTotalesResponse>>> obtenerInmobiliariaXCobrarTotales(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(dashInmobiliariaCxcService.obtenerInmobiliariaXCobrarTotales(fechaInicio, fechaFin)));
     }
 
     @GetMapping("/inmobiliaria-x-cobrar-detalles")
-    public ResponseEntity<ApiResponse<List<InmobiliariaXCobrarDetallesResponse>>> spDashInmobiliariaXCobrarDetalles(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin, @RequestParam(required = false) String clasificacion) {
-        return ResponseEntity.ok(ApiResponse.success(dashInmobiliariaCxcService.spDashInmobiliariaXCobrarDetalles(fechaInicio, fechaFin, clasificacion)));
+    public ResponseEntity<ApiResponse<List<InmobiliariaXCobrarDetallesResponse>>> obtenerInmobiliariaXCobrarDetalles(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) String clasificacion
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(dashInmobiliariaCxcService.obtenerInmobiliariaXCobrarDetalles(fechaInicio, fechaFin, clasificacion)));
     }
 
     @GetMapping("/inmobiliaria-x-cobrar-detalles-x-cliente")
-    public ResponseEntity<ApiResponse<List<InmobiliariaXCobrarDetalleClienteResponse>>> spDashInmobiliariaXCobrarDetallesXCliente(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin, @RequestParam(required = false) String membresia) {
-        return ResponseEntity.ok(ApiResponse.success(dashInmobiliariaCxcService.spDashInmobiliariaXCobrarDetallesXCliente(fechaInicio, fechaFin, membresia)));
+    public ResponseEntity<ApiResponse<List<InmobiliariaXCobrarDetalleClienteResponse>>> obtenerInmobiliariaXCobrarDetallesXCliente(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) String membresia
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(dashInmobiliariaCxcService.obtenerInmobiliariaXCobrarDetallesXCliente(fechaInicio, fechaFin, membresia)));
     }
 }

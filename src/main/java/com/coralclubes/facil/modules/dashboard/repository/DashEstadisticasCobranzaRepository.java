@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,10 +29,10 @@ public class DashEstadisticasCobranzaRepository {
                     rs.getBigDecimal("TOTAL")
             );
 
-    public Optional<IngresosTotalesResponse> spDashBoardIngresosTotales(String fechaInicio, String fechaFin) {
+    public Optional<IngresosTotalesResponse> spDashBoardIngresosTotales(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.querySingle("spDashBoardIngresosTotales", params, ingresosTotalesMapper);
     }
 

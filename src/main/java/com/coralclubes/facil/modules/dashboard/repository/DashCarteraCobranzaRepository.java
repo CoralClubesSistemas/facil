@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,40 +29,40 @@ public class DashCarteraCobranzaRepository {
                     rs.getBigDecimal("totalAdeudo")
             );
 
-    public List<InventarioMembresiasResponse> spObtieneInventarioMembresiasTotales(String fechaInicio, String fechaFin) {
+    public List<InventarioMembresiasResponse> spObtieneInventarioMembresiasTotales(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.queryList("spObtieneInventarioMembresiasTotales", params, inventarioMembresiasMapper);
     }
 
-    public List<InventarioMembresiasResponse> spObtieneInventarioMembresiasDesarrollo(String fechaInicio, String fechaFin, String desarrollo) {
+    public List<InventarioMembresiasResponse> spObtieneInventarioMembresiasDesarrollo(LocalDate fechaInicio, LocalDate fechaFin, String desarrollo) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         params.put("desarrollo", desarrollo);
         return spExecutor.queryList("spObtieneInventarioMembresiasDesarrollo", params, inventarioMembresiasMapper);
     }
 
-    public List<TotalCategoriaResponse<Long>> spInventarioMembresiasTotalesGlobal(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spInventarioMembresiasTotalesGlobal(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.queryList("spInventarioMembresiasTotalesGlobal", params, DashboardRowMappers.crearMapper());
     }
 
-    public List<TotalCategoriaResponse<Long>> spObtieneInventarioMembresiasTotalesXCartera(String fechaInicio, String fechaFin, String desarrollo) {
+    public List<TotalCategoriaResponse<Long>> spObtieneInventarioMembresiasTotalesXCartera(LocalDate fechaInicio, LocalDate fechaFin, String desarrollo) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         params.put("desarrollo", desarrollo);
         return spExecutor.queryList("spObtieneInventarioMembresiasTotalesXCartera", params, DashboardRowMappers.crearMapper());
     }
 
-    public List<TotalCategoriaResponse<Long>> spObtieneInventarioMembresiasTotalesXTipo(String fechaInicio, String fechaFin, String desarrollo) {
+    public List<TotalCategoriaResponse<Long>> spObtieneInventarioMembresiasTotalesXTipo(LocalDate fechaInicio, LocalDate fechaFin, String desarrollo) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         params.put("desarrollo", desarrollo);
         return spExecutor.queryList("spObtieneInventarioMembresiasTotalesXTipo", params, DashboardRowMappers.crearMapper());
     }

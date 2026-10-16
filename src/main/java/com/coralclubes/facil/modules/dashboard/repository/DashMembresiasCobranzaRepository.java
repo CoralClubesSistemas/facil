@@ -5,6 +5,7 @@ import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExe
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -15,10 +16,10 @@ public class DashMembresiasCobranzaRepository {
 
     private final StoredProcedureExecutor spExecutor;
 
-    public Optional<TotalCategoriaResponse<Long>> spDashMembresiasTotales(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> spDashMembresiasTotales(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.querySingle("spDashMembresiasTotales", params, DashboardRowMappers.crearMapper());
     }
 }

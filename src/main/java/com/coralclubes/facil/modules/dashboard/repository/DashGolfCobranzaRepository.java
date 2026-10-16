@@ -5,6 +5,7 @@ import com.coralclubes.facil.shared.infrastructure.repository.StoredProcedureExe
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,38 +17,38 @@ public class DashGolfCobranzaRepository {
 
     private final StoredProcedureExecutor spExecutor;
 
-    public Optional<TotalCategoriaResponse<Long>> spDashGolfTotales(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> spDashGolfTotales(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.querySingle("spDashGolfTotales", params, DashboardRowMappers.crearMapper());
     }
 
-    public Optional<TotalCategoriaResponse<Long>> spDashGreenFeesTotales(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> spDashGreenFeesTotales(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.querySingle("spDashGreenFeesTotales", params, DashboardRowMappers.crearMapper());
     }
 
-    public List<TotalCategoriaResponse<Long>> spDashGreenFeesClasificacion(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spDashGreenFeesClasificacion(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.queryList("spDashGreenFeesClasificacion", params, DashboardRowMappers.crearMapper());
     }
 
-    public Optional<TotalCategoriaResponse<Long>> spDashOtrosIngresosGolf(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> spDashOtrosIngresosGolf(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.querySingle("spDashOtrosIngresosGolf", params, DashboardRowMappers.crearMapper());
     }
 
-    public List<TotalCategoriaResponse<Long>> spDashOtrosIngresosGolfDetalles(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spDashOtrosIngresosGolfDetalles(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.queryList("spDashOtrosIngresosGolfDetalles", params, DashboardRowMappers.crearMapper());
     }
 }

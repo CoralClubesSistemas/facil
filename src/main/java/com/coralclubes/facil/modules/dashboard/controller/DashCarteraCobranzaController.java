@@ -5,10 +5,12 @@ import com.coralclubes.facil.modules.dashboard.dto.response.InventarioMembresias
 import com.coralclubes.facil.modules.dashboard.dto.response.TotalCategoriaResponse;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -20,27 +22,45 @@ public class DashCarteraCobranzaController {
     private final DashCarteraCobranzaService dashCarteraCobranzaService;
 
     @GetMapping("/inventario-membresias-totales")
-    public ResponseEntity<ApiResponse<List<InventarioMembresiasResponse>>> spObtieneInventarioMembresiasTotales(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin) {
-        return ResponseEntity.ok(ApiResponse.success(dashCarteraCobranzaService.spObtieneInventarioMembresiasTotales(fechaInicio, fechaFin)));
+    public ResponseEntity<ApiResponse<List<InventarioMembresiasResponse>>> obtenerInventarioMembresiasTotales(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(dashCarteraCobranzaService.obtenerInventarioMembresiasTotales(fechaInicio, fechaFin)));
     }
 
     @GetMapping("/inventario-membresias-desarrollo")
-    public ResponseEntity<ApiResponse<List<InventarioMembresiasResponse>>> spObtieneInventarioMembresiasDesarrollo(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin, @RequestParam(required = false) String desarrollo) {
-        return ResponseEntity.ok(ApiResponse.success(dashCarteraCobranzaService.spObtieneInventarioMembresiasDesarrollo(fechaInicio, fechaFin, desarrollo)));
+    public ResponseEntity<ApiResponse<List<InventarioMembresiasResponse>>> obtenerInventarioMembresiasDesarrollo(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) String desarrollo
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(dashCarteraCobranzaService.obtenerInventarioMembresiasDesarrollo(fechaInicio, fechaFin, desarrollo)));
     }
 
     @GetMapping("/membresias-totales-global")
-    public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> spInventarioMembresiasTotalesGlobal(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin) {
-        return ResponseEntity.ok(ApiResponse.success(dashCarteraCobranzaService.spInventarioMembresiasTotalesGlobal(fechaInicio, fechaFin)));
+    public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> obtenerInventarioMembresiasTotalesGlobal(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(dashCarteraCobranzaService.obtenerInventarioMembresiasTotalesGlobal(fechaInicio, fechaFin)));
     }
 
     @GetMapping("/inventario-membresias-totales-x-cartera")
-    public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> spObtieneInventarioMembresiasTotalesXCartera(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin, @RequestParam(required = false) String desarrollo) {
-        return ResponseEntity.ok(ApiResponse.success(dashCarteraCobranzaService.spObtieneInventarioMembresiasTotalesXCartera(fechaInicio, fechaFin, desarrollo)));
+    public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> obtenerInventarioMembresiasTotalesXCartera(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) String desarrollo
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(dashCarteraCobranzaService.obtenerInventarioMembresiasTotalesXCartera(fechaInicio, fechaFin, desarrollo)));
     }
 
     @GetMapping("/inventario-membresias-totales-x-tipo")
-    public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> spObtieneInventarioMembresiasTotalesXTipo(@RequestParam(required = false) String fechaInicio, @RequestParam(required = false) String fechaFin, @RequestParam(required = false) String desarrollo) {
-        return ResponseEntity.ok(ApiResponse.success(dashCarteraCobranzaService.spObtieneInventarioMembresiasTotalesXTipo(fechaInicio, fechaFin, desarrollo)));
+    public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> obtenerInventarioMembresiasTotalesXTipo(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) String desarrollo
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(dashCarteraCobranzaService.obtenerInventarioMembresiasTotalesXTipo(fechaInicio, fechaFin, desarrollo)));
     }
 }

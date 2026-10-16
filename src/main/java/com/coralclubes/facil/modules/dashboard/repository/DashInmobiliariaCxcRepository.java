@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,25 +52,25 @@ public class DashInmobiliariaCxcRepository {
                     rs.getBigDecimal("importePendiente")
             );
 
-    public List<InmobiliariaXCobrarTotalesResponse> spDashInmobiliariaXCobrarTotales(String fechaInicio, String fechaFin) {
+    public List<InmobiliariaXCobrarTotalesResponse> spDashInmobiliariaXCobrarTotales(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.queryList("spDashInmobiliariaXCobrarTotales", params, totalesMapper);
     }
 
-    public List<InmobiliariaXCobrarDetallesResponse> spDashInmobiliariaXCobrarDetalles(String fechaInicio, String fechaFin, String clasificacion) {
+    public List<InmobiliariaXCobrarDetallesResponse> spDashInmobiliariaXCobrarDetalles(LocalDate fechaInicio, LocalDate fechaFin, String clasificacion) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         params.put("clasificacion", clasificacion);
         return spExecutor.queryList("spDashInmobiliariaXCobrarDetalles", params, detallesMapper);
     }
 
-    public List<InmobiliariaXCobrarDetalleClienteResponse> spDashInmobiliariaXCobrarDetallesXCliente(String fechaInicio, String fechaFin, String membresia) {
+    public List<InmobiliariaXCobrarDetalleClienteResponse> spDashInmobiliariaXCobrarDetallesXCliente(LocalDate fechaInicio, LocalDate fechaFin, String membresia) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         params.put("membresia", membresia);
         return spExecutor.queryList("spDashInmobiliariaXCobrarDetallesXCliente", params, detalleClienteMapper);
     }

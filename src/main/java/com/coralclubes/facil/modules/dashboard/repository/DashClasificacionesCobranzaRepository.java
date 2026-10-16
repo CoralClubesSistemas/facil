@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,19 +50,19 @@ public class DashClasificacionesCobranzaRepository {
                     rs.getString("recibo")
             );
 
-    public List<ClasificacionesResponse> spDashTotalesClasificaciones(String fechaInicio, String fechaFin, String desarrollos, String clasificaciones) {
+    public List<ClasificacionesResponse> spDashTotalesClasificaciones(LocalDate fechaInicio, LocalDate fechaFin, String desarrollos, String clasificaciones) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         params.put("desarrollos", desarrollos);
         params.put("clasificaciones", clasificaciones);
         return spExecutor.queryList("spDashTotalesClasificaciones", params, clasificacionesMapper);
     }
 
-    public List<ClasificacionesDetallesResponse> spDashClasificacionesDetalles(String fechaInicio, String fechaFin, String desarrollos, String clasificaciones) {
+    public List<ClasificacionesDetallesResponse> spDashClasificacionesDetalles(LocalDate fechaInicio, LocalDate fechaFin, String desarrollos, String clasificaciones) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         params.put("desarrollos", desarrollos);
         params.put("clasificaciones", clasificaciones);
         return spExecutor.queryList("spDashClasificacionesDetalles", params, clasificacionesDetallesMapper);

@@ -8,8 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -17,19 +17,18 @@ public class DashEventosVentasService {
 
     private final DashEventosVentasRepository dashEventosVentasRepository;
 
-
     @Transactional(readOnly = true)
-    public List<TotalCategoriaResponse<Long>> spDashEventosDesarrollosVentas(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> obtenerEventosDesarrollosVentas(LocalDate fechaInicio, LocalDate fechaFin) {
         return dashEventosVentasRepository.spDashEventosDesarrollosVentas(fechaInicio, fechaFin);
     }
 
     @Transactional(readOnly = true)
-    public List<EventosDetallesResponse> spDashEventosDetallesVentas(String fechaInicio, String fechaFin, Integer desarrollo) {
+    public List<EventosDetallesResponse> obtenerEventosDetallesVentas(LocalDate fechaInicio, LocalDate fechaFin, Integer desarrollo) {
         return dashEventosVentasRepository.spDashEventosDetallesVentas(fechaInicio, fechaFin, desarrollo);
     }
 
     @Transactional(readOnly = true)
-    public List<EventosOperadosResponse> spDashEventosVendidos(String fechaInicio, String fechaFin, String desarrollo) {
+    public List<EventosOperadosResponse> obtenerEventosVendidos(LocalDate fechaInicio, LocalDate fechaFin, String desarrollo) {
         return dashEventosVentasRepository.spDashEventosVendidos(fechaInicio, fechaFin, desarrollo);
     }
 }

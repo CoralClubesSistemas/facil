@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,44 +22,43 @@ public class DashMembresiasVentasService {
 
     private final DashMembresiasVentasRepository dashMembresiasVentasRepository;
 
-
     @Transactional(readOnly = true)
-    public List<TotalCategoriaResponse<Long>> spDashMembresiasDesarrollos(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> obtenerMembresiasDesarrollos(LocalDate fechaInicio, LocalDate fechaFin) {
         return dashMembresiasVentasRepository.spDashMembresiasDesarrollos(fechaInicio, fechaFin);
     }
 
     @Transactional(readOnly = true)
-    public List<MovimientoVentaXDesarrolloResponse> spDashMovimientosVentasXDesarrollo(String fechaInicio, String fechaFin, String desarrollo) {
+    public List<MovimientoVentaXDesarrolloResponse> obtenerMovimientosVentasXDesarrollo(LocalDate fechaInicio, LocalDate fechaFin, String desarrollo) {
         return dashMembresiasVentasRepository.spDashMovimientosVentasXDesarrollo(fechaInicio, fechaFin, desarrollo);
     }
 
     @Transactional(readOnly = true)
-    public List<TotalCategoriaResponse<Long>> spDashMembresiasProcesables(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> obtenerMembresiasProcesables(LocalDate fechaInicio, LocalDate fechaFin) {
         return dashMembresiasVentasRepository.spDashMembresiasProcesables(fechaInicio, fechaFin);
     }
 
     @Transactional(readOnly = true)
-    public List<MembresiasProcesablesDetallesResponse> spDashMembresiasProcesablesDetalles(String fechaInicio, String fechaFin, String desarrollo) {
+    public List<MembresiasProcesablesDetallesResponse> obtenerMembresiasProcesablesDetalles(LocalDate fechaInicio, LocalDate fechaFin, String desarrollo) {
         return dashMembresiasVentasRepository.spDashMembresiasProcesablesDetalles(fechaInicio, fechaFin, desarrollo);
     }
 
     @Transactional(readOnly = true)
-    public List<MejoresClientesResponse> spDashMejoresClientes(String fechaInicio, String fechaFin, Integer desarrollo) {
+    public List<MejoresClientesResponse> obtenerMejoresClientes(LocalDate fechaInicio, LocalDate fechaFin, Integer desarrollo) {
         return dashMembresiasVentasRepository.spDashMejoresClientes(fechaInicio, fechaFin, desarrollo);
     }
 
     @Transactional(readOnly = true)
-    public List<UltimosClientesResponse> spDashUltimosClientes(Integer desarrollo) {
+    public List<UltimosClientesResponse> obtenerUltimosClientes(Integer desarrollo) {
         return dashMembresiasVentasRepository.spDashUltimosClientes(desarrollo);
     }
 
     @Transactional(readOnly = true)
-    public List<UltimasMembresiasResponse> spDashUltimasMembresias() {
+    public List<UltimasMembresiasResponse> obtenerUltimasMembresias() {
         return dashMembresiasVentasRepository.spDashUltimasMembresias();
     }
 
     @Transactional(readOnly = true)
-    public List<EstatusMembresiasResponse> spDashEstatusMembresias(String fechaInicio, String fechaFin) {
+    public List<EstatusMembresiasResponse> obtenerEstatusMembresias(LocalDate fechaInicio, LocalDate fechaFin) {
         return dashMembresiasVentasRepository.spDashEstatusMembresias(fechaInicio, fechaFin);
     }
 }

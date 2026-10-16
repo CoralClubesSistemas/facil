@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,17 +18,17 @@ public class DashEstadisticasCobranzaService {
     private final DashEstadisticasCobranzaRepository dashEstadisticasCobranzaRepository;
 
     @Transactional(readOnly = true)
-    public Optional<IngresosTotalesResponse> spDashBoardIngresosTotales(String fechaInicio, String fechaFin) {
+    public Optional<IngresosTotalesResponse> obtenerIngresosTotales(LocalDate fechaInicio, LocalDate fechaFin) {
         return dashEstadisticasCobranzaRepository.spDashBoardIngresosTotales(fechaInicio, fechaFin);
     }
 
     @Transactional(readOnly = true)
-    public List<EstadisticasTotalesResponse> spDashEstadisticasTotales(Integer anio) {
+    public List<EstadisticasTotalesResponse> obtenerEstadisticasTotales(Integer anio) {
         return dashEstadisticasCobranzaRepository.spDashEstadisticasTotales(anio);
     }
 
     @Transactional(readOnly = true)
-    public List<EstadisticasTotalesResponse> spDashEstadisticasTotalesXDesarrollo(Integer anio, String desarrollo) {
+    public List<EstadisticasTotalesResponse> obtenerEstadisticasTotalesXDesarrollo(Integer anio, String desarrollo) {
         return dashEstadisticasCobranzaRepository.spDashEstadisticasTotalesXDesarrollo(anio, desarrollo);
     }
 }

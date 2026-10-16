@@ -16,9 +16,14 @@ public final class DashboardRowMappers {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final TypeReference<Map<String, Object>> MAP_TYPE_REF = new TypeReference<>() {
     };
+    private static final java.time.format.DateTimeFormatter DATE_FORMATTER = java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 
     // patron singleton para evitar instanciación
     private DashboardRowMappers() {
+    }
+
+    public static String formatFecha(java.time.LocalDate fecha) {
+        return fecha != null ? fecha.format(DATE_FORMATTER) : null;
     }
 
     public static <T> RowMapper<TotalCategoriaResponse<T>> crearMapper(Class<T> tipoId, String columnaConteo) {

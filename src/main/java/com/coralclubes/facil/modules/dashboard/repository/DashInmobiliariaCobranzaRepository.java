@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,31 +35,31 @@ public class DashInmobiliariaCobranzaRepository {
                     rs.getBigDecimal("total")
             );
 
-    public Optional<TotalCategoriaResponse<Long>> spDashInmobiliariaTotales(String fechaInicio, String fechaFin) {
+    public Optional<TotalCategoriaResponse<Long>> spDashInmobiliariaTotales(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.querySingle("spDashInmobiliariaTotales", params, DashboardRowMappers.crearMapper());
     }
 
-    public List<TotalCategoriaResponse<Long>> spDashInmobiliariaClasificacion(String fechaInicio, String fechaFin) {
+    public List<TotalCategoriaResponse<Long>> spDashInmobiliariaClasificacion(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.queryList("spDashInmobiliariaClasificacion", params, DashboardRowMappers.crearMapper());
     }
 
-    public List<InmobiliariaMovimientosCobranzaResponse> spDashInmobiliariaCasas(String fechaInicio, String fechaFin) {
+    public List<InmobiliariaMovimientosCobranzaResponse> spDashInmobiliariaCasas(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.queryList("spDashInmobiliariaCasas", params, movimientosCobranzaMapper);
     }
 
-    public List<InmobiliariaMovimientosCobranzaResponse> spDashInmobiliariaTerrenos(String fechaInicio, String fechaFin) {
+    public List<InmobiliariaMovimientosCobranzaResponse> spDashInmobiliariaTerrenos(LocalDate fechaInicio, LocalDate fechaFin) {
         Map<String, Object> params = new HashMap<>();
-        params.put("fechaInicio", fechaInicio);
-        params.put("fechaFin", fechaFin);
+        params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
+        params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
         return spExecutor.queryList("spDashInmobiliariaTerrenos", params, movimientosCobranzaMapper);
     }
 }
