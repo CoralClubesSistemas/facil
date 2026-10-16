@@ -9,7 +9,6 @@ import com.coralclubes.facil.modules.dashboard.dto.response.SinReservaDetalleMov
 import com.coralclubes.facil.modules.dashboard.dto.response.TotalCategoriaResponse;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -27,16 +26,16 @@ public class DashHospedajeController {
 
     @GetMapping("/hospedaje-totales")
     public ResponseEntity<ApiResponse<TotalCategoriaResponse<Long>>> obtenerHospedajeTotales(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashHospedajeService.obtenerHospedajeTotales(fechaInicio, fechaFin).orElse(null)));
     }
 
     @GetMapping("/hospedaje-totales-estatus")
     public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> obtenerHospedajeTotalesEstatus(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
             @RequestParam(required = false) Integer desarrollo
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashHospedajeService.obtenerHospedajeTotalesEstatus(fechaInicio, fechaFin, desarrollo)));
@@ -44,16 +43,16 @@ public class DashHospedajeController {
 
     @GetMapping("/hospedajes-desarrollos")
     public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> obtenerHospedajesDesarrollos(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashHospedajeService.obtenerHospedajesDesarrollos(fechaInicio, fechaFin)));
     }
 
     @GetMapping("/hospedajes-libres")
     public ResponseEntity<ApiResponse<List<HospedajeLibreResponse>>> obtenerHospedajesLibres(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
             @RequestParam(required = false) Integer desarrollo
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashHospedajeService.obtenerHospedajesLibres(fechaInicio, fechaFin, desarrollo)));
@@ -70,8 +69,8 @@ public class DashHospedajeController {
 
     @GetMapping("/hospedajes-detalles-movimientos")
     public ResponseEntity<ApiResponse<List<HospedajeDetalleMovimientoResponse>>> obtenerHospedajesDetallesMovimientos(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
             @RequestParam(required = false) Integer desarrollo
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashHospedajeService.obtenerHospedajesDetallesMovimientos(fechaInicio, fechaFin, desarrollo)));
@@ -80,16 +79,16 @@ public class DashHospedajeController {
     @GetMapping("/reservas-canceladas")
     public ResponseEntity<ApiResponse<List<ReservasCanceladasResponse>>> obtenerReservasCanceladas(
             @RequestParam(required = false) String idDesarrollo,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaEntrada,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaSalida
+            @RequestParam(required = false) LocalDate fechaEntrada,
+            @RequestParam(required = false) LocalDate fechaSalida
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashHospedajeService.obtenerReservasCanceladas(idDesarrollo, fechaEntrada, fechaSalida)));
     }
 
     @GetMapping("/sin-reserva-detalles-movimientos")
     public ResponseEntity<ApiResponse<List<SinReservaDetalleMovimientoResponse>>> obtenerSinReservaDetallesMovimientos(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
             @RequestParam(required = false) Integer desarrollo
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashHospedajeService.obtenerSinReservaDetallesMovimientos(fechaInicio, fechaFin, desarrollo)));

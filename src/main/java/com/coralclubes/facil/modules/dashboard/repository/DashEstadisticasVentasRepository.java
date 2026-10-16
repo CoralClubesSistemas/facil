@@ -61,10 +61,11 @@ public class DashEstadisticasVentasRepository {
         return spExecutor.querySingle("spDashInmobiliariaTotalesVentas", params, DashboardRowMappers.crearMapper());
     }
 
-    public Optional<IngresosTotalesResponse> spDashBoardIngresosTotalesVentas(LocalDate fechaInicio, LocalDate fechaFin) {
+    public Optional<IngresosTotalesResponse> spDashBoardIngresosTotalesVentas(LocalDate fechaInicio, LocalDate fechaFin, Integer desarrollo) {
         Map<String, Object> params = new HashMap<>();
         params.put("fechaInicio", DashboardRowMappers.formatFecha(fechaInicio));
         params.put("fechaFin", DashboardRowMappers.formatFecha(fechaFin));
+        params.put("desarrollo", desarrollo);
         return spExecutor.querySingle("spDashBoardIngresosTotalesVentas", params, ingresosTotalesMapper);
     }
 

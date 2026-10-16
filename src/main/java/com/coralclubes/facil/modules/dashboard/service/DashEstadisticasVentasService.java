@@ -39,8 +39,8 @@ public class DashEstadisticasVentasService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<IngresosTotalesResponse> obtenerIngresosTotalesVentas(LocalDate fechaInicio, LocalDate fechaFin) {
-        return dashEstadisticasVentasRepository.spDashBoardIngresosTotalesVentas(fechaInicio, fechaFin);
+    public Optional<IngresosTotalesResponse> obtenerIngresosTotalesVentas(LocalDate fechaInicio, LocalDate fechaFin, Integer desarrollo) {
+        return dashEstadisticasVentasRepository.spDashBoardIngresosTotalesVentas(fechaInicio, fechaFin, desarrollo);
     }
 
     @Transactional(readOnly = true)

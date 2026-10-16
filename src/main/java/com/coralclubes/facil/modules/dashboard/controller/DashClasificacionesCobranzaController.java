@@ -5,7 +5,6 @@ import com.coralclubes.facil.modules.dashboard.dto.response.ClasificacionesDetal
 import com.coralclubes.facil.modules.dashboard.dto.response.ClasificacionesResponse;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -23,8 +22,8 @@ public class DashClasificacionesCobranzaController {
 
     @GetMapping("/totales-clasificaciones")
     public ResponseEntity<ApiResponse<List<ClasificacionesResponse>>> obtenerTotalesClasificaciones(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
             @RequestParam(required = false) String desarrollos,
             @RequestParam(required = false) String clasificaciones
     ) {
@@ -33,8 +32,8 @@ public class DashClasificacionesCobranzaController {
 
     @GetMapping("/clasificaciones-detalles")
     public ResponseEntity<ApiResponse<List<ClasificacionesDetallesResponse>>> obtenerClasificacionesDetalles(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
             @RequestParam(required = false) String desarrollos,
             @RequestParam(required = false) String clasificaciones
     ) {

@@ -7,7 +7,6 @@ import com.coralclubes.facil.modules.dashboard.dto.response.EventosOperadosRespo
 import com.coralclubes.facil.modules.dashboard.dto.response.TotalCategoriaResponse;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -25,24 +24,24 @@ public class DashEventosCobranzaController {
 
     @GetMapping("/eventos-totales")
     public ResponseEntity<ApiResponse<TotalCategoriaResponse<Long>>> obtenerEventosTotales(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashEventosCobranzaService.obtenerEventosTotales(fechaInicio, fechaFin).orElse(null)));
     }
 
     @GetMapping("/eventos-desarrollos")
     public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> obtenerEventosDesarrollos(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashEventosCobranzaService.obtenerEventosDesarrollos(fechaInicio, fechaFin)));
     }
 
     @GetMapping("/eventos-detalles")
     public ResponseEntity<ApiResponse<List<EventosDetallesResponse>>> obtenerEventosDetalles(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
             @RequestParam(required = false) Integer desarrollo
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashEventosCobranzaService.obtenerEventosDetalles(fechaInicio, fechaFin, desarrollo)));
@@ -50,8 +49,8 @@ public class DashEventosCobranzaController {
 
     @GetMapping("/eventos-amortizados")
     public ResponseEntity<ApiResponse<List<EventosOperadosResponse>>> obtenerEventosAmortizados(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
             @RequestParam(required = false) String desarrollo
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashEventosCobranzaService.obtenerEventosAmortizados(fechaInicio, fechaFin, desarrollo)));
@@ -59,8 +58,8 @@ public class DashEventosCobranzaController {
 
     @GetMapping("/eventos-anticipos")
     public ResponseEntity<ApiResponse<List<EventosDetallesResponse>>> obtenerEventosAnticipos(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
             @RequestParam(required = false) Integer desarrollo
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashEventosCobranzaService.obtenerEventosAnticipos(fechaInicio, fechaFin, desarrollo)));
@@ -68,8 +67,8 @@ public class DashEventosCobranzaController {
 
     @GetMapping("/eventos-anticipos-total")
     public ResponseEntity<ApiResponse<TotalCategoriaResponse<Long>>> obtenerEventosAnticiposTotal(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
             @RequestParam(required = false) Integer desarrollo
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashEventosCobranzaService.obtenerEventosAnticiposTotal(fechaInicio, fechaFin, desarrollo).orElse(null)));
@@ -77,8 +76,8 @@ public class DashEventosCobranzaController {
 
     @GetMapping("/eventos-liquidacion")
     public ResponseEntity<ApiResponse<List<EventosDetallesResponse>>> obtenerEventosLiquidacion(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
             @RequestParam(required = false) Integer desarrollo
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashEventosCobranzaService.obtenerEventosLiquidacion(fechaInicio, fechaFin, desarrollo)));
@@ -86,8 +85,8 @@ public class DashEventosCobranzaController {
 
     @GetMapping("/eventos-liquidacion-total")
     public ResponseEntity<ApiResponse<TotalCategoriaResponse<Long>>> obtenerEventosLiquidacionTotal(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
             @RequestParam(required = false) Integer desarrollo
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashEventosCobranzaService.obtenerEventosLiquidacionTotal(fechaInicio, fechaFin, desarrollo).orElse(null)));
@@ -95,8 +94,8 @@ public class DashEventosCobranzaController {
 
     @GetMapping("/eventos-operados")
     public ResponseEntity<ApiResponse<List<EventosOperadosResponse>>> obtenerEventosOperados(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
             @RequestParam(required = false) Integer desarrollo
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashEventosCobranzaService.obtenerEventosOperados(fechaInicio, fechaFin, desarrollo)));
@@ -104,16 +103,16 @@ public class DashEventosCobranzaController {
 
     @GetMapping("/obtener-adendas-eventos")
     public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> obtenerAdendasEventos(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashEventosCobranzaService.obtenerAdendasEventos(fechaInicio, fechaFin)));
     }
 
     @GetMapping("/obtener-adendas-eventos-detalles")
     public ResponseEntity<ApiResponse<List<AdendasDetallesResponse>>> obtenerAdendasEventosDetalles(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
             @RequestParam(required = false) Integer desarrollo
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashEventosCobranzaService.obtenerAdendasEventosDetalles(fechaInicio, fechaFin, desarrollo)));

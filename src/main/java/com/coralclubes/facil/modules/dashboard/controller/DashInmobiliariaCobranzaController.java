@@ -5,7 +5,6 @@ import com.coralclubes.facil.modules.dashboard.dto.response.InmobiliariaMovimien
 import com.coralclubes.facil.modules.dashboard.dto.response.TotalCategoriaResponse;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -23,32 +22,32 @@ public class DashInmobiliariaCobranzaController {
 
     @GetMapping("/inmobiliaria-totales")
     public ResponseEntity<ApiResponse<TotalCategoriaResponse<Long>>> obtenerInmobiliariaTotales(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashInmobiliariaCobranzaService.obtenerInmobiliariaTotales(fechaInicio, fechaFin).orElse(null)));
     }
 
     @GetMapping("/inmobiliaria-clasificacion")
     public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> obtenerInmobiliariaClasificacion(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashInmobiliariaCobranzaService.obtenerInmobiliariaClasificacion(fechaInicio, fechaFin)));
     }
 
     @GetMapping("/inmobiliaria-casas")
     public ResponseEntity<ApiResponse<List<InmobiliariaMovimientosCobranzaResponse>>> obtenerInmobiliariaCasas(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashInmobiliariaCobranzaService.obtenerInmobiliariaCasas(fechaInicio, fechaFin)));
     }
 
     @GetMapping("/inmobiliaria-terrenos")
     public ResponseEntity<ApiResponse<List<InmobiliariaMovimientosCobranzaResponse>>> obtenerInmobiliariaTerrenos(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashInmobiliariaCobranzaService.obtenerInmobiliariaTerrenos(fechaInicio, fechaFin)));
     }

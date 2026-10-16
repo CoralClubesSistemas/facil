@@ -10,7 +10,6 @@ import com.coralclubes.facil.modules.dashboard.dto.response.UltimasMembresiasRes
 import com.coralclubes.facil.modules.dashboard.dto.response.UltimosClientesResponse;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -28,38 +27,38 @@ public class DashMembresiasVentasController {
 
     @GetMapping("/membresias-desarrollos")
     public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> obtenerMembresiasDesarrollos(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) {
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin) {
         return ResponseEntity.ok(ApiResponse.success(dashMembresiasVentasService.obtenerMembresiasDesarrollos(fechaInicio, fechaFin)));
     }
 
     @GetMapping("/movimientos-ventas-x-desarrollo")
     public ResponseEntity<ApiResponse<List<MovimientoVentaXDesarrolloResponse>>> obtenerMovimientosVentasXDesarrollo(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
             @RequestParam(required = false) String desarrollo) {
         return ResponseEntity.ok(ApiResponse.success(dashMembresiasVentasService.obtenerMovimientosVentasXDesarrollo(fechaInicio, fechaFin, desarrollo)));
     }
 
     @GetMapping("/membresias-procesables")
     public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> obtenerMembresiasProcesables(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) {
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin) {
         return ResponseEntity.ok(ApiResponse.success(dashMembresiasVentasService.obtenerMembresiasProcesables(fechaInicio, fechaFin)));
     }
 
     @GetMapping("/membresias-procesables-detalles")
     public ResponseEntity<ApiResponse<List<MembresiasProcesablesDetallesResponse>>> obtenerMembresiasProcesablesDetalles(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
             @RequestParam(required = false) String desarrollo) {
         return ResponseEntity.ok(ApiResponse.success(dashMembresiasVentasService.obtenerMembresiasProcesablesDetalles(fechaInicio, fechaFin, desarrollo)));
     }
 
     @GetMapping("/mejores-clientes")
     public ResponseEntity<ApiResponse<List<MejoresClientesResponse>>> obtenerMejoresClientes(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
             @RequestParam(required = false) Integer desarrollo) {
         return ResponseEntity.ok(ApiResponse.success(dashMembresiasVentasService.obtenerMejoresClientes(fechaInicio, fechaFin, desarrollo)));
     }
@@ -76,8 +75,8 @@ public class DashMembresiasVentasController {
 
     @GetMapping("/estatus-membresias")
     public ResponseEntity<ApiResponse<List<EstatusMembresiasResponse>>> obtenerEstatusMembresias(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) {
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin) {
         return ResponseEntity.ok(ApiResponse.success(dashMembresiasVentasService.obtenerEstatusMembresias(fechaInicio, fechaFin)));
     }
 }

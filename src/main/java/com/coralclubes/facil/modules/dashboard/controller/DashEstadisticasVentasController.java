@@ -4,9 +4,9 @@ import com.coralclubes.facil.modules.dashboard.service.DashEstadisticasVentasSer
 import com.coralclubes.facil.modules.dashboard.dto.response.EstadisticasTotalesResponse;
 import com.coralclubes.facil.modules.dashboard.dto.response.IngresosTotalesResponse;
 import com.coralclubes.facil.modules.dashboard.dto.response.TotalCategoriaResponse;
+import com.coralclubes.facil.modules.usuarios.service.UserContext;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -21,45 +21,47 @@ import java.util.List;
 public class DashEstadisticasVentasController {
 
     private final DashEstadisticasVentasService dashEstadisticasVentasService;
+    private final UserContext userContext;
 
     @GetMapping("/membresias-totales-ventas")
     public ResponseEntity<ApiResponse<TotalCategoriaResponse<Long>>> obtenerMembresiasTotalesVentas(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashEstadisticasVentasService.obtenerMembresiasTotalesVentas(fechaInicio, fechaFin).orElse(null)));
     }
 
     @GetMapping("/golf-totales-ventas")
     public ResponseEntity<ApiResponse<TotalCategoriaResponse<Long>>> obtenerGolfTotalesVentas(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashEstadisticasVentasService.obtenerGolfTotalesVentas(fechaInicio, fechaFin).orElse(null)));
     }
 
     @GetMapping("/eventos-totales-ventas")
     public ResponseEntity<ApiResponse<TotalCategoriaResponse<Long>>> obtenerEventosTotalesVentas(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashEstadisticasVentasService.obtenerEventosTotalesVentas(fechaInicio, fechaFin).orElse(null)));
     }
 
     @GetMapping("/inmobiliaria-totales-ventas")
     public ResponseEntity<ApiResponse<TotalCategoriaResponse<Long>>> obtenerInmobiliariaTotalesVentas(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashEstadisticasVentasService.obtenerInmobiliariaTotalesVentas(fechaInicio, fechaFin).orElse(null)));
     }
 
     @GetMapping("/ingresos-totales-ventas")
     public ResponseEntity<ApiResponse<IngresosTotalesResponse>> obtenerIngresosTotalesVentas(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin
     ) {
-        return ResponseEntity.ok(ApiResponse.success(dashEstadisticasVentasService.obtenerIngresosTotalesVentas(fechaInicio, fechaFin).orElse(null)));
+        Integer desarrollo = userContext.getIdDesarrollo();
+        return ResponseEntity.ok(ApiResponse.success(dashEstadisticasVentasService.obtenerIngresosTotalesVentas(fechaInicio, fechaFin, desarrollo).orElse(null)));
     }
 
     @GetMapping("/estadisticas-totales-ventas")

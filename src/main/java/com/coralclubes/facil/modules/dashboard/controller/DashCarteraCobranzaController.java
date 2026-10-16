@@ -5,7 +5,6 @@ import com.coralclubes.facil.modules.dashboard.dto.response.InventarioMembresias
 import com.coralclubes.facil.modules.dashboard.dto.response.TotalCategoriaResponse;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -23,16 +22,16 @@ public class DashCarteraCobranzaController {
 
     @GetMapping("/inventario-membresias-totales")
     public ResponseEntity<ApiResponse<List<InventarioMembresiasResponse>>> obtenerInventarioMembresiasTotales(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashCarteraCobranzaService.obtenerInventarioMembresiasTotales(fechaInicio, fechaFin)));
     }
 
     @GetMapping("/inventario-membresias-desarrollo")
     public ResponseEntity<ApiResponse<List<InventarioMembresiasResponse>>> obtenerInventarioMembresiasDesarrollo(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
             @RequestParam(required = false) String desarrollo
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashCarteraCobranzaService.obtenerInventarioMembresiasDesarrollo(fechaInicio, fechaFin, desarrollo)));
@@ -40,16 +39,16 @@ public class DashCarteraCobranzaController {
 
     @GetMapping("/membresias-totales-global")
     public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> obtenerInventarioMembresiasTotalesGlobal(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashCarteraCobranzaService.obtenerInventarioMembresiasTotalesGlobal(fechaInicio, fechaFin)));
     }
 
     @GetMapping("/inventario-membresias-totales-x-cartera")
     public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> obtenerInventarioMembresiasTotalesXCartera(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
             @RequestParam(required = false) String desarrollo
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashCarteraCobranzaService.obtenerInventarioMembresiasTotalesXCartera(fechaInicio, fechaFin, desarrollo)));
@@ -57,8 +56,8 @@ public class DashCarteraCobranzaController {
 
     @GetMapping("/inventario-membresias-totales-x-tipo")
     public ResponseEntity<ApiResponse<List<TotalCategoriaResponse<Long>>>> obtenerInventarioMembresiasTotalesXTipo(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
             @RequestParam(required = false) String desarrollo
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashCarteraCobranzaService.obtenerInventarioMembresiasTotalesXTipo(fechaInicio, fechaFin, desarrollo)));

@@ -5,7 +5,6 @@ import com.coralclubes.facil.modules.dashboard.dto.response.EstadisticasTotalesR
 import com.coralclubes.facil.modules.dashboard.dto.response.IngresosTotalesResponse;
 import com.coralclubes.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -23,8 +22,8 @@ public class DashEstadisticasCobranzaController {
 
     @GetMapping("/ingresos-totales")
     public ResponseEntity<ApiResponse<IngresosTotalesResponse>> obtenerIngresosTotales(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin
     ) {
         return ResponseEntity.ok(ApiResponse.success(dashEstadisticasCobranzaService.obtenerIngresosTotales(fechaInicio, fechaFin).orElse(null)));
     }
